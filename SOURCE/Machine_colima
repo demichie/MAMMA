@@ -1,0 +1,30 @@
+#----------------------------------------
+#MACROS= -D__MPI
+MACROS= -D__SCALAR
+#----------------------------------------
+CPPFLAGS= $(MACROS)
+LINKFLAGS= 
+LIBS= -llapack
+#FREEFORM= -FR
+ARFLAGS=rv
+#----------------------------------------
+# FFLAGS= -O0 -pg -g $(CPPFLAGS)
+# FFLAGS= -O3 -check bounds -unroll -ip -ipo $(CPPFLAGS)
+FFLAGS= -g -check all -fpe0 -warn -traceback -debug extended -O3 -g -mtune=core2 -unroll -ip -ipo $(CPPFLAGS)
+CC=gcc
+FC=ifort
+MPFC=ifort
+LINKER=ifort
+
+.SUFFIXES:.f90
+
+.F90.o:
+	$(CPP) $(CPPFLAGS) $*.f90
+	$(MPFC) -c $(MPFFLAGS) $(MODULES) $*.f90 -o $*.o
+	touch $*.o
+
+.f90.o:
+	$(FC) -c $(FREEFORM) $(FFLAGS) $(MODULES) $<
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
