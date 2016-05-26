@@ -128,6 +128,8 @@ MODULE constitutive
 
 
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
+  COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
+
 
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -140,6 +142,8 @@ MODULE constitutive
   COMPlEX*16, ALLOCATABLE :: x_g(:)    !< exsolved gas mass fraction (with respect to the mixture)
 
   COMPLEX*16, ALLOCATABLE :: x_d_md(:)     !< dissolved gas mass fraction in the melt+dis.gas phase
+  COMPLEX*16, ALLOCATABLE :: x_d_md_eq(:)  !< equil. dis. gas mass fraction in the melt+dis.gas phase
+
 
   COMPLEX*16, ALLOCATABLE :: x_c_1(:)      !< cristal mass fractions in phase 1
   COMPLEX*16 :: x_m_1             !< melt mass fraction in phase 1
@@ -440,6 +444,7 @@ CONTAINS
     ALLOCATE( rhoB_c(n_cry) )
     ALLOCATE( alfa_c_1(n_cry) )
     ALLOCATE( beta(n_cry) )
+    ALLOCATE( beta_eq(n_cry) )
     ALLOCATE( x_c(n_cry) )
     ALLOCATE( x_c_1(n_cry) )
     ALLOCATE( tau_c(n_cry) )
@@ -463,6 +468,7 @@ CONTAINS
 
     ALLOCATE( x_d(n_gas) )
     ALLOCATE( x_d_md(n_gas) )
+    ALLOCATE( x_d_md_eq(n_gas) )
     ALLOCATE( x_d_1(n_gas) )
     ALLOCATE( tau_d(n_gas) )
     ALLOCATE( solub(n_gas) )
@@ -892,8 +898,6 @@ CONTAINS
 
     COMPLEX*16 :: qp(n_vars)
 
-    COMPLEX*16 :: beta_eq(n_cry) , x_d_md_eq(1:n_gas)
-
     INTEGER :: i 
 
 
@@ -906,11 +910,9 @@ CONTAINS
     CALL phys_var_qp( c_qp = qp )
     CALL eos
 
-    CALL f_beta_eq( p_1 , T , x_d_md(1:n_gas) , beta_eq(1:n_cry) ,              &
-         rho_c(1:n_cry) , rho_1 )
+    CALL f_beta_eq
 
-    CALL f_xdis_eq( p_2 , T , x_ex_dis_in(1:n_gas) , alfa_g_2, x_g(1:n_gas),    &
-         rho_md, x_d_md_eq(1:n_gas) )
+    CALL f_xdis_eq
 
     qp2(1) = REAL(rho_1)
     qp2(1+1:1+n_gas) = REAL(rho_g(1:n_gas))
@@ -1242,8 +1244,6 @@ CONTAINS
     COMPLEX*16 :: velocity_relaxation
     !COMPLEX*16 :: frag_relaxation
 
-    COMPLEX*16 :: beta_eq(n_cry) , x_d_md_eq(n_gas)
-
     INTEGER :: i
     INTEGER :: idx
 
@@ -1267,8 +1267,7 @@ CONTAINS
 
     ! relaxation term for exsolved gas idx = 2+1,2+n_gas
 
-    CALL f_xdis_eq( p_2 , T , x_ex_dis_in(1:n_gas) , alfa_g_2, x_g(1:n_gas),    &
-         rho_md, x_d_md_eq )
+    CALL f_xdis_eq
 
     DO i=1,n_gas
 
@@ -1308,7 +1307,7 @@ CONTAINS
 
     ! relaxation term for crystallization idx = 2+n_gas+3+1,2+n_gas+3+n_cry
 
-    CALL f_beta_eq( p_1 , T , x_d_md , beta_eq , rho_c , rho_1)
+    CALL f_beta_eq
 
     DO i=1,n_cry
 
@@ -1322,8 +1321,7 @@ CONTAINS
     ! relaxation term for dissolved gas 
     ! idx = 2+n_gas+3+n_cry+1,2+n_gas+3+n_cry+n_gas
 
-    CALL f_xdis_eq( p_2 , T , x_ex_dis_in(1:n_gas) , alfa_g_2, x_g(1:n_gas),    &
-         rho_md,  x_d_md_eq )
+    CALL f_xdis_eq
 
     DO i=1,n_gas
 
@@ -1867,16 +1865,11 @@ CONTAINS
   !> \date 08/10/12       
   !********************************************************************************
 
-  SUBROUTINE f_xdis_eq( pres , temp , xtot, alfa_g_2, x_g, rho_md, x_d_md_eq )
+  SUBROUTINE f_xdis_eq
 
     USE complexify 
 
     IMPLICIT NONE
-
-    COMPLEX*16, INTENT(IN) :: pres , temp, alfa_g_2(1:n_gas)
-    COMPLEX*16, INTENT(IN) :: rho_md, x_g(1:n_gas)
-    REAL*8, INTENT(IN) :: xtot(1:n_gas)
-    COMPLEX*16, INTENT(OUT) :: x_d_md_eq(1:n_gas)
 
 
     COMPLEX*16 :: aa , bb , cc , pp
@@ -1891,7 +1884,7 @@ CONTAINS
     COMPLEX*16 :: S_mass,Cl_mass
 
 
-    IF ( REAL(pres) .LE. 0.D0 ) THEN
+    IF ( REAL(p_2) .LE. 0.D0 ) THEN
 
        x_d_md_eq = DCMPLX(0.D0, 0.D0)
 
@@ -1906,27 +1899,20 @@ CONTAINS
 
           ! Henry's law
 
-          !WRITE(*,*) alfa_g_2
-          !READ(*,*)
-
-          x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * pres)      &
+          x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * p_2 )      &
                ** solub_exp(1:n_gas)
-
-          !x_d_md_eq(1:n_gas) = solub(1:n_gas) * (pres)  &
-          !			** solub_exp(1:n_gas)
-
 
        CASE ( 'Zhang' )
 
           ! Zhang
 
-          aa = 0.4874d0 - 608.0d0 / temp + 489530.d0 / ( temp * temp )
+          aa = 0.4874d0 - 608.0d0 / T + 489530.d0 / ( T * T )
 
-          bb = -0.06062d0 + 135.6d0 / temp - 69200.d0 / ( temp * temp )
+          bb = -0.06062d0 + 135.6d0 / T - 69200.d0 / ( T * T )
 
-          cc = 0.00253d0 - 4.154d0 / temp + 1509.0d0 / ( temp * temp )
+          cc = 0.00253d0 - 4.154d0 / T + 1509.0d0 / ( T * T )
 
-          pp = pres * 1.0D-6
+          pp = p_2 * 1.0D-6
 
           x_d_md_eq(1:n_gas) = 1.0D-2 * ( aa * CDSQRT(pp) + bb * pp + cc        &
                * pp ** 1.5D0 )
@@ -1934,67 +1920,65 @@ CONTAINS
        CASE ( 'H20-CO2-S-CL' )
 
           ! Henry's law (s is global variable and is a constant for rhyolite)
-
+          
           melt_volume=1.0 !%m3
-
+          
           melt_mass=melt_volume*rho_md
-
+          
           !water exsolved mass
           h2o_exs_mass=melt_mass*x_g(1)
-
+          
           !co2 exsolved mass
           co2_exs_mass=melt_mass*x_g(2)
-
+          
           !S exsolved mass
           S_exs_mass=melt_mass*x_g(3)
-
+          
           !Cl exsolved mass
           Cl_exs_mass=melt_mass*x_g(4)
-
+          
           !Total volatile mass
           gas_mass=co2_exs_mass+h2o_exs_mass+S_exs_mass+Cl_exs_mass 
-
+          
           !Ratio_exs_dis is ratio of all gas mass to melt mass
           Ratio_exs_dis=gas_mass/melt_mass 
-
+          
           !Pressure in bar
-          P_bar = pres / 1e5;
-
+          P_bar = p_2 / 1e5;
+          
           !fitting coefficient
           beta_S = [4.8095e+02, -4.5850e+02, 3.0240e-03, -2.7519e-07] 
-
-          !Solubility for S and Cl	    
+          
+          !Solubility for S and Cl            
           log10Ds = beta(1) * P_bar**(-0.0075) + beta(2) + beta(3) * P_bar      &
                + beta(4) * P_bar**(2.0)
           Ds = 10**(log10Ds) 
           Dcl = DCMPLX(2.D0, 0.D0)
-
-          !Equilibrium dissolved water	
-          x_d_md_eq(1) = solub(1) * (alfa_g_2(1) * pres) ** solub_exp(1)
-          !Equilibrium dissolved co2	
-          x_d_md_eq(2) = solub(2) * (alfa_g_2(2) * pres) ** solub_exp(2)
-
+          
+          !Equilibrium dissolved water    
+          x_d_md_eq(1) = solub(1) * (alfa_g_2(1) * p_2) ** solub_exp(1)
+          !Equilibrium dissolved co2      
+          x_d_md_eq(2) = solub(2) * (alfa_g_2(2) * p_2) ** solub_exp(2)
 
           !Total mass of S
-          S_mass=melt_mass*xtot(3)
-
+          S_mass=melt_mass*x_ex_dis_in(3)
+          
           !Dissolved mass of S 
           S_dis_mass=S_mass - (Ds*Ratio_exs_dis/(Ds*Ratio_exs_dis + 1.0))*S_mass
-
+          
           !Equilibrium dissolved S
           x_d_md_eq(3)=S_dis_mass/melt_mass 
-
+          
           !Total mass of S
-          Cl_mass=melt_mass*xtot(4)
-
+          Cl_mass=melt_mass*x_ex_dis_in(4)
+          
           !Dissolved mass of Cl 
           Cl_dis_mass=Cl_mass- (Dcl*Ratio_exs_dis/(Dcl* Ratio_exs_dis + 1.0))   &
                *Cl_mass
-
+          
           !Equilibrium dissolved Cl
           x_d_md_eq(4)=Cl_dis_mass/melt_mass 
-
-
+          
        END SELECT
 
     END IF
@@ -2019,14 +2003,10 @@ CONTAINS
   !> \date 08/10/2012 
   !*****************************************************************************
 
-  SUBROUTINE f_beta_eq( press , temp, x_d, beta_eq , rho_c, rho_1)
+  SUBROUTINE f_beta_eq
 
     USE complexify 
     IMPLICIT NONE
-
-    COMPLEX*16, INTENT(IN) :: press, temp, x_d(1:n_gas)
-    COMPLEX*16, INTENT(IN) :: rho_c(1:n_cry), rho_1
-    COMPLEX*16, INTENT(OUT) :: beta_eq(n_cry)
 
     REAL*8 :: a1(n_cry)
     REAL*8 :: a2(n_cry)
@@ -2040,18 +2020,17 @@ CONTAINS
     REAL*8 :: a10(n_cry)
 
 
-    COMPLEX*16 :: x_d_tot ,x_d_wt_tot 
-    COMPLEX*16 :: press_bar, temp_celsius
+    COMPLEX*16 :: x_d_md_tot ,x_d_md_wt_tot 
+    COMPLEX*16 :: p_1_bar, T_celsius
     COMPLEX*16 :: crystal_mass_fraction(1:n_cry)
 
     INTEGER :: j
 
-    press_bar = press / 1.0e5
-    temp_celsius = temp - 273.D0
+    p_1_bar = p_1 / 1.0e5
+    T_celsius = T - 273.D0
 
-    x_d_tot = SUM( x_d(1:n_gas) )
-    x_d_wt_tot = x_d_tot * 100.D0
-
+    x_d_md_tot = SUM( x_d_md(1:n_gas) )
+    x_d_md_wt_tot = x_d_md_tot * 100.D0
 
     SELECT CASE ( crystallization_model )
 
@@ -2060,376 +2039,17 @@ CONTAINS
     CASE ( 'Vitturi2010' )
 
        DO j=1,n_cry
-
-          !-----------------------------------------------------------------------------------
-          beta_eq(j) = beta0(j) + 0.55D0 * ( 0.58815D0 * ( press / 1.D6 ) ** ( -0.5226D0 ) )
-          !-----------------------------------------------------------------------------------
-
+          
+          !----------------------------------------------------------------------
+          beta_eq(j)=beta0(j) + 0.55D0*( 0.58815D0*( p_1/1.D6 )**( -0.5226D0 ) )
+          !----------------------------------------------------------------------
+          
           beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
+          
        END DO
-
-    CASE ( 'Stromboli_STR180307') 
-
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       !
-       ! Bulk Composition used: STR180307 Stromboli HP lava flow (Landi et al. 2009)
-       !
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-
-       a1(1) = -4.791903714265485D-05 
-       a2(1) = -8.988225948330287D-04
-       a3(1) = -6.382730957586952D+00
-       a4(1) =  1.377810638208974D-04
-       a5(1) = -1.067932170091223D-01
-       a6(1) =  3.288990885608967D-02
-       a7(1) = -1.451168416585621D-01
-       a8(1) =  1.706606833857004D+00
-       a9(1) =  1.012926526113178D+02
-       a10(1) =-7.571346831725028D+02
-
-       !
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-
-       a1(2) =  1.336305215565643D-06
-       a2(2) = -2.210686595971240D-03 
-       a3(2) =  3.546171081028642D-01
-       a4(2) =  1.645999104597007D-05
-       a5(2) = -9.110622446695235D-02
-       a6(2) = -2.142526158415833D-03
-       a7(2) = -8.645267782315901D-03 
-       a8(2) =  4.698000476917640D+00 
-       a9(2) =  9.241918569621214D+01 
-       a10(2) =-2.469200288140726D+03
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) = -6.852178417550073D-07
-       a2(3) =  2.316395050802485D-04 
-       a3(3) =  5.971444771638420D-01
-       a4(3) = -4.217349466721149D-06 
-       a5(3) =  2.553494912086464D-02 
-       a6(3) = -5.388286594344003D-04
-       a7(3) =  8.947135359599550D-03 
-       a8(3) = -6.151995646254820D-01 
-       a9(3) = -3.246365161003231D+01
-       a10(3) = 4.035185107799892D+02
-
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar    &
-            +  a2(1:n_cry) * temp_celsius * temp_celsius + a3(1:n_cry)          &
-            * x_d_wt_tot * x_d_wt_tot + a4(1:n_cry) * press_bar * temp_celsius  &
-            + a5(1:n_cry) * temp_celsius * x_d_wt_tot + a6(1:n_cry)             &
-            * x_d_wt_tot * press_bar + a7(1:n_cry) * press_bar + a8(1:n_cry)    &
-            * temp_celsius + a9(1:n_cry) * x_d_wt_tot + a10(1:n_cry) ) / 100.D0
-
-       DO j=1,n_cry
-
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
-    CASE ( 'Stromboli_ST133s') 
-
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       !
-       ! Bulk Composition used: ST133s Stromboli scoria
-       !
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-       a1(1) = -3.093779776233308D-07
-       a2(1) = -8.067836437243864D-04
-       a3(1) = 2.294951872038490D-01
-       a4(1) = -6.936620172601397D-06   
-       a5(1) = -6.631778535978987D-02 
-       a6(1) = -1.076527457480074D-03
-       a7(1) = 1.170550995397176D-02
-       a8(1) = 1.483428805582366D+00
-       a9(1) = 5.316907381640926D+01
-       a10(1) = -6.188915005911542D+02
-
-       !
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-       a1(2) = -3.297723608947776D-07
-       a2(2) = -1.860397247461556D-03
-       a3(2) = -6.018660543771569D-01
-       a4(2) = 4.740192872414050D-05
-       a5(2) = -9.444195515718287D-02
-       a6(2) = 1.164456435617836D-03
-       a7(2) = -4.752115360211296D-02
-       a8(2) = 3.939798624092848D+00
-       a9(2) = 9.848041126653341D+01
-       a10(2) = -2.065132798030168D+03
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) = -1.557967309896266D-07
-       a2(3) = 2.840071833750253D-04
-       a3(3) = 6.491517319015943D-01
-       a4(3) =  -3.954003174183837D-06
-       a5(3) = 2.701408495438072D-02
-       a6(3) = -2.292398712367445D-04
-       a7(3) = 5.009256471020030D-03
-       a8(3) = -7.369279648282138D-01
-       a9(3) = -3.387376210643496D+01
-       a10(3) = 4.744703352699356D+02
-
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar    &
-            +  a2(1:n_cry) * temp_celsius * temp_celsius + a3(1:n_cry)          &
-            * x_d_wt_tot * x_d_wt_tot + a4(1:n_cry) * press_bar * temp_celsius  &
-            + a5(1:n_cry) * temp_celsius * x_d_wt_tot + a6(1:n_cry)             &
-            * x_d_wt_tot * press_bar + a7(1:n_cry) * press_bar + a8(1:n_cry)    &
-            * temp_celsius + a9(1:n_cry) * x_d_wt_tot + a10(1:n_cry) ) / 100.D0
-
-       DO j=1,n_cry
-
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
-    CASE ( 'Kilauea_07-Jul-92' )
-
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       !
-       ! Bulk Composition used: Kilauea 07-Jul-92, Garcia et al. 2000
-       ! Fugacity: NNO  
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-       a1(1) = -7.768936411102159e-07
-       a2(1) = -7.932566862956254e-04
-       a3(1) =  1.381315176743774e+00
-       a4(1) =  1.132648152550738e-05
-       a5(1) = -9.131590237642724e-02
-       a6(1) =  5.811724126484576e-04
-       a7(1) = -7.621220321474196e-03 
-       a8(1) =  1.417841764212868e+00
-       a9(1) =  7.219534668221827e+01
-       a10(1) =  -5.703749938360843e+02 
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-       a1(2) = -1.391690056769844e-06
-       a2(2) = -2.609971873754069e-03
-       a3(2) = -5.323285583512379e+00 
-       a4(2) = 1.102208789382047e-04  
-       a5(2) = -2.538292245640016e-01
-       a6(2) = 5.883706484507861e-03 
-       a7(2) = -1.191519600913973e-01 
-       a8(2) = 5.641920984927774e+00 
-       a9(2) = 2.806586069029652e+02
-       a10(2) = -3.027184386763626e+03
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) = -5.206454724503925e-07
-       a2(3) = -7.808199371334820e-04
-       a3(3) = -1.226994438431730e+00
-       a4(3) = 3.377257850329295e-05
-       a5(3) = -5.412394321821650e-02
-       a6(3) = 1.561193048719084e-03 
-       a7(3) = -4.006783668891632e-02
-       a8(3) = 1.786797354846754e+00
-       a9(3) = 6.446122129237291e+01
-       a10(3) = -1.019893114383826e+03
-
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar    &
-            +  a2(1:n_cry) * temp_celsius * temp_celsius + a3(1:n_cry)          &
-            * x_d_wt_tot * x_d_wt_tot + a4(1:n_cry) * press_bar * temp_celsius  &
-            + a5(1:n_cry) * temp_celsius * x_d_wt_tot + a6(1:n_cry)             &
-            * x_d_wt_tot * press_bar + a7(1:n_cry) * press_bar + a8(1:n_cry)    &
-            * temp_celsius + a9(1:n_cry) * x_d_wt_tot + a10(1:n_cry) ) / 100.D0
-
-       DO j=1,n_cry
-
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
-    CASE ( 'Stromboli_ST130p') 
-
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       !
-       ! Bulk Composition used: ST130p Stromboli pumice
-       !
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-       a1(1) = -5.406068699656079e-07
-       a2(1) = -1.404463478707256e-03
-       a3(1) = -1.218583188111566e+00
-       a4(1) = 1.728402665922039e-05
-       a5(1) = -1.282827971714570e-01
-       a6(1) = -3.091522536201172e-05
-       a7(1) = -1.568603010029308e-02
-       a8(1) = 2.822957859286888e+00
-       a9(1) = 1.235177658401323e+02
-       a10(1) = -1.370929036297232e+03    
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-       a1(2) = -4.499667328641805e-07
-       a2(2) = -2.004690994444441e-03
-       a3(2) = -4.323433023469858e-01
-       a4(2) = 4.347299593155883e-05
-       a5(2) = -9.438608446914021e-02
-       a6(2) =  9.379109964849730e-04
-       a7(2) = -4.221103215004686e-02
-       a8(2) =  4.242344230541831e+00
-       a9(2) = 9.709916450890972e+01
-       a10(2) =  -2.215787657691036e+03
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) = -2.375888285872058e-07
-       a2(3) = -9.883569535836583e-05
-       a3(3) = -3.654120328418190e-02
-       a4(3) = 1.181819777091870e-05
-       a5(3) = -1.846470331493797e-03
-       a6(3) = 3.990741777716456e-04
-       a7(3) = -1.340622323852491e-02
-       a8(3) = 1.799813645176881e-01
-       a9(3) = 8.788057872187769e-01
-       a10(3) = -7.427464653661571e+01
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar    &
-            +  a2(1:n_cry) * temp_celsius * temp_celsius + a3(1:n_cry)          &
-            * x_d_wt_tot * x_d_wt_tot + a4(1:n_cry) * press_bar * temp_celsius  &
-            + a5(1:n_cry) * temp_celsius * x_d_wt_tot + a6(1:n_cry)             &
-            * x_d_wt_tot * press_bar + a7(1:n_cry) * press_bar + a8(1:n_cry)    &
-            * temp_celsius + a9(1:n_cry) * x_d_wt_tot + a10(1:n_cry) ) / 100.D0
-
-       DO j=1,n_cry
-
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
-
-    CASE ( 'Etna_240701D') 
-
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-       !
-       ! Bulk Composition used: Etna 2001 UV 2700m, 240701D, Corsaro et al. 2007
-       ! Fugacity: NNO - 1
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-
-       a1(1) =  -2.883823644064584e-07 
-       a2(1) =  -8.996854713790933e-04 
-       a3(1) =  -9.976754097409724e-01 
-       a4(1) =  -4.619301584325058e-06
-       a5(1) =  -1.054250270339032e-01 
-       a6(1) =  -5.699373047492240e-04 
-       a7(1) =   7.828296016148413e-03  
-       a8(1) =   1.738990854083376e+00  
-       a9(1) =   1.000937682796073e+02  
-       a10(1) = -7.994004803536411e+02 
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-       a1(2) =  -3.886845280124826e-07 
-       a2(2) =  -2.645181849792622e-03 
-       a3(2) =  -7.704696516201739e-01 
-       a4(2) =   5.778003756746030e-05 
-       a5(2) =  -9.780372270345014e-02 
-       a6(2) =   1.116143539954889e-03  
-       a7(2) =  -5.850200419827916e-02  
-       a8(2) =   5.606388836953109e+00   
-       a9(2) =   1.021407884054004e+02 
-       a10(2) = -2.947906187099900e+03 
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) =  -9.163326721370947e-08 
-       a2(3) =   4.015049183142782e-04 
-       a3(3) =   7.234678104569880e-01 
-       a4(3) =  -3.551712687703816e-06 
-       a5(3) =   3.394901762327399e-02 
-       a6(3) =  -2.233354821268313e-04  
-       a7(3) =   4.681881609461632e-03  
-       a8(3) =  -1.013405668755297e+00 
-       a9(3) =  -4.119956139955736e+01  
-       a10(3) =  6.348137296735375e+02 
-
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar +  a2(1:n_cry) *    &
-            temp_celsius * temp_celsius + a3(1:n_cry) * x_d_wt_tot * x_d_wt_tot    &
-            + a4(1:n_cry) * press_bar * temp_celsius + a5(1:n_cry) * temp_celsius  &
-            * x_d_wt_tot + a6(1:n_cry) * x_d_wt_tot * press_bar + a7(1:n_cry)      &
-            * press_bar + a8(1:n_cry) * temp_celsius + a9(1:n_cry) * x_d_wt_tot    &
-            + a10(1:n_cry) ) / 100.D0
-
-       DO j=1,n_cry
-
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
-
+       
     CASE ( 'Etna_260701C') 
-
 
        !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -2484,18 +2104,17 @@ CONTAINS
        a9(3) =  -4.141308301086861e+01 
        a10(3) =  6.193378556096160e+02 
 
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * press_bar * press_bar +  a2(1:n_cry) *    &
-            temp_celsius * temp_celsius + a3(1:n_cry) * x_d_wt_tot * x_d_wt_tot    &
-            + a4(1:n_cry) * press_bar * temp_celsius + a5(1:n_cry) * temp_celsius  &
-            * x_d_wt_tot + a6(1:n_cry) * x_d_wt_tot * press_bar + a7(1:n_cry)      &
-            * press_bar + a8(1:n_cry) * temp_celsius + a9(1:n_cry) * x_d_wt_tot    &
-            + a10(1:n_cry) ) / 100.D0
-
+       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * p_1_bar * p_1_bar +      &
+            a2(1:n_cry) * T_celsius * T_celsius + a3(1:n_cry) * x_d_md_wt_tot * &
+            x_d_md_wt_tot + a4(1:n_cry) * p_1_bar * T_celsius + a5(1:n_cry) *   &
+            T_celsius * x_d_md_wt_tot + a6(1:n_cry) * x_d_md_wt_tot * p_1_bar + &
+            a7(1:n_cry) * p_1_bar + a8(1:n_cry) * T_celsius + a9(1:n_cry) *     &
+            x_d_md_wt_tot + a10(1:n_cry) ) / 100.D0
+       
        DO j=1,n_cry
-
+          
           beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-
+          
           beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
 
@@ -2503,13 +2122,6 @@ CONTAINS
 
 
     END SELECT
-
-
-    !WRITE(*,*) REAL(press)
-    !WRITE(*,*) REAL(temp)
-    !WRITE(*,*) REAL(x_d)
-    !WRITE(*,*) REAL(beta_eq)
-    !READ(*,*)
 
   END SUBROUTINE f_beta_eq
 

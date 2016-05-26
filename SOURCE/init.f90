@@ -44,7 +44,8 @@ CONTAINS
 
     ! external variables
     USE constitutive, ONLY : p_1 , p_2 , T , x_d_md, x_g, alfa_g_2
-    USE constitutive, ONLY : x_ex_dis_in , beta , rho_2 , rho_md, rho_g, rho_1, rho_c
+    USE constitutive, ONLY : x_ex_dis_in , x_d_md_eq, beta , beta_eq 
+    USE constitutive, ONLY : rho_2 , rho_md, rho_g, rho_1, rho_c
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
 
@@ -68,8 +69,6 @@ CONTAINS
 
     REAL*8 :: r_frag_eff
 
-    COMPLEX*16 :: pres, temp , beta_eq(n_cry) , x_d_md_eq(n_gas)
-
     REAL*8 :: alfa2_in
     REAL*8 :: alfa_g_in(1:n_gas)
 	
@@ -86,143 +85,131 @@ CONTAINS
 
     ! evaluate the initial crystal volume fraction
 
-    pres = DCMPLX( p1_in , 0.D0 )
-    temp = DCMPLX( T_in , 0.D0 )
+    p_1 = DCMPLX( p1_in , 0.D0 ) 
+    p_2 = DCMPLX( p2_in , 0.D0 ) 
+    T = DCMPLX( T_in , 0.D0 )
 
     ! evaluate the initial dissolved gas mass fraction
 	
-	r_rho_md = ( pres + bar_p_m ) / ( temp * cv_m * ( gamma_m - 1.D0) )
-	rho_md = DCMPLX(r_rho_md,0.0)
-
-    r_rho_c(1:n_cry) = ( pres + bar_p_c(1:n_cry) ) / ( temp * cv_c(1:n_cry) *         &
-         ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) )	
-
-	r_rho_1 = r_rho_md
-
+    r_rho_md = ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - 1.D0) )
+    rho_md = DCMPLX(r_rho_md,0.0)
+    
+    r_rho_c(1:n_cry) = ( p_1 + bar_p_c(1:n_cry) ) / ( T * cv_c(1:n_cry) *         &
+         ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) )     
+    
+    r_rho_1 = r_rho_md
+    
     rho_c(1:n_cry) = DCMPLX( r_rho_c(1:n_cry) , 0.D0 )
     rho_1 = DCMPLX( r_rho_1 , 0.D0 )
-
-	DO i=1,n_gas
-		alfa_g_2(i) = DCMPLX(1.0 / n_gas,0.0);
-		x_g(i) = DCMPLX(1e-2,0.0)
-	END DO
-
-	iter = 1
-	max_iter =1000
-	error_iter = 1.0
-
-	DO WHILE( error_iter .GT. 1e-15 .AND. (iter .LT. max_iter) )		
-
-		!WRITE(*,*) REAL(rho_md)
-		!READ(*,*)
-
-		x_g_old = x_g
-
-	    CALL f_xdis_eq( pres , temp , x_ex_dis_in(1:n_gas) , alfa_g_2(1:n_gas), &
-					x_g(1:n_gas), rho_md, x_d_md_eq(1:n_gas) )
-	
-	    DO i=1,n_gas
-
-	       xd_md_in(i) = MIN( REAL(x_d_md_eq(i)) , x_ex_dis_in(i) )
-
-	    END DO
-
-	    ! required by eval_densities
-	    x_d_md(1:n_gas) = DCMPLX( xd_md_in(1:n_gas) , 0.D0 )
-
-	    CALL f_beta_eq( pres , temp, x_d_md(1:n_gas) , beta_eq(1:n_cry) , rho_c(1:n_cry), rho_1)
-
-	    beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
-
-	    r_u_1 = u_0
-	    r_u_2 = u_0 + 1.D-5
-	
-    	! evaluate the volume fractions of the two phases
-
-	    beta = DCMPLX( beta_in(1:n_cry) , 0.D0 )
-	    p_1 = DCMPLX( p1_in , 0.D0 ) 
-	    p_2 = DCMPLX( p2_in , 0.D0 ) 
-	    T = DCMPLX( T_in , 0.D0 )
-
-	    CALL eval_densities
     
-		r_rho_1 = REAL( rho_1 )
-	    r_rho_2 = REAL( rho_2 )
-		r_rho_g = REAL( rho_g )
-
-	    r_rho_md = REAL( rho_md )
-   
-	    xd_md_tot = SUM( xd_md_in(1:n_gas) )
-
-	    xtot_in = SUM( x_ex_dis_in(1:n_gas) ) 
-
-		IF ( n_gas .EQ. 1 ) THEN
-
-			CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) , beta_in(1:n_cry) ,  &
-		         r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
-
-		ELSE
-
-		    CALL f_alfa3( p2_in, x_ex_dis_in(1:n_gas) , beta_in(1:n_cry) ,  &
-		         r_rho_md , r_rho_g(1:n_gas) , alfa_g_in(1:n_gas) )
-
-		END IF
-
-
-	    DO i = 1,n_gas
-	
-	       alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-10 )
-	
-	    END DO
-
-	    alfa2_in = SUM( alfa_g_in(1:n_gas) )
-	    alfa1_in = 1.D0 - alfa2_in
-
-		x_g = alfa_g_in * r_rho_g / ( alfa1_in * r_rho_1 + alfa2_in * r_rho_2 )
-
-		alfa_g_2 = alfa_g_in / alfa2_in
-
-		error_iter = (MAXVAL(ABS(x_g - x_g_old)))
-	
-	END DO
-
-	IF (iter .GE. max_iter) THEN
-			
-		WRITE(*,*) 'No convergence for initial gas dissolve mass fraction'
-		STOP
-
-	END IF
-
-	!WRITE(*,*) 'xd_md_in'
-	!WRITE(*,*) REAL(xd_md_in)
-	!WRITE(*,*) 'x_ex_dis_in'
-	!WRITE(*,*) REAL(x_ex_dis_in)
-	!READ(*,*)
-
-    ! initialize the fragmentation efficiency to zero
-
-    r_frag_eff = frag_eff_in
-
-    ! define the vector of primitive variables
-
-    idx = 0
-
-    DO i = 1,n_gas
-
-       idx = idx + 1
-
-       qp(idx) = alfa_g_in(i)
-
+    DO i=1,n_gas
+       alfa_g_2(i) = DCMPLX(1.0 / n_gas,0.0);
+       x_g(i) = DCMPLX(1e-2,0.0)
     END DO
+    
+    iter = 1
+    max_iter =1000
+    error_iter = 1.0
+    
+    DO WHILE( error_iter .GT. 1e-15 .AND. (iter .LT. max_iter) )		
+       
+       x_g_old = x_g
+       
+       CALL f_xdis_eq
+       
+       DO i=1,n_gas
+          
+          xd_md_in(i) = MIN( REAL(x_d_md_eq(i)) , x_ex_dis_in(i) )
+          
+       END DO
+       
+       ! required by eval_densities
+       x_d_md(1:n_gas) = DCMPLX( xd_md_in(1:n_gas) , 0.D0 )
+       
+       CALL f_beta_eq
 
+       beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
+       
+       r_u_1 = u_0
+       r_u_2 = u_0 + 1.D-5
+       
+       ! evaluate the volume fractions of the two phases
+       
+       beta = DCMPLX( beta_in(1:n_cry) , 0.D0 )
+       
+       CALL eval_densities
+       
+       r_rho_1 = REAL( rho_1 )
+       r_rho_2 = REAL( rho_2 )
+       r_rho_g = REAL( rho_g )
+       
+       r_rho_md = REAL( rho_md )
+       
+       xd_md_tot = SUM( xd_md_in(1:n_gas) )
+       
+       xtot_in = SUM( x_ex_dis_in(1:n_gas) ) 
+       
+       IF ( n_gas .EQ. 1 ) THEN
+          
+          CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) , beta_in(1:n_cry) ,  &
+               r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
+          
+       ELSE
+          
+          CALL f_alfa3( p2_in, x_ex_dis_in(1:n_gas) , beta_in(1:n_cry) ,  &
+               r_rho_md , r_rho_g(1:n_gas) , alfa_g_in(1:n_gas) )
+          
+       END IF
+       
+       
+       DO i = 1,n_gas
+          
+          alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-10 )
+          
+       END DO
+       
+       alfa2_in = SUM( alfa_g_in(1:n_gas) )
+       alfa1_in = 1.D0 - alfa2_in
+       
+       x_g = alfa_g_in * r_rho_g / ( alfa1_in * r_rho_1 + alfa2_in * r_rho_2 )
+       
+       alfa_g_2 = alfa_g_in / alfa2_in
+       
+       error_iter = (MAXVAL(ABS(x_g - x_g_old)))
+       
+    END DO
+    
+    IF (iter .GE. max_iter) THEN
+       
+       WRITE(*,*) 'No convergence for initial gas dissolve mass fraction'
+       STOP
+       
+    END IF
+    
+    ! initialize the fragmentation efficiency to zero
+    
+    r_frag_eff = frag_eff_in
+    
+    ! define the vector of primitive variables
+    
+    idx = 0
+    
+    DO i = 1,n_gas
+       
+       idx = idx + 1
+       
+       qp(idx) = alfa_g_in(i)
+       
+    END DO
+    
     ! Frist phase pressure
     idx = idx + 1
-
+    
     qp(idx) = p1_in
-
+    
     ! Second phase pressure
     idx = idx + 1
-
+    
     qp(idx) = p2_in
 
     ! Frist phase velocity

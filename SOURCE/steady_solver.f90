@@ -51,8 +51,8 @@ CONTAINS
 
     ! external variables
     USE constitutive, ONLY : rho_m, rho_c, rho_mix, u_mix, u_1, u_2
-    USE constitutive, ONLY : p_1 , p_2 , T , s_1, s_2, e_1, e_2 !, alfa_g_2, x_d_md, x_g
-    USE constitutive, ONLY : rho_2 , rho_g, rho_1, rho_c, rho_m !, beta , x_ex_dis_in , rho_md
+    USE constitutive, ONLY : p_1 , p_2 , T , s_1, s_2, e_1, e_2
+    USE constitutive, ONLY : rho_2 , rho_g, rho_1, rho_c, rho_m
     USE constitutive, ONLY : mu_1, mu_2, s_c, mu_c, s_g, mu_g
     USE constitutive, ONLY : e_c, e_g, e_m, mu_m, s_m
     USE init, ONLY : u1_in
@@ -615,7 +615,7 @@ CONTAINS
     USE constitutive, ONLY : phys_var_qp , eos
     USE constitutive, ONLY : sound_speeds
 
-    USE constitutive, ONLY : f_beta_eq , f_xdis_eq , eval_densities
+    USE constitutive, ONLY : eval_densities
     USE constitutive, ONLY : f_alfa3, f_alfa
 
     USE geometry, ONLY : update_radius
@@ -623,10 +623,6 @@ CONTAINS
     ! external variables
     USE constitutive, ONLY : frag_thr, fragmentation, frag_eff
     USE constitutive, ONLY : rho_mix, u_mix
-    USE constitutive, ONLY : p_1 , p_2 , T
-    USE constitutive, ONLY : beta , rho_1, rho_c
-
-
 
     USE inpout, ONLY : output_steady
 
@@ -637,7 +633,7 @@ CONTAINS
 
     USE parameters, ONLY : shooting
 
-    USE parameters, ONLY : tol_abs , tol_rel, n_gas, n_cry
+    USE parameters, ONLY : tol_abs , tol_rel, n_gas
 
 
     IMPLICIT NONE
@@ -691,16 +687,6 @@ CONTAINS
 
     REAL*8 :: delta_full , delta_half2
 
-    COMPLEX*16 :: beta_eq(n_cry) , x_d_md_eq(n_gas)
-
-    ! COMPLEX*16 :: x_g_old(n_gas)
-
-    ! INTEGER :: i,iter,max_iter
-
-    ! REAL*8 :: r_rho_1, r_rho_2, r_rho_md, r_rho_g(n_gas), r_u_1, r_u_2, beta_in(n_cry), alfa_g_in(n_gas)
-
-    ! REAL*8 :: xd_md_in(n_cry),alfa1_in, alfa2_in,error_iter, xd_md_tot, xtot_in
-
     REAL*8 :: fragmentation_half2, fragmentation_full
 
     REAL*8 :: alfa_2_half2, alfa_2_full, alfa_2_qp
@@ -730,15 +716,6 @@ CONTAINS
 
        WRITE(*,*) 'qp = '
        WRITE(*,*) qp
-
-       beta = DCMPLX( qp(n_gas+5+1:n_gas+5+n_cry) , 0.D0 )
-       p_1 = DCMPLX( qp(n_gas+1) , 0.D0 ) 
-       p_2 = DCMPLX( qp(n_gas+2) , 0.D0 ) 
-       T = DCMPLX( qp(n_gas+5) , 0.D0 )
-       x_d_md_eq = DCMPLX( qp(n_gas+5+n_cry+1:n_gas+5+n_cry+n_gas),0.D0 )
-
-       CALL f_beta_eq( p_1, T , x_d_md_eq(1:n_gas) , &
-            beta_eq(1:n_cry), rho_c(1:n_cry), rho_1 )
 
        READ(*,*)
 
