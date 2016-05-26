@@ -130,6 +130,8 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
+  REAL*8, ALLOCATABLE :: fit(:,:)
+
 
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -373,6 +375,10 @@ MODULE constitutive
   !> Parameter to select the melt viscosity (bubbles and crystal-free) model
   CHARACTER*30 :: visc_melt_model
 
+  
+  REAL*8, DIMENSION(12) :: wt_init
+
+
   !> Flag to activate the injection of external water:\n
   !> - ext_water = .TRUE.   => interaction with external water
   !> - ext_water = .FALSE.  => no interaction
@@ -413,6 +419,9 @@ MODULE constitutive
   REAL*8 :: rho_w
 
   REAL*8 :: xa,xb,xc
+
+  ! number of coefficients for the alphaMelts fitting
+  INTEGER :: n_coeffs
 
 CONTAINS
 
@@ -2008,18 +2017,6 @@ CONTAINS
     USE complexify 
     IMPLICIT NONE
 
-    REAL*8 :: a1(n_cry)
-    REAL*8 :: a2(n_cry)
-    REAL*8 :: a3(n_cry)
-    REAL*8 :: a4(n_cry)
-    REAL*8 :: a5(n_cry)
-    REAL*8 :: a6(n_cry)
-    REAL*8 :: a7(n_cry)
-    REAL*8 :: a8(n_cry)
-    REAL*8 :: a9(n_cry)
-    REAL*8 :: a10(n_cry)
-
-
     COMPLEX*16 :: x_d_md_tot ,x_d_md_wt_tot 
     COMPLEX*16 :: p_1_bar, T_celsius
     COMPLEX*16 :: crystal_mass_fraction(1:n_cry)
@@ -2049,67 +2046,18 @@ CONTAINS
           
        END DO
        
-    CASE ( 'Etna_260701C') 
+    CASE ( 'alphaMelts') 
 
-       !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-       !
-       ! Bulk Composition used: Etna 2001 LV 2550m, 260701C, Corsaro et al. 2007
-       ! Fugacity: NNO - 1
-
-       !
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => FELDSPAR
-       ! 
-
-
-       a1(1) =  -2.679593653482365e-07
-       a2(1) =  -9.121310944316992e-04
-       a3(1) =  -8.024166310689372e-01
-       a4(1) =  -7.865378746628937e-06
-       a5(1) =  -1.007008421176608e-01
-       a6(1) =  -7.104730113530506e-04
-       a7(1) =   1.151977402356674e-02
-       a8(1) =   1.756050687589626e+00
-       a9(1) =   9.429418001090374e+01
-       a10(1) = -8.027039225610339e+02
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => CLINOPYROXENE
-       ! 
-
-       a1(2) =  -4.475941441132232e-07  
-       a2(2) =  -2.548558173661612e-03
-       a3(2) =  -7.944249885651755e-01
-       a4(2) =   6.059994013752037e-05
-       a5(2) =  -9.884512045769797e-02
-       a6(2) =   1.135479785202102e-03  
-       a7(2) =  -6.134027929958916e-02
-       a8(2) =   5.390800973450543e+00
-       a9(2) =   1.032279432984214e+02  
-       a10(2) = -2.826590324335306e+03 
-
-
-       ! 
-       ! RECONSTRUCTION USING ALPHAMELTS AND DAKOTA => OLIVINE
-       ! 
-
-       a1(3) =  -7.485271890425919e-08 
-       a2(3) =   3.855184680709266e-04
-       a3(3) =   7.366439864530397e-01
-       a4(3) =  -3.747384519152521e-06
-       a5(3) =   3.405224212393172e-02
-       a6(3) =  -2.311352864134083e-04
-       a7(3) =   4.853642492506569e-03
-       a8(3) =  -9.808177156858028e-01
-       a9(3) =  -4.141308301086861e+01 
-       a10(3) =  6.193378556096160e+02 
-
-       crystal_mass_fraction(1:n_cry) = (a1(1:n_cry) * p_1_bar * p_1_bar +      &
-            a2(1:n_cry) * T_celsius * T_celsius + a3(1:n_cry) * x_d_md_wt_tot * &
-            x_d_md_wt_tot + a4(1:n_cry) * p_1_bar * T_celsius + a5(1:n_cry) *   &
-            T_celsius * x_d_md_wt_tot + a6(1:n_cry) * x_d_md_wt_tot * p_1_bar + &
-            a7(1:n_cry) * p_1_bar + a8(1:n_cry) * T_celsius + a9(1:n_cry) *     &
-            x_d_md_wt_tot + a10(1:n_cry) ) / 100.D0
+       crystal_mass_fraction(1:n_cry) = ( fit(1,1:n_cry) * p_1_bar * p_1_bar    &
+            + fit(2,1:n_cry) * T_celsius * T_celsius                            &
+            + fit(3,1:n_cry) * x_d_md_wt_tot * x_d_md_wt_tot                    &
+            + fit(4,1:n_cry) * p_1_bar * T_celsius                              &
+            + fit(5,1:n_cry) * T_celsius * x_d_md_wt_tot                        &
+            + fit(6,1:n_cry) * x_d_md_wt_tot * p_1_bar                          &
+            + fit(7,1:n_cry) * p_1_bar                                          &
+            + fit(8,1:n_cry) * T_celsius                                        &
+            + fit(9,1:n_cry) * x_d_md_wt_tot                                    &
+            + fit(10,1:n_cry) ) / 100.D0
        
        DO j=1,n_cry
           
@@ -2729,6 +2677,8 @@ CONTAINS
 
     COMPLEX*16 :: x_d_md_tot
 
+    INTEGER :: i
+
     x_d_md_tot = SUM( x_d_md(1:n_gas) )
 
     w = x_d_md_tot * 100.d0
@@ -2779,120 +2729,16 @@ CONTAINS
 
     CASE ( 'Giordano_et_al2008' )
 
-       SELECT CASE ( crystallization_model )
-
-       CASE DEFAULT
-
-       CASE ( 'Vitturi2010' )
-
-          !>  (Glass in a basaltic andesite from Moore et al. (1998)  
-
-          wt(1)  = 58.5   ! SiO2  wt. %
-          wt(2)  = 0.91   ! TiO2  wt. %
-          wt(3)  = 16.90  ! Al2O3 wt. %
-          wt(4)  = 5.03   ! FeO   wt. %
-          wt(5)  = 0.0    ! MnO   wt. %
-          wt(6)  = 2.80   ! MgO   wt. %
-          wt(7)  = 5.35   ! CaO   wt. %
-          wt(8)  = 2.20   ! Na2O  wt. %
-          wt(9)  = 1.74   ! K2O   wt. %
-          wt(10) = 0.0    ! P2O5  wt. %
-          wt(11) = 0.0    ! H2O   wt. %
-          wt(12) = 0.0    ! F2O-1 wt. %
-
-       CASE ( 'Kilauea_07-Jul-92' )
-
-          !>  Kilauea Magma - 07-Jul-92; Garcia et al (2000)
-
-          wt(1)  = 49.76D0   ! SiO2  wt. %
-          wt(2)  = 2.386D0   ! TiO2  wt. %
-          wt(3)  = 12.85D0   ! Al2O3 wt. %
-          wt(4)  = 12.34D0   ! FeO   wt. %
-          wt(5)  = 0.18D0    ! MnO   wt. %
-          wt(6)  = 8.51D0    ! MgO   wt. %
-          wt(7)  = 10.59D0   ! CaO   wt. %
-          wt(8)  = 2.27D0    ! Na2O  wt. %
-          wt(9)  = 0.424D0   ! K2O   wt. %
-          wt(10) = 0.23D0    ! P2O5  wt. %
-          wt(11) = 0.0       ! H2O   wt. %
-          wt(12) = 0.0       ! F2O-1 wt. %
-
-       CASE ('Stromboli_ST133s')
-
-          !>  Stromboli 23 August 1998 explosion ST133s; Metrich et al. 2001
-
-          wt(1)  = 49.89D0   ! SiO2  wt. %
-          wt(2)  = 0.980D0   ! TiO2  wt. %
-          wt(3)  = 18.05D0   ! Al2O3 wt. %
-          wt(4)  = 8.76D0    ! FeO   wt. %
-          wt(5)  = 0.16D0    ! MnO   wt. %
-          wt(6)  = 5.97D0    ! MgO   wt. %
-          wt(7)  = 10.78D0   ! CaO   wt. %
-          wt(8)  = 2.60D0    ! Na2O  wt. %
-          wt(9)  = 2.07D0    ! K2O   wt. %
-          wt(10) = 0.45D0    ! P2O5  wt. %
-          wt(11) = 0.0       ! H2O   wt. %
-          wt(12) = 0.0       ! F2O-1 wt. %
-
-       CASE ('Stromboli_ST130p')
-
-          !>  Stromboli 23 August 1998 explosion ST130p; Metrich et al. 2001
-
-          wt(1)  = 49.72D0   ! SiO2  wt. %
-          wt(2)  = 0.970D0   ! TiO2  wt. %
-          wt(3)  = 16.71D0   ! Al2O3 wt. %
-          wt(4)  = 8.98D0    ! FeO   wt. %
-          wt(5)  = 0.17D0    ! MnO   wt. %
-          wt(6)  = 6.62D0    ! MgO   wt. %
-          wt(7)  = 11.46D0   ! CaO   wt. %
-          wt(8)  = 2.53D0    ! Na2O  wt. %
-          wt(9)  = 1.81D0    ! K2O   wt. %
-          wt(10) = 0.45D0    ! P2O5  wt. %
-          wt(11) = 0.0       ! H2O   wt. %
-          wt(12) = 0.0       ! F2O-1 wt. %
-
-       CASE ('Etna_240701D')
-
-          !>  Etna 2001 flank eruption lava flow UV 240701D; Corsaro et al. 2007
-
-          wt(1)  = 47.30D0   ! SiO2  wt. %
-          wt(2)  = 1.680D0   ! TiO2  wt. %
-          wt(3)  = 17.22D0   ! Al2O3 wt. %
-          wt(4)  = 10.45D0   ! FeO   wt. %
-          wt(5)  = 0.17D0    ! MnO   wt. %
-          wt(6)  = 5.66D0    ! MgO   wt. %
-          wt(7)  = 10.81D0   ! CaO   wt. %
-          wt(8)  = 3.63D0    ! Na2O  wt. %
-          wt(9)  = 2.01D0    ! K2O   wt. %
-          wt(10) = 0.50D0    ! P2O5  wt. %
-          wt(11) = 0.0       ! H2O   wt. %
-          wt(12) = 0.0       ! F2O-1 wt. %			
-
-       CASE ('Etna_260701C')
-
-
-          !>  Etna 2001 flank eruption lava flow LV 260701C; Corsaro et al. 2007
-
-          wt(1)  = 47.43D0   ! SiO2  wt. %
-          wt(2)  = 1.650D0   ! TiO2  wt. %
-          wt(3)  = 16.75D0   ! Al2O3 wt. %
-          wt(4)  = 10.54D0   ! FeO   wt. %
-          wt(5)  = 0.17D0    ! MnO   wt. %
-          wt(6)  = 6.07D0    ! MgO   wt. %
-          wt(7)  = 10.89D0   ! CaO   wt. %
-          wt(8)  = 3.42D0    ! Na2O  wt. %
-          wt(9)  = 1.95D0    ! K2O   wt. %
-          wt(10) = 0.48D0    ! P2O5  wt. %
-          wt(11) = 0.0       ! H2O   wt. %
-          wt(12) = 0.0       ! F2O-1 wt. %	
-
-
-       END SELECT
-
-
        ! -------------------------- Giordano et al. (2008) ----------------------
        ! Call for dissolved water in te melt from the model and add it to the   
        ! composition of glass in wt
+
+       DO i = 1,12
+
+          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+       END DO
+
 
        wt(11) = w
 

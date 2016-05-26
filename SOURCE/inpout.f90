@@ -68,6 +68,13 @@ MODULE inpout
 
   !  USE parameters, ONLY : atmospheric_pressure, chocked_flow
 
+
+  ! -- Variables for the card alphaMelts
+  USE constitutive, ONLY : fit , n_coeffs
+
+  ! -- Variables for the card meltcomposition
+  USE constitutive, ONLY : wt_init
+
   IMPLICIT NONE
 
   CHARACTER(LEN=50) :: run_name           !< Name of the run
@@ -442,6 +449,11 @@ CONTAINS
 
     IMPLICIT none
 
+    INTEGER :: i
+    LOGICAL :: tend1
+    CHARACTER(LEN=80) :: card
+
+
     OPEN(input_unit,FILE=input_file,STATUS='old')
 
 
@@ -547,24 +559,14 @@ CONTAINS
 
 
     IF ( (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) ) .AND.             & 
-         (.NOT. (crystallization_model .EQ. 'Stromboli_ST133s' ) ) .AND.        &
-         (.NOT. (crystallization_model .EQ. 'Stromboli_ST130p' ) ) .AND.        &
-         (.NOT. (crystallization_model .EQ. 'Stromboli_STR180307' ) ) .AND.     &
-         (.NOT. (crystallization_model .EQ. 'Etna_240701D' ) ) .AND.            &
-         (.NOT. (crystallization_model .EQ. 'Etna_260701C' ) ) .AND.            &
-         (.NOT. (crystallization_model .EQ. 'Kilauea_07-Jul-92' ) ) ) THEN
+         (.NOT. (crystallization_model .EQ. 'alphaMelts' ) ) ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
        WRITE(*,*) 'Please choose between:'
        WRITE(*,*) ''
        WRITE(*,*) 'Vitturi2010'
-       WRITE(*,*) 'Stromboli_ST133s'
-       WRITE(*,*) 'Stromboli_ST130p'
-       WRITE(*,*) 'Stromboli_STR180307'
-       WRITE(*,*) 'Etna_240701D'
-       WRITE(*,*) 'Etna_260701C'
-       WRITE(*,*) 'Kilauea_07-Jul-92'
+       WRITE(*,*) 'alphaMelts'
        WRITE(*,*) ''
 
        CALL ABORT
@@ -572,7 +574,7 @@ CONTAINS
     END IF
 
     IF ( (crystallization_model .EQ. 'Vitturi2010' ) .AND.                      & 
-         (.NOT.(n_cry .EQ. 1.0))  ) THEN
+         (.NOT.(n_cry .EQ. 1 ))  ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong number of crystal components inserted'
@@ -583,78 +585,46 @@ CONTAINS
 
     END IF
 
+    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
+       
+      tend1 = .FALSE.
 
-    IF ( (crystallization_model .EQ. 'Stromboli_ST133s' ) .AND.                 & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
+       WRITE(*,*) 'search alphaMelts fitting coefficients'
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Stromboli_ST133s, n_cry has to be 3'
-       WRITE(*,*) ''
+       alphaMelts_search: DO
 
-       CALL ABORT
+          READ(input_unit,*, END = 200 ) card
 
-    END IF
+          IF( TRIM(card) == 'ALPHAMELTS_COEFFS' ) THEN
 
-    IF ( (crystallization_model .EQ. 'Stromboli_ST130p' ) .AND.                 & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
+             EXIT alphaMelts_search
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Stromboli_ST130p, n_cry has to be 3'
-       WRITE(*,*) ''
+          END IF
 
-       CALL ABORT
+       END DO alphaMelts_search
 
-    END IF
+       READ(input_unit,*) n_coeffs
 
-    IF ( (crystallization_model .EQ. 'Stromboli_STR180307' ) .AND.              & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
+       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'n_coeffs',n_coeffs
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Stromboli_STR180307, n_cry has to be 3'
-       WRITE(*,*) ''
+       ALLOCATE( fit(n_cry,n_coeffs) )
 
-       CALL ABORT
+       DO i = 1, n_coeffs
 
-    END IF
+          READ(input_unit,*) fit(1:n_cry,i)
 
-    IF ( (crystallization_model .EQ. 'Etna_240701D' ) .AND.                     & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
+          IF ( verbose_level .GE. 1 ) WRITE(*,*) i,fit(1:n_cry,i)
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Etna_240701D, n_cry has to be 3'
-       WRITE(*,*) ''
+       END DO
 
-       CALL ABORT
+       GOTO 210
+200    tend1 = .TRUE.
+210    CONTINUE
+
+       REWIND(input_unit)
 
     END IF
 
-    IF ( (crystallization_model .EQ. 'Etna_260701C' ) .AND.                     & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
-
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Etna_260701C, n_cry has to be 3'
-       WRITE(*,*) ''
-
-       CALL ABORT
-
-    END IF
-
-    IF ( (crystallization_model .EQ. 'Kilauea_07-Jul-92' ) .AND.                & 
-         (.NOT.(n_cry .EQ. 3.0))  ) THEN
-
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Kilauea_07-Jul-92, n_cry has to be 3'
-       WRITE(*,*) ''
-
-       CALL ABORT
-
-    END IF
 
     ! ------- READ melt_parameters NAMELIST -----------------------------------
     READ(input_unit, melt_parameters )
@@ -689,6 +659,36 @@ CONTAINS
 
     END IF
 
+    IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
+       
+       tend1 = .FALSE.
+       
+       WRITE(*,*) 'search melt composition'
+       
+       melt_comp_search: DO
+          
+          READ(input_unit,*, END = 300 ) card
+          
+          IF( TRIM(card) == 'MELTCOMPOSITION' ) THEN
+             
+             EXIT melt_comp_search
+
+          END IF
+          
+       END DO melt_comp_search
+       
+       READ(input_unit,*) 
+       READ(input_unit,*) wt_init(1:12)
+       
+       IF ( verbose_level .GE. 1 ) WRITE(*,*) wt_init(1:12)
+
+       GOTO 310
+300    tend1 = .TRUE.
+310    CONTINUE
+
+       REWIND(input_unit)
+
+    END IF
 
     IF ( (.NOT. (theta_model .EQ. 'Lejeune_and_Richet1995' ) ) .AND.            & 
          (.NOT. (theta_model .EQ. 'Dingwell1993' ) ) .AND.                      & 
@@ -716,6 +716,7 @@ CONTAINS
        CALL ABORT
 
     END IF
+
 
 
     ! ------- READ temperature_parameters NAMELIST ----------------------------
@@ -814,6 +815,10 @@ CONTAINS
 
     END IF
 
+
+
+
+
     CLOSE( input_unit )
 
     bak_name = TRIM(run_name)//'.bak'
@@ -872,6 +877,34 @@ CONTAINS
        WRITE(backup_unit, permeability_parameters )
 
     END IF
+
+    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
+       
+       WRITE(backup_unit,*) '''ALPHAMELTS_COEFFS'''
+       WRITE(backup_unit,*) n_coeffs
+       
+       DO i = 1, n_coeffs
+          
+          WRITE(backup_unit,106) fit(1:n_cry,i)
+
+       END DO
+          
+106    FORMAT(7(1x,e14.7))
+       
+    END IF
+    
+    IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
+       
+       WRITE(backup_unit,*) '''MELTCOMPOSITION'''
+       WRITE(backup_unit,*) 'SiO2  TiO2 Al2O3  FeO   MnO   MgO   CaO   Na2O  K2O   P2O5  H2O   F2O-1'     
+       WRITE(backup_unit,107) wt_init(1:12)
+       
+107    FORMAT(12(f5.2,1x))
+       
+    END IF
+    
+    
+
 
     CLOSE(backup_unit)
 
