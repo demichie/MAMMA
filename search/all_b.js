@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['mamma_20_2d_20finite_20volume_20solver',['MAMMA - Finite volume solver',['../index.html',1,'']]],
+  ['mamma_20_2d_20magma_20ascent_20finite_20volume_20solver',['MAMMA - Magma Ascent finite volume solver',['../index.html',1,'']]],
   ['mamma_5fmain',['mamma_main',['../c__main_8f90.html#a74023b0aa852629566537e2c5644cc62',1,'c_main.f90']]],
   ['max',['max',['../interfacecomplexify_1_1max.html',1,'complexify']]],
   ['max_5fcc',['max_cc',['../interfacecomplexify_1_1max.html#a5311e1cfe58a175447242730da8eec8f',1,'complexify::max::max_cc()'],['../classcomplexify.html#a2607070c67d256b3c176f64dee23872d',1,'complexify::max_cc()']]],
