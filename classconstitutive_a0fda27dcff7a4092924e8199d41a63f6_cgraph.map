@@ -1,0 +1,6 @@
+<map id="constitutive::mixture_viscosity" name="constitutive::mixture_viscosity">
+<area shape="rect" id="node2" href="$classconstitutive.html#ada97267098e4c98be778d9c76713164f" title="Magma viscosity. " alt="" coords="199,31,345,57"/>
+<area shape="rect" id="node5" href="$classconstitutive.html#a63d78b8ba91e4bdd49119b67169edc16" title="constitutive::f_bubbles" alt="" coords="195,81,349,108"/>
+<area shape="rect" id="node3" href="$classconstitutive.html#a852a31ee99c69f17a4170cb03f8d077e" title="Melt viscosity. " alt="" coords="397,5,555,32"/>
+<area shape="rect" id="node4" href="$classconstitutive.html#a71079d628d054119f3fefe50b5097cb8" title="Crystal relative viscosity. " alt="" coords="407,56,545,83"/>
+</map>

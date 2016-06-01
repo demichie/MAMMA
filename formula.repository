@@ -1,0 +1,28 @@
+\form#0:$\rightarrow +\infty $
+\form#1:$ \theta = \left( 1 - \frac{\beta}{0.7}\right)^{-3,4}$
+\form#2:$ \theta = \left( 1+0.75\frac{\beta/0.84}{1-\beta/0.84} \right)^2$
+\form#3:$ \theta = \theta_0 $
+\form#4:$ \theta = \left[ 1 - c_1 erf\left(0.5 * \sqrt\pi (1+\frac{c_2}{(1-\beta)^{c_3}}) \right)\right]^\frac{-2.5}{c_1}$
+\form#5:$ \theta = c_1 \cdot 10 ^{arctan(c_2(\beta-c_3))+\frac{\pi}{2}} $
+\form#6:$\alpha_i, u_i, \rho_i, x_i, p_i $
+\form#7:$ \rho_{mix} $
+\form#8:$\alpha_g(i), \alpha_g2(i), $
+\form#9:$ \rho_i $
+\form#10:$ e_i, p_i, s_i, \mu_i $
+\form#11:$ C_i = \sqrt \frac{\partial p_i}{\partial \rho_i} $
+\form#12:$ \rho_i = \frac{p_i + \bar{p}_i}{c_{v,i}(\gamma_i-1)T} $
+\form#13:$ \rho_1 $
+\form#14:$ \rho_g(1:ngas) $
+\form#15:$ \beta^{eq}(1:ncry) $
+\form#16:$ x_{d,md}^eq(1:ngas) $
+\form#17:$ x_{d,md}^{eq} = s\sqrt P\ (kg/m^3)$
+\form#18:$s$
+\form#19:$ x_{d,md}^{eq} = x_{tot}$
+\form#20:$ \beta = \min\left( beta_{max} , 0.45 + 0.55 (0.58815 (\frac{p}{1.D6})^{-0.5226} \right) $
+\form#21:$ perm_{kc}= perm_0*10.0^{-10.2(100*\alpha)^{\frac{0.014}{\alpha}}} $
+\form#22:$\alpha\geq\overline{alpha}$
+\form#23:$\alpha<\overline{alpha}$
+\form#24:$1\theta$
+\form#25:$\theta$
+\form#26:$ \alpha_2= \frac{x_2(1-\beta)\rho_{md}}{(1-x_{tot})\rho_2 + x_2(1-\beta)\rho_{md}}$
+\form#27:$ x_2=x_{tot}-x_{d,md} $

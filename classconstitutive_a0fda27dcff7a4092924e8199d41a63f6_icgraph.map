@@ -1,0 +1,9 @@
+<map id="constitutive::mixture_viscosity" name="constitutive::mixture_viscosity">
+<area shape="rect" id="node2" href="$classconstitutive.html#a09e4dcc6d17b5eed6c2114ec0a2579a0" title="Conservative to physical variables. " alt="" coords="212,7,361,33"/>
+<area shape="rect" id="node4" href="$classconstitutive.html#a516b12b759328c81b034b839ddb86337" title="Force terms. " alt="" coords="439,57,561,98"/>
+<area shape="rect" id="node6" href="$classconstitutive.html#aea435309cb10222a1bcbc1b20ded1f0c" title="Pressure relaxation term. " alt="" coords="222,113,351,154"/>
+<area shape="rect" id="node8" href="$classconstitutive.html#a6cc6e971b11378e51b6e95c135efdc87" title="Velocity relaxation term. " alt="" coords="195,179,378,205"/>
+<area shape="rect" id="node3" href="$classinpout.html#a2c792d5cbba7c092600f8d7aa4bc4c7f" title="Write the steady solution on the output unit. " alt="" coords="427,5,573,32"/>
+<area shape="rect" id="node5" href="$classconstitutive.html#ac8a60b0f2ef636a87537e1e846fe89ac" title="Non&#45;Hyperbolic terms. " alt="" coords="621,90,792,131"/>
+<area shape="rect" id="node7" href="$classconstitutive.html#aa8989a7552c086b47f0459dc4f236591" title="Relaxation terms. " alt="" coords="437,122,563,163"/>
+</map>
