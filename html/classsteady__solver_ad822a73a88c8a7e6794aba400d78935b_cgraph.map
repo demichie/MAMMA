@@ -1,0 +1,21 @@
+<map id="steady_solver::integrate_equations" name="steady_solver::integrate_equations">
+<area shape="rect" id="node2" href="$classconstitutive.html#ac8a60b0f2ef636a87537e1e846fe89ac" title="Non&#45;Hyperbolic terms. " alt="" coords="659,596,829,637"/>
+<area shape="rect" id="node3" href="$classconstitutive.html#aca96d2deaea18b97c5a5a29d814c03f3" title="Physical variables. " alt="" coords="877,265,1003,306"/>
+<area shape="rect" id="node4" href="$classconstitutive.html#a732a48a9e18f3e44fba2a39fcf6b1897" title="Phases densities. " alt="" coords="1051,130,1173,172"/>
+<area shape="rect" id="node5" href="$classconstitutive.html#a6f99d946adce8b066feaa2d9d9038aa3" title="Equation of state. " alt="" coords="881,452,999,479"/>
+<area shape="rect" id="node9" href="$classconstitutive.html#ae60d4c5958cefe8298c7c36ef8448249" title="Fluxes. " alt="" coords="683,476,805,517"/>
+<area shape="rect" id="node10" href="$classconstitutive.html#ad97c40ac27f3c51fe276a02535e817f7" title="Local sound speeds. " alt="" coords="462,206,594,248"/>
+<area shape="rect" id="node11" href="$classconstitutive.html#a671ae281e22c39423c189de3827132bc" title="Bottom exsolved gas. " alt="" coords="239,323,375,350"/>
+<area shape="rect" id="node12" href="$classconstitutive.html#ae22b267e5ec94ec0a0485142f1ad0c65" title="Bottom exsolved gas. " alt="" coords="242,374,371,400"/>
+<area shape="rect" id="node13" href="$classgeometry.html#af7f6340e8fcc9bc6d1929a540a8f67e9" title="geometry::update_radius" alt="" coords="445,104,611,131"/>
+<area shape="rect" id="node14" href="$classinpout.html#a2c792d5cbba7c092600f8d7aa4bc4c7f" title="Write the steady solution on the output unit. " alt="" coords="233,155,380,182"/>
+<area shape="rect" id="node16" href="$classsteady__solver.html#af9bf21bb962fcb1299b1332aa5dfad10" title="Solution preturbation. " alt="" coords="217,526,396,552"/>
+<area shape="rect" id="node17" href="$classsteady__solver.html#a7ad42fc91e32dec4cfce126cdc0864ef" title="Solution advance in space. " alt="" coords="216,576,397,603"/>
+<area shape="rect" id="node20" href="$classsteady__solver.html#add6edf89996d61a4cdadf43db25373d2" title="Linear extrapolation of the solution. " alt="" coords="235,257,378,298"/>
+<area shape="rect" id="node6" href="$classconstitutive.html#aa8989a7552c086b47f0459dc4f236591" title="Relaxation terms. " alt="" coords="877,530,1003,572"/>
+<area shape="rect" id="node7" href="$classconstitutive.html#a516b12b759328c81b034b839ddb86337" title="Force terms. " alt="" coords="879,596,1001,637"/>
+<area shape="rect" id="node8" href="$classconstitutive.html#a49f3921f76132c93993fd1ec1801b80c" title="Source terms. " alt="" coords="879,661,1001,702"/>
+<area shape="rect" id="node15" href="$classconstitutive.html#a09e4dcc6d17b5eed6c2114ec0a2579a0" title="Conservative to physical variables. " alt="" coords="669,222,819,248"/>
+<area shape="rect" id="node18" href="$classsteady__solver.html#a019b1825ffbc521a70cfca0d3cd7e666" title="Nonlinear function evaluation. " alt="" coords="455,592,601,619"/>
+<area shape="rect" id="node19" href="$classsteady__solver.html#ab214b0c71f5c60c01c75ff0634132359" title="Jacobian evaluation. " alt="" coords="461,526,595,568"/>
+</map>
