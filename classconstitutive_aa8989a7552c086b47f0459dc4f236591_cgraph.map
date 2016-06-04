@@ -1,7 +1,0 @@
-<map id="constitutive::eval_relaxation_terms" name="constitutive::eval_relaxation_terms">
-<area shape="rect" id="node2" href="$classconstitutive.html#aea435309cb10222a1bcbc1b20ded1f0c" title="Pressure relaxation term. " alt="" coords="206,5,335,46"/>
-<area shape="rect" id="node4" href="$classconstitutive.html#ab8a949990e3cd7e9d63978863431c805" title="Equilibrium Dissolved gas. " alt="" coords="194,71,347,97"/>
-<area shape="rect" id="node5" href="$classconstitutive.html#a6cc6e971b11378e51b6e95c135efdc87" title="Velocity relaxation term. " alt="" coords="179,121,362,148"/>
-<area shape="rect" id="node6" href="$classconstitutive.html#ae3e1c288a8201a36d3909fbd555b019d" title="Equilibrium Crystal content. " alt="" coords="193,172,348,199"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#a0fda27dcff7a4092924e8199d41a63f6" title="Mixture viscosity. " alt="" coords="411,59,551,101"/>
-</map>

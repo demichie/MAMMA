@@ -1,5 +1,0 @@
-<map id="constitutive::press_relax_term" name="constitutive::press_relax_term">
-<area shape="rect" id="node2" href="$classconstitutive.html#a0fda27dcff7a4092924e8199d41a63f6" title="Mixture viscosity. " alt="" coords="185,23,325,65"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#ada97267098e4c98be778d9c76713164f" title="Magma viscosity. " alt="" coords="378,5,523,32"/>
-<area shape="rect" id="node4" href="$classconstitutive.html#a63d78b8ba91e4bdd49119b67169edc16" title="constitutive::f_bubbles" alt="" coords="374,56,527,83"/>
-</map>

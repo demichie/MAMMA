@@ -1,9 +1,0 @@
-<map id="steady_solver::eval_f" name="steady_solver::eval_f">
-<area shape="rect" id="node2" href="$classconstitutive.html#ae60d4c5958cefe8298c7c36ef8448249" title="Fluxes. " alt="" coords="225,57,346,98"/>
-<area shape="rect" id="node5" href="$classconstitutive.html#ac8a60b0f2ef636a87537e1e846fe89ac" title="Non&#45;Hyperbolic terms. " alt="" coords="200,122,371,163"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#aca96d2deaea18b97c5a5a29d814c03f3" title="Physical variables. " alt="" coords="419,57,544,98"/>
-<area shape="rect" id="node4" href="$classconstitutive.html#a6f99d946adce8b066feaa2d9d9038aa3" title="Equation of state. " alt="" coords="422,5,541,32"/>
-<area shape="rect" id="node6" href="$classconstitutive.html#aa8989a7552c086b47f0459dc4f236591" title="Relaxation terms. " alt="" coords="419,122,544,163"/>
-<area shape="rect" id="node7" href="$classconstitutive.html#a516b12b759328c81b034b839ddb86337" title="Force terms. " alt="" coords="421,187,542,229"/>
-<area shape="rect" id="node8" href="$classconstitutive.html#a49f3921f76132c93993fd1ec1801b80c" title="Source terms. " alt="" coords="421,253,542,294"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="steady_solver::linear_extrapolation" name="steady_solver::linear_extrapolation">
-<area shape="rect" id="node2" href="$classconstitutive.html#aca96d2deaea18b97c5a5a29d814c03f3" title="Physical variables. " alt="" coords="201,5,327,46"/>
-<area shape="rect" id="node4" href="$classconstitutive.html#a6f99d946adce8b066feaa2d9d9038aa3" title="Equation of state. " alt="" coords="205,71,323,97"/>
-<area shape="rect" id="node5" href="$classconstitutive.html#ad97c40ac27f3c51fe276a02535e817f7" title="Local sound speeds. " alt="" coords="198,122,330,163"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#a732a48a9e18f3e44fba2a39fcf6b1897" title="Phases densities. " alt="" coords="379,5,501,46"/>
-</map>

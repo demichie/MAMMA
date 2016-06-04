@@ -1,5 +1,0 @@
-<map id="constitutive::f_alfa" name="constitutive::f_alfa">
-<area shape="rect" id="node2" href="$classinit.html#aade4f67d168785192b43b7c80660508e" title="Steady problem initialization. " alt="" coords="210,5,321,32"/>
-<area shape="rect" id="node4" href="$classsteady__solver.html#ad822a73a88c8a7e6794aba400d78935b" title="Steady state integration. " alt="" coords="185,57,346,98"/>
-<area shape="rect" id="node3" href="$classsteady__solver.html#a0fa878033a67fd656f89b4ce49291446" title="Shooting Method. " alt="" coords="395,27,546,69"/>
-</map>

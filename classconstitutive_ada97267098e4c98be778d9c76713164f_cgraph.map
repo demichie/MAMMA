@@ -1,4 +1,0 @@
-<map id="constitutive::f_viscliq" name="constitutive::f_viscliq">
-<area shape="rect" id="node2" href="$classconstitutive.html#a852a31ee99c69f17a4170cb03f8d077e" title="Melt viscosity. " alt="" coords="200,5,357,32"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#a71079d628d054119f3fefe50b5097cb8" title="Crystal relative viscosity. " alt="" coords="210,56,347,83"/>
-</map>
