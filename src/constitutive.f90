@@ -364,10 +364,10 @@ MODULE constitutive
   REAL*8 :: zeta_lith
 
   !> Parameter to choose the model for the influence of the bubbles on the mixture:\n 
-  !> 'Einstein' 
-  !> 'Quane-Russel  -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
-  !> 'Eilers'       -> Mader et al. 2013
-  !> 'Sibree'       -> Mader et al. 2013
+  !> - 'Einstein' 
+  !> - 'Quane-Russel  -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+  !> - 'Eilers'       -> Mader et al. 2013
+  !> - 'Sibree'       -> Mader et al. 2013
   !> .
   CHARACTER*20 :: bubbles_model
 
@@ -384,12 +384,12 @@ MODULE constitutive
   REAL*8 :: a_2nd , b_2nd , perm0
 
   !> Parameter to select the melt viscosity (bubbles and crystal-free) model:\n
-  !> 'Hess_and_Dingwell1996'
-  !> 'Romano_et_al2003'
-  !> 'Giordano_et_al2008'
-  !> 'Giordano_et_al2009'
-  !> 'Di_Genova_et_al2013_eqn_3,5'
-  !> 'Di_Genova_et_al2013_eqn_4,5'
+  !> - 'Hess_and_Dingwell1996'
+  !> - 'Romano_et_al2003'
+  !> - 'Giordano_et_al2008'
+  !> - 'Giordano_et_al2009'
+  !> - 'Di_Genova_et_al2013_eqn_3,5'
+  !> - 'Di_Genova_et_al2013_eqn_4,5'
   !> .
   CHARACTER*30 :: visc_melt_model
 
