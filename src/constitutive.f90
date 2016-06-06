@@ -71,10 +71,13 @@ MODULE constitutive
   REAL*8, ALLOCATABLE :: a_g(:)	   	   !< parameter for the VDW EOS
   REAL*8, ALLOCATABLE :: b_g(:)	           !< parameter for the VDW EOS  
 
+  !> equation of state for gas\n
+  !> - 'ideal'          => ideal gas law
+  !> - 'VDW'            => Van der Waals equation of state
+  !> .
   CHARACTER*20 :: gas_law
   !----------------------------------------------------------------------------------------!
 
-  !----------------------------------------------------------------------------
 
   COMPLEX*16 :: cv_1       !< dis.gas+melt+crystals specific heat capacity at constant volume
 
@@ -236,6 +239,10 @@ MODULE constitutive
   !> maximum crystal volume fraction
   REAL*8, ALLOCATABLE :: beta_max(:)
 
+  !> Model for the equilibrium crystal volume fraction:\n
+  !> - 'Vitturi2010'    => Eq. 4 of de' Michieli Vitturi et al. 2010;
+  !> - 'alphaMelts'     => Equilibrium from fitting of alphaMelts results;
+  !> .
   CHARACTER*20 :: crystallization_model
 
   !> index of fragmentation in the interval [0;1]
@@ -356,8 +363,12 @@ MODULE constitutive
   !> Elevation above the bottom for the evaluation of the lithostatic pressure
   REAL*8 :: zeta_lith
 
-  !> Parameter to choose the model for the influence of the bubbles on the mixture 
-  !> viscosity
+  !> Parameter to choose the model for the influence of the bubbles on the mixture:\n 
+  !> 'Einstein' 
+  !> 'Quane-Russel  -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+  !> 'Eilers'       -> Mader et al. 2013
+  !> 'Sibree'       -> Mader et al. 2013
+  !> .
   CHARACTER*20 :: bubbles_model
 
   !> Flag to choose the eruptive style:\n
@@ -372,7 +383,14 @@ MODULE constitutive
   REAL*8 :: alfa_switch
   REAL*8 :: a_2nd , b_2nd , perm0
 
-  !> Parameter to select the melt viscosity (bubbles and crystal-free) model
+  !> Parameter to select the melt viscosity (bubbles and crystal-free) model:\n
+  !> 'Hess_and_Dingwell1996'
+  !> 'Romano_et_al2003'
+  !> 'Giordano_et_al2008'
+  !> 'Giordano_et_al2009'
+  !> 'Di_Genova_et_al2013_eqn_3,5'
+  !> 'Di_Genova_et_al2013_eqn_4,5'
+  !> .
   CHARACTER*30 :: visc_melt_model
 
   
