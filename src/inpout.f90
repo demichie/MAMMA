@@ -25,7 +25,7 @@ MODULE inpout
 
   ! -- Variables for the namelist EXSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_g , cv_g , gamma_g , T0_g ,                     &
-       bar_e_g , visc_2 , lateral_degassing_flag ,                              &
+       bar_e_g , visc_2 , lateral_degassing_flag , rho_cr , k_cr ,              &
        alfa2_lat_thr , perm0, Pc_g, Tc_g, a_g, b_g, s0_g, gas_law
 
   ! -- Variables for the namelist DISSOLVED_GAS_PARAMETERS
@@ -117,7 +117,7 @@ MODULE inpout
 
   NAMELIST / exsolved_gas_parameters / gas_law, Pc_g , Tc_g , cv_g , gamma_g ,  &
        rho0_g , T0_g , bar_e_g , s0_g, visc_2 , lateral_degassing_flag ,        &
-       alfa2_lat_thr , perm0 
+       alfa2_lat_thr , perm0 , rho_cr , k_cr
 
   NAMELIST / dissolved_gas_parameters / rho0_d , C0_d , cv_d , gamma_d , p0_d , &
        T0_d , bar_e_d , bar_p_d , s0_d , exsol_model , solub , solub_exp
@@ -198,9 +198,10 @@ CONTAINS
     NAMELIST / steady_boundary_conditions_init / T_in , p1_in , delta_p_in ,  &
          x_ex_dis_in_init , p_out , u1_in , eps_conv, shooting
 
-    NAMELIST / exsolved_gas_parameters_init / gas_law_init, Pc_g_init , Tc_g_init ,         &
-         cv_g_init , gamma_g_init , rho0_g_init , T0_g_init , bar_e_g_init ,  &
-         s0_g_init, visc_2 , lateral_degassing_flag , alfa2_lat_thr , perm0 
+    NAMELIST / exsolved_gas_parameters_init / gas_law_init, Pc_g_init ,       &
+         Tc_g_init , cv_g_init , gamma_g_init , rho0_g_init , T0_g_init ,     &
+         bar_e_g_init , s0_g_init, visc_2 , lateral_degassing_flag ,          &
+         alfa2_lat_thr , perm0 , rho_cr , k_cr
 
     NAMELIST / dissolved_gas_parameters_init / rho0_d_init ,                  &
          C0_d_init , cv_d_init , gamma_d_init , p0_d_init , T0_d_init ,       &
@@ -256,6 +257,8 @@ CONTAINS
     lateral_degassing_flag = .FALSE.
     alfa2_lat_thr = 1.1D0
     perm0 = 5.0D-3
+    rho_cr = 2600
+    k_cr = 5.e-12
 
     n_gas_init = 1
     n_cry_init = 1
@@ -264,7 +267,6 @@ CONTAINS
     n_eqns = n_vars
 
     ! dissolved gas parameters
-
     rho0_d_init = 1000.D0
     C0_d_init = 2000.D0
     cv_d_init = 1200.D0
@@ -276,8 +278,6 @@ CONTAINS
     solub_exp_init = 0.5D0
 
     ! crystals parameters
-
-
     rho0_c_init = 2600.D0
     C0_c_init = 2000.D0
     cv_c_init = 1200.D0

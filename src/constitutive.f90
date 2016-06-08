@@ -1609,10 +1609,6 @@ CONTAINS
 
           ELSE
 
-             rho_cr = 2600.D0
-
-             k_cr = 5.0D-12
-
              rho_w = 1000;
 
              CALL hydrostatic_pressure

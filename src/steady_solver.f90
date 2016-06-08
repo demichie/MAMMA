@@ -1207,7 +1207,7 @@ CONTAINS
 
        ! ----- Evaluate some phys. variables to pass out of the subroutine ------
 
-       r_alfa_2 = 1.D0 - 1.d0-SUM(qp_half2(1:n_gas))
+       r_alfa_2 = SUM(qp_half2(1:n_gas))
        r_p_1 = qp(idx_pressure1)
        r_p_2 = qp(idx_pressure1 + 1)
 
@@ -2093,7 +2093,7 @@ CONTAINS
        extrap_z_mach,extrap_flag)
 
     ! external procedures
-    USE constitutive, ONLY : phys_var_qp , eos
+    USE constitutive, ONLY : phys_var_qp , eos , alfa_2
     USE constitutive, ONLY : sound_speeds, x_d_md, x_ex_dis_in
 
     ! external variables
@@ -2128,6 +2128,8 @@ CONTAINS
     REAL*8 :: p_out_1 , p_out_2
 
     REAL*8 :: eps_extrap
+
+    REAL*8 :: r_alfa_2
 
     INTEGER :: idx_pressure1
 
@@ -2170,6 +2172,8 @@ CONTAINS
 
     p_check = MIN(r_p_2,r_p_1)
 
+    r_alfa_2 = REAL(alfa_2)
+
     IF ( ( r_p_1 .LT. p_out_1 ) .OR. ( r_p_2 .LT. p_out_2 ) .OR.                &
          ( mach .GT. 1.d0 ) ) THEN
 
@@ -2186,6 +2190,22 @@ CONTAINS
 
        RETURN
 
+    END IF
+
+    IF ( r_alfa_2 .GE. 1.D0 ) THEN
+       
+       IF ( verbose_level .GE. -1 ) THEN
+          
+          WRITE(*,*) 'Boundary conditions before the top' 
+          WRITE(*,*) 'z = ',zeta,'alfa gas = ',r_alfa_2
+                    
+       END IF
+       
+       extrap_z = zeta
+       extrap_flag = 4
+       
+       RETURN
+       
     END IF
 
     IF ( (ABS(zeta - zeta_old) .LT. 1E-11) .AND. 		&
