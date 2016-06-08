@@ -185,24 +185,25 @@ hold all
 for i=1:N_CRY,
 
     plot(beta(i,:),zeta_grid_reverse,color_list(i));
-%     plot(beta_eq(i,subgrid_idx),zeta_grid_reverse(subgrid_idx),...
-%         color_list_eq(1+2*(i-1):2*i));
-    plot(beta_eq(i,:),zeta_grid_reverse,color_list_eq2(1+3*(i-1):3*i));
+     plot(beta_eq(i,subgrid_idx),zeta_grid_reverse(subgrid_idx),...
+         color_list_eq(1+2*(i-1):2*i));
     
 end
 
-i = N_CRY + 1;
-
-plot(beta_tot,zeta_grid_reverse,color_list(i));
-% plot(beta_eq_tot(subgrid_idx),zeta_grid_reverse(subgrid_idx),...
-%     color_list_eq(1+2*(i-1):2*i));
-plot(beta_tot,zeta_grid_reverse,color_list_eq2(1+3*(i-1):3*i));
-
+if ( N_CRY > 1)
+    
+    i = N_CRY + 1;
+    
+    plot(beta_tot,zeta_grid_reverse,color_list(i));
+    plot(beta_eq_tot(subgrid_idx),zeta_grid_reverse(subgrid_idx),...
+        color_list_eq(1+2*(i-1):2*i));
+    
+end
+ 
 title('beta');
 xlim([0,1]);
 ylim([Z0,ZN]);
 set(gca,'YDir','reverse')
-%legend('Plag','Eq','Pyrox','Eq','Oliv','Eq','Tot.','Eq','Location','SouthEast')
 box on;
 hold all;
 
@@ -214,14 +215,19 @@ for i=1:N_GAS,
     plot(x_d(i,:),zeta_grid_reverse,color_list(i));
     plot(x_d_eq(i,subgrid_idx),zeta_grid_reverse(subgrid_idx),...
         color_list_eq(1+2*(i-1):2*i) );
-
+    
 end
 
-i = N_GAS + 1;
+if ( N_GAS >1)
+    
+    i = N_GAS + 1;
+    
+    plot(x_d_tot,zeta_grid_reverse,color_list(i));
+    plot(x_d_eq_tot(subgrid_idx),zeta_grid_reverse(subgrid_idx),...
+        color_list_eq(1+2*(i-1):2*i) );
+    
+end
 
-plot(x_d_tot,zeta_grid_reverse,color_list(i));
-plot(x_d_eq_tot(subgrid_idx),zeta_grid_reverse(subgrid_idx),...
-    color_list_eq(1+2*(i-1):2*i) );
 
 title('x_{d}');
 ylim([Z0,ZN]);
