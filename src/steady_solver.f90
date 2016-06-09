@@ -96,15 +96,11 @@ CONTAINS
 
        IF ( explosive ) THEN
 
-          !V_temp = 1.0D+0
-
-          V_temp = u1_in
+          V_temp = 1.0D+0
 
        ELSE
 
-          !V_temp = 1.D-1
-
-          V_temp = u1_in          
+          V_temp = 1.D-1
 
        END IF
 
@@ -237,11 +233,13 @@ CONTAINS
 
        V_0 = V_temp
        V_coeff = 1.D1
+       V_2 = V_temp * V_coeff
 
     ELSE
 
        V_2 = V_temp
        V_coeff = 5.D-1
+       V_0 = V_temp * V_coeff
 
        WRITE(*,*) 'At zeta ',zeta
        WRITE(*,*) 'Pressure 1 is: ',r_p_1
@@ -522,7 +520,7 @@ CONTAINS
           END IF
 
           IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                      &
-               ( zeta .GE. zN - (iter-20)/100.D0 ) .AND. 			&
+               ( zeta .GE. zN - (iter-20)/100.D0 ) .AND.                        &
                ( ABS(mach - 1.0) .LT. 0.01) ) THEN
 
              WRITE(*,*) 'Relative change in flow rate', ( V_2 - V_0 ) / V_0
@@ -635,7 +633,6 @@ CONTAINS
 
     USE parameters, ONLY : tol_abs , tol_rel, n_gas
 
-
     IMPLICIT NONE
 
     REAL*8, INTENT(INOUT) :: qp(n_eqns)
@@ -695,8 +692,13 @@ CONTAINS
 
     REAL*8 :: u_1_old
 
-
     INTEGER :: counter
+
+    delta_full = 0.D0
+    delta_half2 = 0.D0
+
+    idx_pressure1 = n_gas + 1
+    idx_temperature = n_gas + 5
 
     zeta = z0
 
@@ -742,9 +744,11 @@ CONTAINS
        counter = counter + 1
 
        IF ( counter .GT. 10 * comp_cells ) THEN
+
           WRITE(*,*)'Convergence error: Too many iterations'
           WRITE(*,*)'counter = ', counter
-          STOP	
+          STOP
+
        END IF
 
        zeta_old = zeta
@@ -773,8 +777,6 @@ CONTAINS
        END IF
 
        IF ( isothermal ) THEN
-
-          idx_temperature = n_gas + 5
 
           fluxes_old(idx_temperature) = qp_old(idx_temperature)
           nh_terms_old(idx_temperature) = 0.D0
@@ -960,8 +962,6 @@ CONTAINS
 
              END IF
 
-             idx_pressure1 = n_gas + 1
-
              IF ( MAX( qp_half2(idx_pressure1) , qp_half2(idx_pressure1 + 1) )  &
                   .LT. p_out) THEN
 
@@ -991,7 +991,7 @@ CONTAINS
 
           ! ---- Check if the fragmentation threshold is reached ---------------
 
-          IF ( EXPLOSIVE )	THEN
+          IF ( EXPLOSIVE ) THEN
 
              !IF ( fragmentation_model .EQ. 1 ) THEN
 
@@ -1104,27 +1104,7 @@ CONTAINS
 
           END IF
 
-          IF ( ( check_error .GT. 1.D0 ) .OR. ( .NOT. check_convergence ) ) THEN
-
-             ! --- if the error is big repeat the step with smaller dz
-
-             dz = 0.950D0 * dz
-
-             fluxes_old = fluxes_temp
-             nh_terms_old = nh_terms_temp
-
-             IF ( verbose_level .GE. 1 ) WRITE(*,*) 'zeta_old',zeta_old,        &
-                  'dz = ',dz
-
-             IF ( dz .LT. 1E-20 ) THEN
-
-                WRITE(*,*)'Convergence Error: dz too small'
-                WRITE(*,*)'dz =', dz
-                STOP				
-
-             END IF
-
-          ELSE
+          IF ( ( check_error .LT. 1.D0 ) .AND. ( check_convergence ) ) THEN
 
              ! --- if the error is small accept the solution obtained with dz/2
              ! --- and exit from the search loop
@@ -1168,6 +1148,27 @@ CONTAINS
 
              EXIT find_step_loop
 
+          ELSE
+
+
+             ! --- if the error is big repeat the step with smaller dz
+
+             dz = 0.950D0 * dz
+
+             fluxes_old = fluxes_temp
+             nh_terms_old = nh_terms_temp
+
+             IF ( verbose_level .GE. 1 ) WRITE(*,*) 'zeta_old',zeta_old,        &
+                  'dz = ',dz
+
+             IF ( dz .LT. 1E-20 ) THEN
+
+                WRITE(*,*)'Convergence Error: dz too small'
+                WRITE(*,*)'dz =', dz
+                STOP
+
+             END IF
+
           END IF
 
        END DO find_step_loop
@@ -1191,7 +1192,7 @@ CONTAINS
 
              END DO
 
-             IF ( zeta .EQ. zN ) CALL output_steady(zeta,qp,radius)		
+             IF ( zeta .EQ. zN ) CALL output_steady(zeta,qp,radius)
 
           ELSE
 
@@ -1208,6 +1209,7 @@ CONTAINS
        ! ----- Evaluate some phys. variables to pass out of the subroutine ------
 
        r_alfa_2 = SUM(qp_half2(1:n_gas))
+
        r_p_1 = qp(idx_pressure1)
        r_p_2 = qp(idx_pressure1 + 1)
 
@@ -1241,7 +1243,7 @@ CONTAINS
 
        ! ---- Check if the fragmentation threshold is reached ---------------
 
-       IF ( EXPLOSIVE )	THEN
+       IF ( EXPLOSIVE ) THEN
 
           !IF ( fragmentation_model .EQ. 1 ) THEN	
 
@@ -1359,7 +1361,6 @@ CONTAINS
     IF ( qp(idx) - qp(idx+1) .GT. -1D-7 )  THEN
 
        qp(idx+1) = qp(idx+1) * ( 1.0001D0 )
-       !qp(idx+1) = qp(idx+1) * ( 1.01D0 )
 
     END IF
 
@@ -1370,12 +1371,12 @@ CONTAINS
     idx = idx + 1
 
     !Crystals --------------------
-    DO i=1,n_cry	
+    DO i=1,n_cry
        idx = idx + 1
     END DO
 
     !Dissolved gas mass fraction --------------------
-    DO i=1,n_gas	
+    DO i=1,n_gas
        idx = idx + 1
     END DO
 
@@ -1980,6 +1981,7 @@ CONTAINS
     END IF
 
     alam = 1.0D0
+    alam2 = alam
 
     optimal_step_search: DO
 
@@ -1992,6 +1994,8 @@ CONTAINS
        x_rel_new = x_rel_init + alam * desc_dir
 
        CALL callf( x_rel_new , x_org , dz , coeff_f , f_nl , scal_f )
+
+       scal_f2 = scal_f
 
        IF ( verbose_level .GE. 4 ) THEN
 
@@ -2208,9 +2212,8 @@ CONTAINS
        
     END IF
 
-    IF ( (ABS(zeta - zeta_old) .LT. 1E-11) .AND. 		&
+    IF ( (ABS(zeta - zeta_old) .LT. 1E-11) .AND.                                &
          (r_p_1 .LT. 1.0E+6) ) THEN
-
 
        IF ( verbose_level .GE. -1 ) THEN
 

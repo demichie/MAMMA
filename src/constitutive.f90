@@ -66,10 +66,10 @@ MODULE constitutive
   REAL*8, ALLOCATABLE :: s0_g(:)    !< exsolved gas reference entropy
 
   !-----------------------------------------------------------------------------------------!
-  REAL*8, ALLOCATABLE :: Pc_g(:)	   !< critical gas pressure
-  REAL*8, ALLOCATABLE :: Tc_g(:)	   !< critical gas temperature
-  REAL*8, ALLOCATABLE :: a_g(:)	   	   !< parameter for the VDW EOS
-  REAL*8, ALLOCATABLE :: b_g(:)	           !< parameter for the VDW EOS  
+  REAL*8, ALLOCATABLE :: Pc_g(:)           !< critical gas pressure
+  REAL*8, ALLOCATABLE :: Tc_g(:)           !< critical gas temperature
+  REAL*8, ALLOCATABLE :: a_g(:)            !< parameter for the VDW EOS
+  REAL*8, ALLOCATABLE :: b_g(:)            !< parameter for the VDW EOS  
 
   !> equation of state for gas\n
   !> - 'ideal'          => ideal gas law
@@ -768,12 +768,12 @@ CONTAINS
 
     K_mix = alfa_1*K_1 + alfa_2*K_2
 
-    C_mix = 1.D0 / CDSQRT( K_mix * rho_mix )
+    C_mix = DREAL( 1.D0 / CDSQRT( K_mix * rho_mix ) )
 
     ! Sound speed of the mixture (Wallis, 1969)
     !    C_mix = REAL( C_2 / SQRT(x_2) * ( x_2 + (1.d0 - x_2 ) * rho_2 / rho_1 ) )
 
-    mach = REAL( u_mix / C_mix )
+    mach = DREAL( u_mix / C_mix )
 
   END SUBROUTINE sound_speeds
 
@@ -1401,6 +1401,8 @@ CONTAINS
 
     REAL*8 :: frag_transition, t
 
+    q_lat = DCMPLX(0.D0,0.D0)
+
     frag_transition = frag_thr + 0.05D0
 
     t = MIN(1.0D0,MAX(0.0D0, ( REAL(alfa_2) - frag_transition ) /               &
@@ -1436,6 +1438,8 @@ CONTAINS
 
     idx = idx + 1
 
+    force_term(idx) = DCMPLX(0.0,0.0)
+
     force_term(idx) = - rho_mix * grav * radius**2.D0
 
     CALL mixture_viscosity
@@ -1469,7 +1473,6 @@ CONTAINS
 
     force_term(idx) = DCMPLX(0.0,0.0)
 
-
     IF ( drag_funct_model .EQ. 'single_velocity' ) THEN
 
        force_term(idx) = DCMPLX( 0.D0 , 0.D0 ) 
@@ -1498,6 +1501,8 @@ CONTAINS
        force_term(idx) = DCMPLX(0.d0,0.D0)
 
     ELSE
+
+       force_term(idx) = DCMPLX(0.d0,0.D0)
 
        force_term(idx) = - rho_mix * u_mix * grav * radius**2
 
@@ -1569,6 +1574,9 @@ CONTAINS
 
     idx = 0
 
+    q_lat = DCMPLX(0.D0,0.D0)
+    water_mass_flux = DCMPLX(0.D0,0.D0)
+
     source_term(1:n_eqns) = DCMPLX(0.D0,0.D0)
 
     ! --- TOTAL MASS SOURCE TERM ------------------------------------------------
@@ -1605,7 +1613,7 @@ CONTAINS
 
           IF ( total_water_influx .GT. 0.D0 ) THEN
 
-             water_mass_flux = total_water_influx / delta_z_influx
+             water_mass_flux = DCMPLX( total_water_influx/delta_z_influx , 0.D0)
 
           ELSE
 
@@ -1617,8 +1625,8 @@ CONTAINS
 
                 visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
 
-                water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr / visc_w *   &
-                     ( p_hydro-p_1 ) / radius
+                water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr /    &
+                     visc_w * ( p_hydro - p_1 ) / radius
                      
              ELSE
 
@@ -1780,13 +1788,12 @@ CONTAINS
   !> \param[out]    expl_forces_term   forces term
   !******************************************************************************
 
-  SUBROUTINE eval_explicit_forces( qj , expl_forces_term )
+  SUBROUTINE eval_explicit_forces( expl_forces_term )
 
     USE geometry, ONLY : radius
 
     IMPLICIT NONE
 
-    REAL*8, INTENT(IN) :: qj(n_eqns)                 !< conservative variables 
     REAL*8, INTENT(OUT) :: expl_forces_term(n_eqns)  !< explicit forces 
 
     INTEGER :: i 
@@ -1802,12 +1809,12 @@ CONTAINS
 
     idx = idx + 1
 
-    expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+    expl_forces_term(idx) = 0.D0
 
     ! --- FIRST PHASE VOLUME FRACTION
     idx = idx + 1
 
-    expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+    expl_forces_term(idx) = 0.D0
 
     ! --- EXSOLVED GAS MASS FRACTIONS
 
@@ -1815,30 +1822,30 @@ CONTAINS
 
        idx = idx + 1
 
-       expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+       expl_forces_term(idx) = 0.D0
 
     END DO
 
     ! --- Mixture Momentum
     idx = idx + 1
 
-    expl_forces_term(idx) = rho_mix * grav * radius ** 2
+    expl_forces_term(idx) = DREAL( rho_mix * grav * radius ** 2 )
 
     ! --- Relative Velocity
     idx = idx + 1
 
-    expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+    expl_forces_term(idx) = 0.D0
 
     ! --- MIXTURE ENERGY
     idx = idx + 1
 
     IF ( isothermal ) THEN
 
-       expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+       expl_forces_term(idx) = 0.D0
 
     ELSE
 
-       expl_forces_term(idx) = rho_mix * u_mix * grav * radius **2 
+       expl_forces_term(idx) = DREAL( rho_mix * u_mix * grav * radius **2 )
 
     END IF
 
@@ -1849,7 +1856,7 @@ CONTAINS
 
        idx = idx + 1
 
-       expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+       expl_forces_term(idx) = 0.D0
 
     END DO
 
@@ -1861,7 +1868,7 @@ CONTAINS
 
        idx = idx + 1
 
-       expl_forces_term(idx) = DCMPLX(0.D0,0.D0)
+       expl_forces_term(idx) = 0.D0
 
     END DO
 
@@ -2213,8 +2220,7 @@ CONTAINS
 
     COMPLEX*16 :: Rey 
     COMPLEX*16 :: diam
-    COMPLEX*16 :: radius_bubble	
-
+    COMPLEX*16 :: radius_bubble
     COMPLEX*16 :: effusive_drag , explosive_drag
 
     COMPLEX*16 :: k_1 , k_2
@@ -2276,10 +2282,6 @@ CONTAINS
 
        k_1 = 2.04D-20 * ( 100.0 * alfa_2 )**5.24D0 
 
-       !C_D= 0.80000000000000004     
-
-       !r_a = 1.00000000000000002E-003
-
        effusive_drag = visc_2 / k_1
 
        explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
@@ -2290,10 +2292,6 @@ CONTAINS
     CASE ( 'darcy_Bai2010_LB' )
 
        k_1 = 2.35D-20 * ( 100.0 * alfa_2 )**5.00D0 
-
-       !C_D= 0.80000000000000004     
-
-       !r_a = 1.00000000000000002E-003
 
        effusive_drag = visc_2 / k_1
 
@@ -2306,10 +2304,6 @@ CONTAINS
 
        k_1 = 5.33D-21 * ( 100.0 * alfa_2 )**5.00D0 
 
-       !C_D= 0.80000000000000004     
-
-       !r_a = 1.00000000000000002E-003
-
        effusive_drag = visc_2 / k_1
 
        explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
@@ -2319,16 +2313,7 @@ CONTAINS
 
     CASE ( 'darcy_Polacci2009' )
 
-
-       !k_1 = 3.0D-19 * ( 100.0 * alfa_2 )**5.24D0 
-
        k_1 = 1.5D-20 * ( 100.0 * alfa_2 )**6.0D0 
-
-       !k_1 = 1.0D-20 * ( 100.0 * alfa_2 )**6.1D0 
-
-       !C_D= 0.80000000000000004     
-
-       !r_a = 1.00000000000000002E-003
 
        effusive_drag = visc_2 / k_1
 
@@ -2508,22 +2493,11 @@ CONTAINS
 
     CASE ('drag')
 
-       !radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density              &
-       !    * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
-
        radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
 
-       Rey = 2 * radius_bubble * ABS( u_2 - u_1 ) / visc_1
+       Rey = 2.D0 * radius_bubble * ABS( u_2 - u_1 ) / visc_1
 
-       C_D = 24.0D0 / Rey * ( 1.0D0 + 1.0D0 / 8.0D0 * Rey**0.72)
-
-       !WRITE(*,*) 'radius'
-       !WRITE(*,*) radius_bubble		
-       !WRITE(*,*) 'Rey'
-       !WRITE(*,*) Rey
-       !WRITE(*,*) 'C_D'
-       !WRITE(*,*) C_D
-       !READ(*,*) 
+       C_D = DREAL ( 24.0D0 / Rey * ( 1.0D0 + 1.0D0 / 8.0D0 * Rey**0.72) )
 
        effusive_drag = 3.D0 * C_D / ( 8.D0 * radius_bubble ) * rho_1            &
             * CDABS( u_2 - u_1 )
@@ -2872,7 +2846,7 @@ CONTAINS
        !C = c1 + c2 * CDLOG( 1.D0 + w  )
 
        visc_melt = A + B / ( T - C )
-       visc_melt = 10.D0 ** visc_melt	
+       visc_melt = 10.D0 ** visc_melt
 
     END SELECT
 
@@ -3099,226 +3073,7 @@ CONTAINS
 
   !*****************************************************************************
   !> @author 
-  !> Mattia de' Michieli Vitturi
-  !> \brief Bottom exsolved gas
-  !
-  !> This subrotine evaluates the exsolved gas volumetric fraction given the  
-  !> the total gas mass fraction and the dissolved gass mass fraction:\n
-  !> \f$ \alpha_2= \frac{x_2(1-\beta)\rho_{md}}{(1-x_{tot})\rho_2
-  !>                   + x_2(1-\beta)\rho_{md}}\f$,\n
-  !> where \f$ x_2=x_{tot}-x_{d,md} \f$ is the mass fraction of the exsolved gas 
-  !> with respect to the crystal-free magma.
-  !> \date 13/03/12       
-  !> \param[in]    p_2       gas pressure
-  !> \param[in]    T         magmatic mixture temperature
-  !> \param[in]    xtot      total gas content
-  !> \param[in]    r_beta    crystals volume fraction
-  !> \param[in]    r_rho_md  dis.gas+melt density
-  !> \param[in]    r_rho_2   exsolved gas density
-  !> \param[out]   r_alfa_2  exsolved gas volume fraction
-  !> \date 02/12/12       
-  !******************************************************************************
-
-  SUBROUTINE f_alfa2(p_2,T, xtot,r_beta,r_rho_md,r_rho_2,r_alfa_2)
-
-    IMPLICIT NONE
-
-    REAL*8, INTENT(IN) :: p_2,T
-    REAL*8, INTENT(IN) :: xtot(n_gas)
-    REAL*8, INTENT(IN) :: r_beta(n_cry)
-    REAL*8, INTENT(IN) :: r_rho_md
-    REAL*8, INTENT(IN) :: r_rho_2(n_gas)
-    REAL*8, INTENT(OUT) :: r_alfa_2(n_gas)
-
-    REAL*8 :: P_bar, melt_volume, melt_mass
-    REAL*8 :: solub_co2, exponent_co2, solub_h2o, exponent_h2o
-
-    REAL*8 :: Ds, Dcl, beta_S(4), log10Ds
-    REAL*8 :: co2_dis, h2o_dis, S_dis, Cl_dis, h2o_dis_test
-    REAL*8 :: co2_exs, h2o_exs, S_exs, Cl_exs
-    REAL*8 :: co2_P, h2o_P, S_P, Cl_P
-    REAL*8 :: co2_exs_mass,h2o_exs_mass,S_exs_mass,Cl_exs_mass
-    REAL*8 :: S_dis_mass,Cl_dis_mass
-    REAL*8 :: co2_exs_moles,h2o_exs_moles,S_exs_moles,Cl_exs_moles
-    REAL*8 :: co2_vol,h2o_vol,S_vol,Cl_vol
-    REAL*8 :: gas_mass, Ratio_exs_dis
-    REAL*8 :: S_mass,Cl_mass
-    REAL*8 :: delta_h2o
-    REAL*8 :: total_co2_wt_percent,total_h2o_wt_percent
-    REAL*8 :: total_S_wt_percent,total_Cl_wt_percent
-    REAL*8 :: x_dis(4), x_exs(4)
-
-    INTEGER :: iter, max_iter
-
-    ! Mass fraction of the exsolved gas with respect to the crystal-free magma
-    !r_x_g(1:n_gas) = xtot(1:n_gas) - xmax(1:n_gas)
-
-    !r_alfa_2 = ( r_x_2 * ( 1.D0 - SUM( r_beta(1:n_cry) ) ) * r_rho_md ) /       &
-    !     ( ( 1.D0 - xtot) * r_rho_2 + r_x_2 * ( 1.D0 - SUM( r_beta(1:n_cry) ) ) &
-    !     * r_rho_md )
-
-    total_h2o_wt_percent= xtot(1) * 100
-    total_co2_wt_percent= xtot(2) * 100
-    total_S_wt_percent = xtot(3) * 100
-    total_Cl_wt_percent= xtot(4) * 100
-
-    P_bar = p_2 / 1e5
-
-    melt_volume=1.0 !%m3
-
-    melt_mass=melt_volume*rho_md
-    solub_h2o = 5.0025e-7
-    exponent_h2o = 0.6
-    solub_co2 = 7.5563e-13 
-    exponent_co2 = 1.1
-
-    !% define S solubility
-    !%Ds=1.0  %  ratio between mass fraction in gas and mass fraction in melt
-
-    !% Fitting for Ds:
-    beta_S = [4.8095e+02, -4.5850e+02, 3.0240e-03, -2.7519e-07] 
-    log10Ds = beta(1) * P_bar**(-0.0075) + beta(2) + beta(3) * P_bar            &
-         + beta(4) * P_bar**(2.0)
-    Ds = 10**(log10Ds) 
-
-    !% define Cl solubility
-    Dcl = 2.0  !% ratio between mass fraction in gas and mass fraction in melt
-
-    !% find eqm dissolved CO2 and H2O
-
-    !% start with CO2 dissolved and exsolved wt percent
-    !%co2_dis=interpol(co2_sat_wt_percent,P_bar_sat,P_bar)
-    co2_dis = 100 * solub_co2 * ( P_bar * 1e5 )**exponent_co2 
-    co2_exs = total_co2_wt_percent-co2_dis 
-
-    !% calculate volume of exsolved CO2
-    co2_exs_mass = melt_mass*co2_exs*0.01 
-    co2_exs_moles = co2_exs_mass*1000.0/44 
-    co2_vol = co2_exs_moles*8.314*T/(P_bar*100000.0) 
-
-    !% now calculate a start H2O dissolved amount
-    h2o_dis = 0.85*total_h2o_wt_percent 
-    h2o_exs = total_h2o_wt_percent-h2o_dis 
-
-    !% calculate volume of exsolved h2o
-    h2o_exs_mass = melt_mass*h2o_exs*0.01 
-    h2o_exs_moles = h2o_exs_mass*1000.0/18 
-    h2o_vol = h2o_exs_moles*8.314*T/(P_bar*100000.0) 
-
-    !% calculate mass of exsolved S = (D.R/(1+D.R)) . S_total_mass
-    !% R is ratio of all gas mass to melt mass
-    gas_mass = co2_exs_mass+h2o_exs_mass 
-    Ratio_exs_dis = gas_mass/melt_mass 
-    S_mass = melt_mass*total_S_wt_percent*0.01 
-    S_exs_mass = (Ds*Ratio_exs_dis/(Ds*Ratio_exs_dis + 1.0))*S_mass 
-    S_dis_mass = S_mass-S_exs_mass 
-    S_dis = 100.0*S_dis_mass/melt_mass 
-    S_exs_moles = S_exs_mass*1000.0/32 
-    S_vol = S_exs_moles*8.314*T/(P_bar*100000.0) 
-
-    !% calculate mass of exsolved Cl = (D.R/(1+D.R)) . Cl_total_mass
-    !% R is ratio of all gas mass to melt mass
-    gas_mass = co2_exs_mass+h2o_exs_mass+S_exs_mass 
-    Ratio_exs_dis = gas_mass/melt_mass 
-    Cl_mass = melt_mass*total_Cl_wt_percent*0.01 
-    Cl_exs_mass = (Dcl*Ratio_exs_dis/(Dcl*Ratio_exs_dis + 1.0))*Cl_mass 
-    Cl_dis_mass=Cl_mass-Cl_exs_mass 
-    Cl_dis=100.0*Cl_dis_mass/melt_mass 
-    Cl_exs_moles=Cl_exs_mass*1000.0/32 
-    Cl_vol=Cl_exs_moles*8.314*T/(P_bar*100000.0) 
-
-    delta_h2o=2.0 
-    h2o_dis=2.0 
-
-    iter = 1 
-    max_iter = 1e4 
-
-    DO WHILE( ABS(delta_h2o) .GT. 0.001 .AND. iter .LT. max_iter)
-
-       !% prescribe dissolved h2o content
-       !% h2o_dis=interpol(h2o_sat_wt_percent,P_bar_sat,h2o_P)
-       IF (delta_h2o .LT. 0.0 ) THEN
-          h2o_dis=h2o_dis+0.001 
-       ELSE
-          h2o_dis=h2o_dis-0.001 
-       END IF
-
-       !% calculate exsolved h2o content and volume
-       h2o_exs=total_h2o_wt_percent-h2o_dis 
-       h2o_exs_mass=melt_mass*h2o_exs*0.01 
-       h2o_exs_moles=h2o_exs_mass*1000.0/18 
-       h2o_vol=h2o_exs_moles*8.314*T/(P_bar*100000.0) 
-
-       !% calculate co2 partial pressure
-       co2_P=P_bar*co2_vol/(co2_vol+h2o_vol+S_vol+Cl_vol) 
-
-       !% calculate dissolved CO2 content
-       !%co2_dis=interpol(co2_sat_wt_percent,P_bar_sat,co2_P) 
-       co2_dis= 100 * solub_co2 * ( co2_P *1e5)**exponent_co2 
-
-       !% calculate exsolved CO2 content and volume
-       co2_exs=total_co2_wt_percent-co2_dis 
-       co2_exs_mass=melt_mass*co2_exs*0.01 
-       co2_exs_moles=co2_exs_mass*1000.0/44 
-       co2_vol=co2_exs_moles*8.314*T/(P_bar*100000.0) 
-
-       !% calculate mass of exsolved S = (D.R/(1+D.R)) . S_total_mass
-       !% R is ratio of all gas mass to melt mass
-       gas_mass=co2_exs_mass+h2o_exs_mass+S_exs_mass+Cl_exs_mass 
-       Ratio_exs_dis=gas_mass/melt_mass 
-       S_mass=melt_mass*total_S_wt_percent*0.01 
-       S_exs_mass=(Ds*Ratio_exs_dis/(Ds*Ratio_exs_dis + 1.0))*S_mass 
-       S_dis_mass=S_mass-S_exs_mass 
-       S_dis=100.0*S_dis_mass/melt_mass 
-       S_exs_moles=S_exs_mass*1000.0/32 
-       S_vol=S_exs_moles*8.314*T/(P_bar*100000.0) 
-       S_p=P_bar*S_vol/(co2_vol+h2o_vol+S_vol+Cl_vol) 
-
-       !% calculate new Ds
-       log10Ds = beta(1) * P_bar**(-0.0075) + beta(2) + beta(3) * P_bar        &
-            + beta(4) * P_bar**(2.0)
-       Ds = 10**(log10Ds) 
-
-       !% calculate mass of exsolved Cl = (D.R/(1+D.R)) . Cl_total_mass
-       !% R is ratio of all gas mass to melt mass
-       gas_mass=co2_exs_mass+h2o_exs_mass+S_exs_mass+Cl_exs_mass 
-       Ratio_exs_dis=gas_mass/melt_mass 
-       Cl_mass=melt_mass*total_Cl_wt_percent*0.01 
-       Cl_exs_mass=(Dcl*Ratio_exs_dis/(Dcl* Ratio_exs_dis + 1.0))*Cl_mass 
-       Cl_dis_mass=Cl_mass-Cl_exs_mass 
-       Cl_dis=100.0*Cl_dis_mass/melt_mass 
-       Cl_exs_moles=Cl_exs_mass*1000.0/32 
-       Cl_vol=Cl_exs_moles*8.314*T/(P_bar*100000.0) 
-       Cl_p=P_bar*Cl_vol/(co2_vol+h2o_vol+S_vol+Cl_vol) 
-
-       !% calculate h2o partial pressure
-       h2o_P=P_bar*h2o_vol/(co2_vol+h2o_vol+S_vol+Cl_vol) 
-       !%h2o_dis_test=interpol(h2o_sat_wt_percent,P_bar_sat,h2o_P)
-       h2o_dis_test=100 * solub_h2o*(h2o_P *1e5 )**exponent_h2o 
-       delta_h2o=h2o_dis-h2o_dis_test 
-
-       !%delta_h2o
-
-       s_exs=total_S_wt_percent-S_dis 
-       cl_exs=total_Cl_wt_percent-Cl_dis 
-
-       !%printf(delta_h2o,R,'   Dissolved wt%: ',h2o_dis,co2_dis,s_dis,cl_dis,'
-       !Exsolved wt%:',h2o_exs,co2_exs,s_exs,cl_exs
-
-       iter = iter + 1 
-
-    END DO
-
-    x_exs = 0.01*[h2o_exs, co2_exs, S_exs, Cl_exs]
-    x_dis = 0.01*[h2o_dis, co2_dis, S_dis, Cl_dis]
-    r_alfa_2 = 0.01*[h2o_vol, co2_vol, S_vol, Cl_vol]
-
-  END SUBROUTINE f_alfa2
-
-
-  !*****************************************************************************
-  !> @author 
-  !> Mattia de' Michieli Vitturi
+  !> Giuseppe La Spina
   !> \brief Bottom exsolved gas
   !
   !> This subrotine evaluates the exsolved gas volumetric fraction given the  
@@ -3386,7 +3141,7 @@ CONTAINS
 
     REAL*8, INTENT(IN) :: xtot(n_gas) 
     REAL*8, INTENT(IN) :: r_beta(n_cry)
-    REAL*8, INTENT(IN) :: r_p_2	
+    REAL*8, INTENT(IN) :: r_p_2
     REAL*8, INTENT(IN) :: r_rho_md
     REAL*8, INTENT(IN) :: r_rho_g(n_gas) 
     REAL*8, INTENT(OUT) :: r_alfa_g(n_gas)
@@ -3397,7 +3152,7 @@ CONTAINS
     REAL*8 :: r_alfa_g_2_max(n_gas),best_alfa_g_2(n_gas)
     REAL*8 :: r_alfa_g_2(n_gas), r_alfa_g_2_new(n_gas)
     REAL*8 :: h,error,best_error
-    REAL*8 :: A(n_gas,n_gas),num(n_gas), den(n_gas)	
+    REAL*8 :: A(n_gas,n_gas),num(n_gas), den(n_gas)
     REAL*8 :: r_rho_md_beta
     INTEGER :: iter,i,j
     INTEGER :: pivot(n_gas)
@@ -3412,33 +3167,20 @@ CONTAINS
 
     h = 1e-5;
 
-    iter = 1.0;
-    error = 1.0;
-    r_alfa_g_2 = [0.0 , 1.0];
+    iter = 1
+    error = 1.0
+    r_alfa_g_2 = [0.0 , 1.0]
 
-    best_error = 1.0;
-    best_alfa_g_2 = r_alfa_g_2;
-
-    !WRITE(*,*)'rho_md'
-    !WRITE(*,*)r_rho_md
-    !WRITE(*,*)'rho_g'
-    !WRITE(*,*)r_rho_g
-    !WRITE(*,*)'r_beta'
-    !WRITE(*,*)r_beta
-    !READ(*,*)
+    best_error = 1.0
+    best_alfa_g_2 = r_alfa_g_2
 
     DO WHILE ( r_alfa_g_2(1) .LT. r_alfa_g_2_max(1) - h)
 
        r_alfa_g_2 = [r_alfa_g_2(1) + h, 1.0 - (r_alfa_g_2(1) + h)]
 
-       !WRITE(*,*)'r_alfa_g_2'
-       !WRITE(*,*) r_alfa_g_2
-       !READ(*,*)
-
        DO i = 1,n_gas
-          r_x_d(i) = solub(i) * (r_alfa_g_2(i) * p_2)**(solub_exp(i))
 
-          !r_x_d(i) = solub(i) * (p_2)**(solub_exp(i))
+          r_x_d(i) = DREAL( solub(i) * (r_alfa_g_2(i) * p_2)**(solub_exp(i)) )
 
           DO j = 1,n_gas
              A(i,j) = - xtot(i) * r_rho_g(j) + r_rho_md_beta * &
@@ -3451,16 +3193,7 @@ CONTAINS
 
        END DO
 
-       !WRITE(*,*)'A'
-       !WRITE(*,*) A
-       !WRITE(*,*)'b'
-       !WRITE(*,*)r_alfa_g
-
        call DGESV(n_gas, 1, A , n_gas, pivot, r_alfa_g , n_gas, ok)
-
-       !WRITE(*,*)'r_alfa_g'
-       !WRITE(*,*)r_alfa_g
-       !READ(*,*)
 
        r_alfa_g_2_new = r_alfa_g / SUM( r_alfa_g )
 
@@ -3483,27 +3216,16 @@ CONTAINS
           best_alfa_g_2 = r_alfa_g_2
        END IF
 
-       !WRITE(*,*)'error'
-       !WRITE(*,*) error
-       !READ(*,*)
-
     END DO
 
     r_alfa_g_2 = best_alfa_g_2
 
-    !WRITE(*,*) best_error
-    !WRITE(*,*) r_alfa_g_2
-    !READ(*,*)
-
     DO i = 1,n_gas
 
-       r_x_d(i) = solub(i) * (r_alfa_g_2(i) * p_2)**(solub_exp(i))
-
-       !r_x_d(i) = solub(i) * (p_2)**(solub_exp(i))
-
+       r_x_d(i) = DREAL (solub(i) * (r_alfa_g_2(i) * p_2)**(solub_exp(i)) )
 
        DO j = 1,n_gas
-          A(i,j) = - xtot(i) * r_rho_g(j) + r_rho_md_beta * &
+          A(i,j) = - xtot(i) * r_rho_g(j) + r_rho_md_beta *                     &
                ( xtot(i) - r_x_d(i) ) 
        END DO
 
@@ -3514,14 +3236,6 @@ CONTAINS
     END DO
 
     call DGESV(n_gas, 1, A , n_gas, pivot, r_alfa_g , n_gas, ok)
-
-
-    !WRITE(*,*) 'r_alfa_g'
-    !WRITE(*,*) r_alfa_g
-    !WRITE(*,*) 'r_x_d'
-    !WRITE(*,*) r_x_d
-    !READ(*,*)
-
 
     num = r_alfa_g * r_rho_g + ( 1.0 - SUM( r_alfa_g ))* r_rho_md_beta * r_x_d
     den = SUM(r_alfa_g * r_rho_g) + ( 1.0 - SUM( r_alfa_g )) * r_rho_md_beta

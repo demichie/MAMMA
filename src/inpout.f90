@@ -496,7 +496,7 @@ CONTAINS
 
        IF ( shooting .EQV. .TRUE.) THEN
           WRITE(*,*) 'Shooting technique to search for inlet velocity'
-       ELSE	
+       ELSE
           WRITE(*,*) 'Single run: no shooting'
        END IF
 
@@ -776,11 +776,11 @@ CONTAINS
          ( drag_funct_model .EQ. 'forchheimer_Bai2010_meas' ) .OR.              &
          ( drag_funct_model .EQ. 'forchheimer_Polacci2009' ) .OR.               &
          ( drag_funct_model .EQ. 'forchheimer') ) THEN
-
+       
        READ(input_unit, forchheimer_parameters )
-
+       
        bubble_number_density = 10.0D0 ** log10_bubble_number_density
-
+       
     ELSEIF ( (drag_funct_model .EQ. 'forchheimer_mod') .OR.                     &
          (drag_funct_model .EQ. 'forchheimer_mod2') .OR.                        &
          (drag_funct_model .EQ. 'forchheimer_mod3') ) THEN
@@ -814,10 +814,6 @@ CONTAINS
        CALL ABORT
 
     END IF
-
-
-
-
 
     CLOSE( input_unit )
 
@@ -857,7 +853,7 @@ CONTAINS
 
        WRITE(backup_unit, bubbles_parameters )
 
-    ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR. 				 &
+    ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR.                                &
          ( drag_funct_model .EQ. 'darcy_Bai2011' ) .OR.                          &
          ( drag_funct_model .EQ. 'darcy_Bai2010_LB' ) .OR.                       &
          ( drag_funct_model .EQ. 'darcy_Bai2010_meas' ) .OR.                     &

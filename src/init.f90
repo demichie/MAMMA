@@ -49,7 +49,6 @@ CONTAINS
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
 
-
     IMPLICIT none
 
     REAL*8, INTENT(IN) :: u_0
@@ -59,8 +58,6 @@ CONTAINS
     REAL*8 :: r_rho_2   !> total exsolved gas density
     REAL*8 :: r_rho_1   !> total exsolved melt density
     REAL*8 :: r_rho_c(1:n_cry)   !> crystals density
-
-
 
     REAL*8 :: r_rho_md  !> dis.gas+melt density
 
@@ -72,14 +69,14 @@ CONTAINS
     REAL*8 :: alfa2_in
     REAL*8 :: alfa_g_in(1:n_gas)
 	
-	COMPLEX*16 :: x_g_old(1:n_gas)
+    COMPLEX*16 :: x_g_old(1:n_gas)
 
     REAL*8 :: xd_md_tot
 
     REAL*8 :: xtot_in
 
     INTEGER :: i,idx,iter,max_iter
-	REAL*8 :: error_iter
+    REAL*8 :: error_iter
 
     p2_in = p1_in + delta_p_in
 
@@ -91,11 +88,11 @@ CONTAINS
 
     ! evaluate the initial dissolved gas mass fraction
 	
-    r_rho_md = ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - 1.D0) )
+    r_rho_md = REAL( ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - 1.D0) ) )
     rho_md = DCMPLX(r_rho_md,0.0)
     
-    r_rho_c(1:n_cry) = ( p_1 + bar_p_c(1:n_cry) ) / ( T * cv_c(1:n_cry) *         &
-         ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) )     
+    r_rho_c(1:n_cry) = REAL( ( p_1 + bar_p_c(1:n_cry) ) / ( T * cv_c(1:n_cry) * &
+         ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) ) )    
     
     r_rho_1 = r_rho_md
     
@@ -111,7 +108,7 @@ CONTAINS
     max_iter =1000
     error_iter = 1.0
     
-    DO WHILE( error_iter .GT. 1e-15 .AND. (iter .LT. max_iter) )		
+    DO WHILE( error_iter .GT. 1e-15 .AND. (iter .LT. max_iter) )
        
        x_g_old = x_g
        
