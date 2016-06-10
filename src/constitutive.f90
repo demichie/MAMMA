@@ -768,12 +768,19 @@ CONTAINS
 
     K_mix = alfa_1*K_1 + alfa_2*K_2
 
+
     C_mix = DREAL( 1.D0 / CDSQRT( K_mix * rho_mix ) )
 
     ! Sound speed of the mixture (Wallis, 1969)
     !    C_mix = REAL( C_2 / SQRT(x_2) * ( x_2 + (1.d0 - x_2 ) * rho_2 / rho_1 ) )
 
-    WRITE(*,*) 'u_mix,C_mix',u_mix,C_mix
+
+    IF ( verbose_level .GE. 1 ) THEN
+
+       WRITE(*,*) 'K_mix,rho_mix',K_mix,rho_mix
+       WRITE(*,*) 'u_mix,C_mix',u_mix,C_mix
+
+    END IF
 
     mach = DREAL( u_mix / C_mix )
 
