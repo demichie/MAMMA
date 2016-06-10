@@ -777,8 +777,8 @@ CONTAINS
 
     IF ( verbose_level .GE. 1 ) THEN
 
-       WRITE(*,*) 'K_1 temrs: ', alfa_m_1*K_m , SUM( alfa_c_1(1:n_cry)*K_c(1:n_cry) ) ,    &
-         SUM( alfa_d_1(1:n_gas) * K_d(1:n_gas) )
+       WRITE(*,*) 'alfa_c_1(1:n_cry)',alfa_c_1(1:n_cry)
+       WRITE(*,*) 'alfa_d_1(1:n_gas)',alfa_d_1(1:n_gas)
 
        WRITE(*,*) 'C2_c(1:n_cry)', C2_c(1:n_cry)
        WRITE(*,*) 'K_c(1:n_cry)',K_c(1:n_cry)
