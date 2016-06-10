@@ -4,6 +4,7 @@
 MODULE constitutive
 
   USE geometry, ONLY : pi
+  USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_eqns , n_vars
   USE parameters, ONLY : n_cry , n_gas
   IMPLICIT none
