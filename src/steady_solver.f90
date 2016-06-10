@@ -2185,8 +2185,8 @@ CONTAINS
        IF ( verbose_level .GE. -1 ) THEN
 
           WRITE(*,*) 'Boundary conditions before the top' 
-          !          WRITE(*,*) 'z = ',zeta,'Pressures = ',r_p_1,r_p_2
-          !          WRITE(*,*) 'Mach =',mach
+          WRITE(*,*) 'z = ',zeta,'Pressures = ',r_p_1,r_p_2
+          WRITE(*,*) 'Mach =',mach
 
        END IF
 
@@ -2218,7 +2218,7 @@ CONTAINS
 
        IF ( verbose_level .GE. -1 ) THEN
 
-          WRITE(*,*) 'Conditions reached before the exit' 
+          WRITE(*,*) 'Pressure Conditions reached before the exit' 
           !READ(*,*)
 
        END IF
@@ -2235,7 +2235,7 @@ CONTAINS
 
        IF ( verbose_level .GE. -1 ) THEN
 
-          WRITE(*,*) 'Conditions reached before the exit' 
+          WRITE(*,*) 'Dissolved gas Conditions reached before the exit' 
           !READ(*,*)
 
        END IF
@@ -2264,7 +2264,12 @@ CONTAINS
        extrap_z_2 = zeta_old - ( zeta - zeta_old ) / ( r_p_2 - r_p_2_old) *     &
             ( r_p_2_old )
 
-       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'extrap_z_2 =',extrap_z_2,r_p_2
+       IF ( verbose_level .GE. 1 ) THEN
+          
+          WRITE(*,*) 'gas pressure extrapolation'
+          WRITE(*,*) 'extrap_z_2 =',extrap_z_2,r_p_2
+
+       END IF
 
     ELSE
 
@@ -2278,7 +2283,12 @@ CONTAINS
        extrap_z_1 = zeta_old + ( zeta - zeta_old ) / ( r_p_1 - r_p_1_old) *     &
             ( p_out_1 - r_p_1_old )
 
-       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'extrap_z_1 =',extrap_z_1,r_p_1
+       IF ( verbose_level .GE. 1 ) THEN
+          
+          WRITE(*,*) 'liquid pressure extrapolation'
+          WRITE(*,*) 'extrap_z_1 =',extrap_z_1,r_p_1
+
+       END IF
 
     ELSE
 
@@ -2294,7 +2304,12 @@ CONTAINS
        extrap_z_mach = zeta_old + ( zeta - zeta_old ) / ( mach - mach_old ) *   &
             ( 1.d0 - mach_old )
 
-       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'extrap_z_mach',extrap_z_mach,mach
+       IF ( verbose_level .GE. 1 ) THEN
+
+          WRITE(*,*) 'Mach number extrapolation'
+          WRITE(*,*) 'extrap_z_mach',extrap_z_mach,mach
+
+       END IF
 
     ELSE
 
