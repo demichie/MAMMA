@@ -769,7 +769,6 @@ CONTAINS
 
     K_mix = alfa_1*K_1 + alfa_2*K_2
 
-
     C_mix = DREAL( 1.D0 / CDSQRT( K_mix * rho_mix ) )
 
     ! Sound speed of the mixture (Wallis, 1969)
@@ -778,6 +777,11 @@ CONTAINS
 
     IF ( verbose_level .GE. 1 ) THEN
 
+       WRITE(*,*) 'C2_c(1:n_cry)', C2_c(1:n_cry)
+       WRITE(*,*) 'C2_d(1:n_gas)', C2_d(1:n_gas)
+       WRITE(*,*) 'C2_g(1:n_gas)', C2_g(1:n_gas)
+
+       WRITE(*,*) 'K_1,k_2',K_1,K_2
        WRITE(*,*) 'K_mix,rho_mix',K_mix,rho_mix
        WRITE(*,*) 'u_mix,C_mix',u_mix,C_mix
 
