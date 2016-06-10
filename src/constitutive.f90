@@ -778,8 +778,11 @@ CONTAINS
     IF ( verbose_level .GE. 1 ) THEN
 
        WRITE(*,*) 'C2_c(1:n_cry)', C2_c(1:n_cry)
+       WRITE(*,*) 'K_c(1:n_cry)',K_c(1:n_cry)
        WRITE(*,*) 'C2_d(1:n_gas)', C2_d(1:n_gas)
+       WRITE(*,*) 'K_d(1:n_gas)',K_d(1:n_gas)
        WRITE(*,*) 'C2_g(1:n_gas)', C2_g(1:n_gas)
+       WRITE(*,*) 'K_g(1:n_gas)',K_g(1:n_gas)
 
        WRITE(*,*) 'K_1,k_2',K_1,K_2
        WRITE(*,*) 'K_mix,rho_mix',K_mix,rho_mix
