@@ -125,8 +125,7 @@ MODULE constitutive
 
   COMPLEX*16 :: alfarho_2  !< bulk density of the exsolved gas
 
-  COMPLEX*16, ALLOCATABLE :: alfa_c_1(:)   !< crystal volume fractions in phase 1
-  COMPLEX*16 :: alfa_m_1          !< melt volume fraction in phase 1
+  COMPLEX*16 :: alfa_m_1                   !< melt volume fraction in phase 1
   COMPLEX*16, ALLOCATABLE :: alfa_d_1(:)   !< dissolved gas volume fractions in phase 1
   COMPLEX*16, ALLOCATABLE :: alfa_g_2(:)   !< exsolved gas volume fractions in phase 2
 
@@ -470,7 +469,6 @@ CONTAINS
     ALLOCATE( mu_c(n_cry) )
     ALLOCATE( rho_c(n_cry) )
     ALLOCATE( rhoB_c(n_cry) )
-    ALLOCATE( alfa_c_1(n_cry) )
     ALLOCATE( beta(n_cry) )
     ALLOCATE( beta_eq(n_cry) )
     ALLOCATE( x_c(n_cry) )
@@ -595,6 +593,8 @@ CONTAINS
     x_d_1(1:n_gas) = x_d_md(1:n_gas) * x_md_1
     x_m_1 = DCMPLX(1.D0,0.D0) - SUM(x_d_1) - SUM(x_c_1)
 
+    alfa_d_1(1:n_gas) = rho_1 * x_d_1(1:n_gas) / rho_d(1:n_gas) 
+    alfa_m_1 = rho_1 * x_m_1 / rho_m
 
     rho_mix = alfa_1 * rho_1 + alfa_2 * rho_2
 
@@ -748,7 +748,7 @@ CONTAINS
     K_m = 1.D0 / ( rho_m * C2_m )
     K_d(1:n_gas) = 1.D0 / ( rho_d(1:n_gas) * C2_d(1:n_gas) )
 
-    K_1 = alfa_m_1*K_m + SUM( alfa_c_1(1:n_cry)*K_c(1:n_cry) )                  &
+    K_1 = alfa_m_1*K_m + SUM( beta(1:n_cry)*K_c(1:n_cry) )                      &
          + SUM( alfa_d_1(1:n_gas) * K_d(1:n_gas) )
 
     C2_1 = 1.D0 / ( K_1 * rho_1 )
@@ -772,20 +772,11 @@ CONTAINS
     C_mix = DREAL( 1.D0 / CDSQRT( K_mix * rho_mix ) )
 
     ! Sound speed of the mixture (Wallis, 1969)
-    !    C_mix = REAL( C_2 / SQRT(x_2) * ( x_2 + (1.d0 - x_2 ) * rho_2 / rho_1 ) )
+    ! C_mix = REAL( C_2 / SQRT(x_2) * ( x_2 + (1.d0 - x_2 ) * rho_2 / rho_1 ) )
 
+    mach = DREAL( u_mix / C_mix )
 
     IF ( verbose_level .GE. 1 ) THEN
-
-       WRITE(*,*) 'alfa_c_1(1:n_cry)',alfa_c_1(1:n_cry)
-       WRITE(*,*) 'alfa_d_1(1:n_gas)',alfa_d_1(1:n_gas)
-
-       WRITE(*,*) 'C2_c(1:n_cry)', C2_c(1:n_cry)
-       WRITE(*,*) 'K_c(1:n_cry)',K_c(1:n_cry)
-       WRITE(*,*) 'C2_d(1:n_gas)', C2_d(1:n_gas)
-       WRITE(*,*) 'K_d(1:n_gas)',K_d(1:n_gas)
-       WRITE(*,*) 'C2_g(1:n_gas)', C2_g(1:n_gas)
-       WRITE(*,*) 'K_g(1:n_gas)',K_g(1:n_gas)
 
        WRITE(*,*) 'K_1,k_2',K_1,K_2
        WRITE(*,*) 'K_mix,rho_mix',K_mix,rho_mix
@@ -793,7 +784,6 @@ CONTAINS
 
     END IF
 
-    mach = DREAL( u_mix / C_mix )
 
   END SUBROUTINE sound_speeds
 
