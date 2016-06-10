@@ -773,6 +773,8 @@ CONTAINS
     ! Sound speed of the mixture (Wallis, 1969)
     !    C_mix = REAL( C_2 / SQRT(x_2) * ( x_2 + (1.d0 - x_2 ) * rho_2 / rho_1 ) )
 
+    WRITE(*,*) 'u_mix,C_mix',u_mix,C_mix
+
     mach = DREAL( u_mix / C_mix )
 
   END SUBROUTINE sound_speeds
