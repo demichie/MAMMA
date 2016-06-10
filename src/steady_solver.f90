@@ -45,7 +45,7 @@ CONTAINS
   SUBROUTINE steady_shooting
 
     ! external procedures
-    USE constitutive, ONLY : phys_var_qp
+    USE constitutive, ONLY : phys_var_qp , eos
     USE constitutive, ONLY : eval_densities
     USE init, ONLY : init_steady
 
@@ -121,6 +121,7 @@ CONTAINS
     CALL init_steady( u_inlet , qp )
 
     CALL phys_var_qp(qp)
+    CALL eos
     CALL eval_densities
 
     IF ( verbose_level .GE. 1 ) THEN
