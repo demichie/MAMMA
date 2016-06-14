@@ -33,7 +33,6 @@ MODULE parameters
   INTEGER :: n_nh
 
   INTEGER :: n_RK     !< Runge-Kutta order
-
   !> Limiter for the slope in the linear reconstruction:\n
   !> - 'none'     => no limiter (constant value)
   !> - 'minmod'   => minmod sloe;

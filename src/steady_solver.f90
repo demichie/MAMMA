@@ -8,6 +8,7 @@ MODULE steady_solver
   USE parameters, ONLY : verbose_level
 
   USE constitutive, ONLY : lateral_degassing_flag
+  USE constitutive, ONLY : lateral_degassing
   USE constitutive, ONLY : alfa2_lat_thr
 
   USE constitutive, ONLY : explosive
@@ -382,6 +383,7 @@ CONTAINS
        V_1 = 0.5D0 * ( V_0 + V_2 )
 
        WRITE(*,*) '********* V_inlet = ',V_1,'********** iter = ', iter
+       WRITE(*,*) 'Delta V = ', 0.5D0 * ( V_2 - V_0 )
 
        u_inlet = V_1
 
@@ -492,8 +494,9 @@ CONTAINS
        END IF
 
        IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                         &
-            ( zeta .GE. zN ) .AND. ( extrap_flag .NE. 4 ) .AND.                 &
-            ( extrap_flag .NE. -3 ) ) THEN
+            ( zeta .GE. zN ) .AND. ( extrap_flag .NE. 4 )                       &
+            ! .AND. ( extrap_flag .NE. -3 )                                       & 
+          ) THEN
 
           WRITE(*,*) 'Relative change in flow rate', ( V_2 - V_0 ) / V_0
 
@@ -532,7 +535,7 @@ CONTAINS
 
        END IF
 
-       IF ( iter .GT. 50 ) THEN
+       IF ( iter .GT. 100 ) THEN
 
           IF ( ( zeta .GE. zN - (iter-20)/100.D0 ) .AND. ( extrap_flag .NE. 4 ) &
                .AND. ( extrap_flag .NE. -3 ) ) THEN
@@ -620,7 +623,7 @@ CONTAINS
     USE geometry, ONLY : update_radius
 
     ! external variables
-    USE constitutive, ONLY : frag_thr, fragmentation, frag_eff
+    USE constitutive, ONLY : frag_thr, frag_eff
     USE constitutive, ONLY : rho_mix, u_mix
 
     USE inpout, ONLY : output_steady
@@ -654,7 +657,7 @@ CONTAINS
 
     REAL*8 :: r_alfa_2
 
-    LOGICAL :: fragmentation_flag
+    LOGICAL :: fragmentation
 
     INTEGER :: idx_zeta,idx_temperature, idx_pressure1
     REAL*8 :: coeff_zeta
@@ -685,7 +688,7 @@ CONTAINS
 
     REAL*8 :: delta_full , delta_half2
 
-    REAL*8 :: fragmentation_half2, fragmentation_full
+    LOGICAL :: fragmentation_half2, fragmentation_full
 
     REAL*8 :: alfa_2_half2, alfa_2_full, alfa_2_qp
 
@@ -724,8 +727,8 @@ CONTAINS
 
     ENDIF
 
-    lateral_degassing_flag = .FALSE.
-    fragmentation_flag = .FALSE.
+    lateral_degassing = .FALSE.
+    fragmentation = .FALSE.
 
     check_error = 1.D0
     check_error_old = 1.D0
@@ -734,8 +737,7 @@ CONTAINS
 
     counter = 1
 
-    fragmentation = 0.0D0
-    frag_eff = DCMPLX ( fragmentation , 0.0D0 )
+    frag_eff = 0.D0
 
     u_1_old = qp(n_gas+3) 
     strain_rate_qp = 0.0
@@ -772,7 +774,7 @@ CONTAINS
        IF ( verbose_level .GE. 3 ) THEN
 
           WRITE(*,*) 'Non hyperbolic term = '
-          WRITE(*,*) nh_terms_old
+          WRITE(*,*) nh_terms_old/(radius**2)
           READ(*,*)
 
        END IF
@@ -994,114 +996,40 @@ CONTAINS
 
           IF ( EXPLOSIVE ) THEN
 
-             !IF ( fragmentation_model .EQ. 1 ) THEN
-
              alfa_2_half2 = SUM(qp_half2(1:n_gas)) 
              alfa_2_full = SUM(qp_full(1:n_gas)) 
              alfa_2_qp = SUM(qp(1:n_gas))
 
              IF ( alfa_2_half2 .GT. frag_thr ) THEN
 
-                fragmentation_half2 = 1.0D0
+                fragmentation_half2 = .TRUE.
 
              ELSE
 
-                fragmentation_half2 = 0.0D0
+                fragmentation_half2 = .FALSE.
 
              END IF
 
              IF ( alfa_2_full .GT. frag_thr ) THEN
 
-                fragmentation_full = 1.0D0
+                fragmentation_full = .TRUE.
 
              ELSE
 
-                fragmentation_full = 0.D0
+                fragmentation_full = .FALSE.
 
              END IF
 
 
-             IF ( (fragmentation_flag .EQV. .FALSE.) .AND.                       &
-                  (MAX(fragmentation_half2,fragmentation_full) .GT. 0.D0 ) .AND. &
-                  ( alfa_2_qp + 1.D-4 .LT. frag_thr) ) THEN
+             IF ( ( .NOT.fragmentation )                                        &
+                  .AND. ( fragmentation_half2 .OR. fragmentation_full )         &
+                  .AND. ( frag_thr - alfa_2_qp .GT. 1.D-4 )                     &
+!                  .AND. ( MAX(alfa_2_half2,alfa_2_full) - frag_thr .GT. 1.D-4 ) & 
+                ) THEN
 
                 check_convergence = .FALSE.
 
              END IF
-
-
-             !ELSEIF ( fragmentation_model .EQ. 2 ) THEN
-             !
-             !   over_pressure_half2 = qp_half2(n_gas+2) - qp_half2(n_gas+1)
-             !   over_pressure_full = qp_full(n_gas+2) - qp_full(n_gas+1) 
-             !   over_pressure_qp = qp(n_gas+2) - qp(n_gas+1) 
-             !
-             !   IF ( over_pressure_half2 .GT. frag_thr ) THEN
-             !
-             !	  fragmentation_half2 = 1.0D0
-             !
-             !	ELSE
-             !
-             !	  fragmentation_half2 = 0.0D0
-             !
-             !   END IF
-             !
-             !   IF ( over_pressure_full .GT. frag_thr ) THEN
-             !
-             !	  fragmentation_full = 1.0D0
-             !
-             !   ELSE
-             !
-             !	  fragmentation_full = 0.D0
-             !
-             !   END IF
-             !
-             !
-             !   IF ( (fragmentation_flag .EQV. .FALSE.) .AND.                       &
-             !		(MAX(fragmentation_half2,fragmentation_full) .GT. 0.D0 ) .AND. &
-             !		( over_pressure_qp + 1.0 .LT. frag_thr) ) THEN
-             !
-             !			check_convergence = .FALSE.
-             !
-             !   END IF
-             !	
-             !
-             !ELSEIF ( fragmentation_model .EQ. 3 ) THEN
-             !
-             !   strain_rate_half2 = (qp_half2(n_gas+3) - u_1_old)/dz
-             !   strain_rate_full = (qp_full(n_gas+3) - u_1_old)/dz 
-             !
-             !   IF ( strain_rate_half2 .GT. frag_thr ) THEN
-             !
-             !	  fragmentation_half2 = 1.0D0
-             !
-             !	ELSE
-             !
-             !	  fragmentation_half2 = 0.0D0
-             !
-             !   END IF
-             !
-             !   IF ( strain_rate_full .GT. frag_thr ) THEN
-             !
-             !	  fragmentation_full = 1.0D0
-             !
-             !   ELSE
-             !
-             !	  fragmentation_full = 0.D0
-             !
-             !   END IF
-             !
-             !	
-             !   IF ( (fragmentation_flag .EQV. .FALSE.) .AND.                       &
-             !		(MAX(fragmentation_half2,fragmentation_full) .GT. 0.D0 ) .AND. &
-             !		( strain_rate_qp + 1.0 .LT. frag_thr) ) THEN
-             !
-             !			check_convergence = .FALSE.
-             !
-             !   END IF
-             !
-             !
-             !END IF
 
           END IF
 
@@ -1141,7 +1069,7 @@ CONTAINS
                 WRITE(*,*) qp
                 WRITE(*,*) ''
                 WRITE(*,*) 'alfa_2 =',SUM(qp(1:n_gas)), ' fragmentation = ',    &
-                     fragmentation, 'Mass flow rate = ',                        &
+                     frag_eff, 'Mass flow rate = ',                        &
                      REAL(rho_mix * u_mix)*3.14*radius*radius
                 WRITE(*,*)''
                 READ(*,*)
@@ -1246,65 +1174,27 @@ CONTAINS
 
        IF ( EXPLOSIVE ) THEN
 
-          !IF ( fragmentation_model .EQ. 1 ) THEN	
-
           alfa_2_qp = SUM(qp(1:n_gas))
 
-          IF ( ( alfa_2_qp + 1.D-4 .GT. frag_thr) .AND.                         &	 
-               (fragmentation_flag .EQV. .FALSE.) )THEN
+          IF ( ( alfa_2_qp .GT. frag_thr) .AND.                                 &	 
+               ( .NOT. fragmentation ) )THEN
 
-             fragmentation = 1.0D0
-             fragmentation_flag = .TRUE.
+             frag_eff = 1.0D0
+             fragmentation = .TRUE.
 
              WRITE(*,*) 'Fragmentation at z = ',zeta
+             ! verbose_level = 3
 
           END IF
-
-          frag_eff = DCMPLX ( fragmentation , 0.0D0 )
-
-          ! ELSEIF ( fragmentation_model .EQ. 2 ) THEN	
-          !
-          !   over_pressure_qp = qp(n_gas+2) - qp(n_gas+1) 
-          !
-          !   IF ( (over_pressure_qp + 1.0 .GT. frag_thr) .AND. 							&	 
-          !			(fragmentation_flag .EQV. .FALSE.) )THEN
-          !
-          !	  fragmentation = 1.0D0
-          !	  fragmentation_flag = .TRUE.
-          !
-          !	  WRITE(*,*) 'Fragmentation at z = ',zeta
-          !
-          !   END IF
-          !
-          !   frag_eff = DCMPLX ( fragmentation , 0.0D0 )
-          !
-          !ELSEIF ( fragmentation_model .EQ. 3 ) THEN	
-          !
-          !   strain_rate_qp = (qp(n_gas+3) - u_1_old) / (zeta - zeta_old)
-          !
-          !   IF ( (strain_rate_qp + 1.0 .GT. frag_thr) .AND. 							&	 
-          !			(fragmentation_flag .EQV. .FALSE.) )THEN
-          !
-          !	  fragmentation = 1.0D0
-          !	  fragmentation_flag = .TRUE.
-          !
-          !	  WRITE(*,*) 'Fragmentation at z = ',zeta
-          !
-          !   END IF
-          !
-          ! 
-          !	  frag_eff = DCMPLX ( fragmentation , 0.0D0 )
-          !
-          !END IF
 
        END IF
 
        ! ---- Check if the lateral degassing threshold is reached ---------------
 
        IF ( ( r_alfa_2 .GE. alfa2_lat_thr ) .AND.                               &
-            ( .NOT.lateral_degassing_flag ) ) THEN
+            ( lateral_degassing_flag ) .AND. ( .NOT.lateral_degassing ) ) THEN
 
-          lateral_degassing_flag = .TRUE.
+          lateral_degassing = .TRUE.
 
           WRITE(*,*) 'Lateral degassing from z = ',zeta
 

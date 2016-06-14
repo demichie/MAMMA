@@ -397,23 +397,9 @@ CONTAINS
           WRITE(input_unit, bubbles_parameters )
 
        ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                          &
-            ( drag_funct_model .EQ. 'darcy_Bai2011' ) .OR.                      &
-            ( drag_funct_model .EQ. 'darcy_Bai2010_LB' ) .OR.                   &
-            ( drag_funct_model .EQ. 'darcy_Bai2010_meas' ) .OR.                 &
-            ( drag_funct_model .EQ. 'darcy_Polacci2009' ) .OR.                  &
-            ( drag_funct_model .EQ. 'forchheimer_Bai2011' ) .OR.                &
-            ( drag_funct_model .EQ. 'forchheimer_Bai2010_LB' ) .OR.             &
-            ( drag_funct_model .EQ. 'forchheimer_Bai2010_meas' ) .OR.           &
-            ( drag_funct_model .EQ. 'forchheimer_Polacci2009' ) .OR.            &
             drag_funct_model .EQ. 'forchheimer' ) THEN
 
           WRITE(input_unit, forchheimer_parameters )
-
-       ELSEIF ( (drag_funct_model .EQ. 'forchheimer_mod') .OR.                  & 
-            (drag_funct_model .EQ. 'forchheimer_mod2') .OR.                     &  
-            (drag_funct_model .EQ. 'forchheimer_mod3') ) THEN
-
-          WRITE(input_unit, permeability_parameters )
 
        END IF
 
@@ -765,20 +751,14 @@ CONTAINS
     tau_d(1:n_gas) = 10.D0 ** log10_tau_d(1:n_gas)
     tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
-    IF ( (drag_funct_model .EQ. 'eval' ) .OR. (drag_funct_model .EQ. 'drag' ) ) &
-         THEN
+
+    IF ( (drag_funct_model .EQ. 'eval' ) .OR.                                   &
+         ( drag_funct_model .EQ. 'Klug_and_Cashman' ) .OR.                      &
+         (drag_funct_model .EQ. 'drag' ) ) THEN
 
        READ(input_unit, bubbles_parameters )
        
     ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
-         ( drag_funct_model .EQ. 'darcy_Bai2011' ) .OR.                         &
-         ( drag_funct_model .EQ. 'darcy_Bai2010_LB' ) .OR.                      &
-         ( drag_funct_model .EQ. 'darcy_Bai2010_meas' ) .OR.                    &
-         ( drag_funct_model .EQ. 'darcy_Polacci2009' ) .OR.                     &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2011' ) .OR.                   &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2010_LB' ) .OR.                &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2010_meas' ) .OR.              &
-         ( drag_funct_model .EQ. 'forchheimer_Polacci2009' ) .OR.               &
          ( drag_funct_model .EQ. 'forchheimer') ) THEN
        
        READ(input_unit, forchheimer_parameters )
@@ -801,18 +781,7 @@ CONTAINS
        WRITE(*,*) 'eval'
        WRITE(*,*) 'drag'
        WRITE(*,*) 'darcy'
-       WRITE(*,*) 'darcy_Bai2011'
-       WRITE(*,*) 'darcy_Bai2010_LB'
-       WRITE(*,*) 'darcy_Bai2010_meas'
-       WRITE(*,*) 'darcy_Polacci2009'
        WRITE(*,*) 'forchheimer'
-       WRITE(*,*) 'forchheimer_Bai2011'
-       WRITE(*,*) 'forchheimer_Bai2010_LB'
-       WRITE(*,*) 'forchheimer_Bai2010_meas'
-       WRITE(*,*) 'forchheimer_Polacci2009'
-       WRITE(*,*) 'forchheimer_mod'
-       WRITE(*,*) 'forchheimer_mod2'
-       WRITE(*,*) 'forchheimer_mod3'
        WRITE(*,*) ''
 
        CALL ABORT
@@ -858,23 +827,9 @@ CONTAINS
        WRITE(backup_unit, bubbles_parameters )
 
     ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR.                                &
-         ( drag_funct_model .EQ. 'darcy_Bai2011' ) .OR.                          &
-         ( drag_funct_model .EQ. 'darcy_Bai2010_LB' ) .OR.                       &
-         ( drag_funct_model .EQ. 'darcy_Bai2010_meas' ) .OR.                     &
-         ( drag_funct_model .EQ. 'darcy_Polacci2009' ) .OR.                      &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2011' ) .OR.                    &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2010_LB' ) .OR.                 &
-         ( drag_funct_model .EQ. 'forchheimer_Bai2010_meas' ) .OR.               &
-         ( drag_funct_model .EQ. 'forchheimer_Polacci2009' ) .OR.                &
          drag_funct_model .EQ. 'forchheimer' ) THEN
 
        WRITE(backup_unit, forchheimer_parameters )
-
-    ELSEIF ( (drag_funct_model .EQ. 'forchheimer_mod') .OR.                      &
-         (drag_funct_model .EQ. 'forchheimer_mod2') .OR.                         &
-         (drag_funct_model .EQ. 'forchheimer_mod3') ) THEN
-
-       WRITE(backup_unit, permeability_parameters )
 
     END IF
 
@@ -1046,7 +1001,7 @@ CONTAINS
        WRITE(dakota_unit,*) 'Exit mixture velocity', mix_velocity
        WRITE(dakota_unit,*) 'Mass flow rate', pi * radius * radius &
             * mix_velocity * rho_mix
-       WRITE(dakota_unit,*) 'Fragmentation', REAL(frag_eff)
+       WRITE(dakota_unit,*) 'Fragmentation', frag_eff
 
        CLOSE( dakota_unit )
 
@@ -1065,7 +1020,7 @@ CONTAINS
        WRITE(dakota_unit2,*) mach
        WRITE(dakota_unit2,*) mix_velocity
        WRITE(dakota_unit2,*) pi * radius * radius * mix_velocity * rho_mix
-       WRITE(dakota_unit2,*) REAL(frag_eff)
+       WRITE(dakota_unit2,*) frag_eff
 
        CLOSE( dakota_unit2 )
 

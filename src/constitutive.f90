@@ -54,7 +54,6 @@ MODULE constitutive
   REAL*8, ALLOCATABLE :: bar_e_d(:)  !< dissolved gas formation energy
   REAL*8, ALLOCATABLE :: bar_e_g(:)  !< exsolved gas formation energy
 
-  !~   REAL*8 :: bar_p_2    !< exsolved gas cohesion pressure
   REAL*8 :: bar_p_m         !< melt cohesion pressure
   REAL*8, ALLOCATABLE :: bar_p_c(:)  !< crystals cohesion pressure
   REAL*8, ALLOCATABLE :: bar_p_d(:)  !< dissolved gas cohesion pressure
@@ -246,9 +245,7 @@ MODULE constitutive
   CHARACTER*20 :: crystallization_model
 
   !> index of fragmentation in the interval [0;1]
-  COMPLEX*16 :: frag_eff
-
-  REAL*8 :: fragmentation
+  REAL*8 :: frag_eff
 
   !> Parameter to choose the fragmentation model:\n
   !> - fragmentation_model = 1  => volume fraction
@@ -301,11 +298,18 @@ MODULE constitutive
   !> Temperature for isothermal runs
   REAL*8 :: fixed_temp
 
-  !> Flag for lateral degassing flag:\n
+  !> Input flag for lateral degassing:\n
   !> - lateral_degassing_flag = .TRUE.  => lateral degassing is considered
   !> - lateral_degassing_flag = .FALSE. => no lateral degassing
   !> .
   LOGICAL :: lateral_degassing_flag
+
+  !> Flag for lateral degassing:\n
+  !> - lateral_degassing = .TRUE.  => lateral degassing is active
+  !> - lateral_degassing = .FALSE. => no lateral degassing
+  !> .
+  LOGICAL :: lateral_degassing
+
 
   !> Exsolved gas volume fraction threshold for lateral degassing 
   REAL*8 :: alfa2_lat_thr
@@ -579,8 +583,6 @@ CONTAINS
     beta(1:n_cry) = qp(n_gas+5+1:n_gas+5+n_cry)
     x_d_md(1:n_gas) = qp(n_gas+5+n_cry+1:n_gas+5+n_cry+n_gas)
 
-    !frag_eff = qp(n_gas+5+n_cry+n_gas+1)
-
     ! eval_densities requires: beta, x_d_md , p_1 , p_2 , T
 
     CALL eval_densities
@@ -776,7 +778,7 @@ CONTAINS
 
     mach = DREAL( u_mix / C_mix )
 
-    IF ( verbose_level .GE. 1 ) THEN
+    IF ( verbose_level .GE. 2 ) THEN
 
        WRITE(*,*) 'K_1,k_2',K_1,K_2
        WRITE(*,*) 'K_mix,rho_mix',K_mix,rho_mix
@@ -1181,6 +1183,7 @@ CONTAINS
        r_nh_term_impl )
 
     USE COMPLEXIFY 
+    USE geometry, ONLY : radius
     IMPLICIT NONE
 
     COMPLEX*16, INTENT(IN), OPTIONAL :: c_qp(n_vars)
@@ -1224,24 +1227,24 @@ CONTAINS
     !--------------- Evaluate the relaxation terms --------------
     CALL eval_relaxation_terms( relaxation_term )
 
-    !WRITE(*,*)'relaxation_term'
-    !WRITE(*,*)relaxation_term
-    !READ(*,*)
-
     !--------------- Evaluate the forces terms ------------------
     CALL eval_forces_terms( forces_term )
-
-    !WRITE(*,*)'forces_term'
-    !WRITE(*,*)forces_term
-    !READ(*,*)
-
 
     !--------------- Evaluate the forces terms ------------------
     CALL eval_source_terms( source_term )
 
-    !WRITE(*,*)'source_term'
-    !WRITE(*,*)source_term
-    !READ(*,*)
+    IF ( verbose_level .GE. 3 ) THEN
+
+       WRITE(*,*)'relaxation_term'
+       WRITE(*,*)relaxation_term / ( radius )**2
+    
+       WRITE(*,*)'forces_term'
+       WRITE(*,*)forces_term / ( radius )**2
+    
+       WRITE(*,*)'source_term'
+       WRITE(*,*)source_term / ( radius )**2
+    
+    END IF
 
 
     nh_term_impl = relaxation_term + forces_term + source_term
@@ -1401,8 +1404,6 @@ CONTAINS
     COMPLEX*16 :: visc_force_1 , visc_force_2
     COMPLEX*16 :: visc_force_1_rel , visc_force_2_rel
 
-    COMPLEX*16 :: q_lat
-
     REAL*8 :: gas_wall_drag
 
     INTEGER :: i
@@ -1410,8 +1411,6 @@ CONTAINS
     INTEGER :: idx
 
     REAL*8 :: frag_transition, t
-
-    q_lat = DCMPLX(0.D0,0.D0)
 
     frag_transition = frag_thr + 0.05D0
 
@@ -1460,22 +1459,16 @@ CONTAINS
 
     gas_wall_drag = 0.03D0
 
-    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * ABS( u_2 ) * u_2
+    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * CDABS( u_2 ) * u_2 
 
-    force_term(idx) = force_term(idx) + visc_force_2 * (frag_eff)
+    visc_force_1 = visc_force_1 * ( 1.D0 - frag_eff )
+    visc_force_2 = visc_force_2 * frag_eff
 
-    force_term(idx) = force_term(idx) + visc_force_1 * (1.0 - frag_eff)
-
-    !force_term(idx) = force_term(idx) + visc_force_2 * (1.0 - t)
-
-    !force_term(idx) = force_term(idx) + visc_force_1 * (t)
+    !visc_force_1 =  visc_force_1 * t
+    !visc_force_2 =  visc_force_2 * ( 1.0 - t )
 
 
-    IF ( lateral_degassing_flag ) THEN
-
-       force_term(idx) = force_term(idx) - 2.D0 * q_lat * radius * alfa_2*u_2
-
-    END IF
+    force_term(idx) = force_term(idx) + visc_force_2 + visc_force_1 
 
     ! Term for the relative velocity equation ----------------------------------
 
@@ -1488,17 +1481,12 @@ CONTAINS
        force_term(idx) = DCMPLX( 0.D0 , 0.D0 ) 
 
     ELSE
+
        visc_force_1_rel = visc_force_1 / ( ( 1.D0 - alfa_2 ) * rho_1 ) 
 
        visc_force_2_rel = - visc_force_2 / ( alfa_2 * rho_2 )
 
-       force_term(idx) = force_term(idx) + visc_force_2_rel * (frag_eff)
-
-       force_term(idx) = force_term(idx) + visc_force_1_rel * (1.0 - frag_eff)
-
-       !force_term(idx) = force_term(idx) + visc_force_2_rel * (1.0 - t)
-
-       !force_term(idx) = force_term(idx) + visc_force_1_rel * (t)
+       force_term(idx) = force_term(idx) + visc_force_2_rel + visc_force_1_rel
 
     END IF
 
@@ -1516,14 +1504,8 @@ CONTAINS
 
        force_term(idx) = - rho_mix * u_mix * grav * radius**2
 
-       force_term(idx) = force_term(idx) + 2.D0 * visc_force_2 * u_2 * (frag_eff)
-
-       force_term(idx) = force_term(idx) + 2.D0 * visc_force_1 * u_1            &
-            * (1.0 - frag_eff)
-
-       !force_term(idx) = force_term(idx) + 2.D0 * visc_force_2 * u_2 * (1.0 - t)
-
-       !force_term(idx) = force_term(idx) + 2.D0 * visc_force_1 * u_1 * (t)
+       force_term(idx) = force_term(idx) + 2.D0 * visc_force_2 * u_2            &
+            + 2.D0 * visc_force_1 * u_1
 
     END IF
 
@@ -1585,6 +1567,25 @@ CONTAINS
     idx = 0
 
     q_lat = DCMPLX(0.D0,0.D0)
+
+    IF ( lateral_degassing ) THEN
+       
+       CALL lithostatic_pressure
+       
+       IF ( p_2 .GE. p_lith ) THEN
+          
+          q_lat = ( rho_2 * alfa_2 * k_cr * ( p_2 - p_lith ) ) /       &
+               ( visc_2 * radius )
+          
+       ELSE
+          
+          q_lat = DCMPLX(0.D0,0.D0)
+          
+       END IF
+       
+    END IF
+
+
     water_mass_flux = DCMPLX(0.D0,0.D0)
 
     source_term(1:n_eqns) = DCMPLX(0.D0,0.D0)
@@ -1593,20 +1594,7 @@ CONTAINS
 
     idx = idx + 1
 
-    IF ( lateral_degassing_flag ) THEN
-
-       CALL lithostatic_pressure
-
-       IF ( p_2 .GE. p_lith ) THEN
-
-          q_lat = ( rho_2 * alfa_2 * k_cr * ( p_2 - p_lith ) ) / ( visc_2 *     &
-               radius )
-
-       ELSE
-
-          q_lat = 0.d0
-
-       END IF
+    IF ( lateral_degassing ) THEN
 
        source_term(idx) = - 2.D0 * q_lat * radius
 
@@ -1669,20 +1657,7 @@ CONTAINS
 
        idx = idx + 1
 
-       IF ( lateral_degassing_flag ) THEN
-
-          CALL lithostatic_pressure
-
-          IF ( p_2 .GE. p_lith ) THEN
-
-             q_lat = ( rho_g(i) * alfa_g(i) * k_cr * ( p_2 - p_lith ) ) /       &
-                  ( visc_2 * radius )
-
-          ELSE
-
-             q_lat = 0.d0
-
-          END IF
+       IF ( lateral_degassing ) THEN
 
           source_term(idx) = - 2.D0 * q_lat * radius
 
@@ -1697,13 +1672,20 @@ CONTAINS
     ! --- Mixture Momentum ------------------------------------------------------
     idx = idx + 1
 
-    source_term(idx) = DCMPLX(0.D0,0.D0)
+    IF ( lateral_degassing ) THEN
+
+       source_term(idx) = - 2.D0 * q_lat * radius * u_2
+
+    ELSE
+
+       source_term(idx) = DCMPLX(0.D0,0.D0)
+
+    END IF
 
     ! --- Relative Velocity -----------------------------------------------------
     idx = idx + 1
 
     source_term(idx) = DCMPLX(0.D0,0.D0)
-
 
     ! --- MIXTURE ENERGY --------------------------------------------------------
     idx = idx + 1
@@ -1714,7 +1696,7 @@ CONTAINS
 
     ELSE
 
-       IF ( lateral_degassing_flag ) THEN
+       IF ( lateral_degassing ) THEN
 
           source_term(idx) = - 2.D0 * q_lat * radius * alfa_2 * ( T * cv_2 +    &
                0.5D0 * u_2*u_2 )
@@ -2175,7 +2157,7 @@ CONTAINS
 
     CASE ( 'eval' ) 
 
-       IF ( ( EXPLOSIVE ) .AND. ( REAL(frag_eff) .GT. 0.D0 ) ) THEN
+       IF ( ( EXPLOSIVE ) .AND. ( frag_eff .GT. 0.D0 ) ) THEN
 
           tau_p = ( visc_mix ** ( 1.D0 - frag_eff ) * visc_2 ** frag_eff )      &
                / ( alfa_1 * alfa_2 * rho_mix )
@@ -2237,36 +2219,54 @@ CONTAINS
 
     COMPLEX*16 :: throat_radius
 
-    REAL*8 :: factor_temp
-
-    REAL*8 :: alfa_2_star, slope
-
-    REAL*8 :: visc_thr, visc_exp, factor_temp2
-
     !REAL*8 :: frag_transition, t
 
     SELECT CASE ( drag_funct_model )
 
     CASE DEFAULT
 
-       drag_funct = 1.D0
+       effusive_drag = DCMPLX(1.D0,0.D0)
+
+       explosive_drag = effusive_drag
 
     CASE ( 'eval' )
 
        ! permeability model
 
-       !CALL f_permkc
-
-       k_1 = 2.04D-20 * ((100.0 * alfa_2)**5.24 )
-
-       inv_permkc = 1.0D0 / k_1 
+       CALL f_permkc
 
        diam = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density              &
             * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
 
-       Rey = alfa_2 * rho_2 * diam * ABS( u_2 - u_1 ) / visc_2
+       Rey = alfa_2 * rho_2 * diam * CDABS( u_2 - u_1 ) / visc_2
 
-       drag_funct = visc_2 * inv_permkc * ( 1.D0 + 1.D-2 * Rey / alfa_1 )
+       effusive_drag = visc_2 * inv_permkc * ( 1.D0 + 1.D-2 * Rey / alfa_1 )
+
+       explosive_drag = effusive_drag
+
+       IF ( verbose_level .GE. 3 ) THEN
+
+          WRITE(*,*) 'Rey',Rey
+          WRITE(*,*) 'visc_2',visc_2
+          WRITE(*,*) 'rho_2',rho_2
+          WRITE(*,*) 'inv_permkc',inv_permkc
+
+       END IF
+
+    CASE ( 'Klug_and_Cashman' )
+
+       ! permeability model
+
+       CALL f_permkc
+
+       diam = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density              &
+            * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
+
+       Rey = alfa_2 * rho_2 * diam * CDABS( u_2 - u_1 ) / visc_2
+
+       effusive_drag = visc_2 * inv_permkc * ( 1.D0 + 1.D-2 * Rey / alfa_1 )
+
+       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
 
     CASE ( 'darcy' )
 
@@ -2282,56 +2282,6 @@ CONTAINS
        effusive_drag = visc_2 / k_1
 
        explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'darcy_Bai2011' )
-
-
-       k_1 = 2.04D-20 * ( 100.0 * alfa_2 )**5.24D0 
-
-       effusive_drag = visc_2 / k_1
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'darcy_Bai2010_LB' )
-
-       k_1 = 2.35D-20 * ( 100.0 * alfa_2 )**5.00D0 
-
-       effusive_drag = visc_2 / k_1
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'darcy_Bai2010_meas' )
-
-       k_1 = 5.33D-21 * ( 100.0 * alfa_2 )**5.00D0 
-
-       effusive_drag = visc_2 / k_1
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'darcy_Polacci2009' )
-
-       k_1 = 1.5D-20 * ( 100.0 * alfa_2 )**6.0D0 
-
-       effusive_drag = visc_2 / k_1
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
 
     CASE ( 'forchheimer' )
 
@@ -2362,180 +2312,60 @@ CONTAINS
 
        END IF
 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-
-    CASE ( 'forchheimer_Bai2011' )
-
-       k_1 = 2.0D-20 * ( 100.0 * alfa_2 )**5.24D0 
-
-       k_2 = 1.11D4 * ( k_1 )**(0.94D0)
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'forchheimer_Bai2010_LB' )
-
-       k_1 = 2.35D-20 * ( 100.0 * alfa_2 )**5.00D0 
-
-       k_2 = 1.11D4 * ( k_1 )**(0.94D0)
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'forchheimer_Bai2010_meas' )
-
-       k_1 = 5.33D-21 * ( 100.0 * alfa_2 )**5.00D0 
-
-       k_2 = 1.11D4 * ( k_1 )**(0.94D0)
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-    CASE ( 'forchheimer_Polacci2009' )
-
-       k_1 = 1.5D-20 * ( 100.0 * alfa_2 )**6.0D0 
-
-       k_2 = 1.11D4 * ( k_1 )**(0.94D0)
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-
-    CASE ( 'forchheimer_mod' )
-
-       ! permeability model
-
-       !k_1 = 2.0D-20 * (xa * 100.0 * alfa_2)**5.24D0 *                        &
-       !		(100.0 * REAL(alfa_2))**( (100.0 * REAL(alfa_2) / xb)**xc)
-
-       k_1 = 2.0D-20 * (xa * 100.0 * alfa_2)**5.24D0 *                          &
-            (100.0 * (alfa_2))**( (100.0 * (alfa_2) / xb)**xc)
-
-       k_2 = 1.11D4 * ( k_1 )**(0.94D0)
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-
-    CASE ( 'forchheimer_mod2' )
-
-       ! permeability model
-
-       CALL mixture_viscosity
-
-       visc_thr = 1.0D7
-
-       visc_exp = 5.0D0
-
-       k_1 = 2.0D-20 * ( 100.0 * alfa_2 )**5.24D0 
-
-       k_2 = ( k_1 / ( 4.97D-5 ) ) ** (1.D0 / 1.06D0)
-
-       inv_permkc = 1.0D0 / k_1 
-
-       drag_funct = visc_2 * inv_permkc
-
-       effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
-
-       explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2 * CDABS( u_2 - u_1 ) 
-
-       drag_funct = ( effusive_drag ** ( 1.D0 - frag_eff ) ) *                  &
-            ( ( explosive_drag + 1.D-10 ) ** frag_eff )
-
-       !factor_temp = ( (100.0 * alfa_2)**( (100.0 * alfa_2 / xb)**xc ) )
-
-       alfa_2_star = xb
-
-       slope = xa
-
-       factor_temp = ( slope + DABS( (REAL(alfa_2) / alfa_2_star)**xc - 1.0D0)  &
-            - ( (REAL(alfa_2) / alfa_2_star)**xc - 1.0D0) )/ ( 2.0D0 *          &
-            (slope + DABS( (REAL(alfa_2) / alfa_2_star)**xc - 1.0D0) ))
-
-
-       factor_temp = factor_temp * (2.0 * slope + 2.0) / (slope + 2.0D0 )
-
-       factor_temp2 = 1.0D0 / ( 1.0D0 + (REAL(visc_mix) / visc_thr)**visc_exp )
-
-       !IF (REAL(alfa_2) .GT. 0.5 ) THEN
-       !   WRITE(*,*) 'alfa_2 = ',alfa_2
-       !   WRITE(*,*) 'factor_temp = ',factor_temp
-       !   WRITE(*,*) 'factor_temp2 = ',factor_temp2
-       !   READ(*,*)
-       !END IF
-
-
-       factor_temp = factor_temp**factor_temp2
-
-       drag_funct = drag_funct * factor_temp
-
-    CASE ( 'forchheimer_mod3' )
-
-       !drag_funct = 1.0D0 / ( 1.D-25 + xa * (100.0 * alfa_2)**                             &
-       !				( 5.0D0 + ( (100.0 * (alfa_2) / xb)**xc) ) )
-
-       drag_funct = 1.0D0 / ( 1.D-25 + xa * (100.0 * alfa_2)**                  &
-            ( 5.0D0 - 1.D0 + ( MAX( 100.0 * REAL(alfa_2) / xb, 1.0D0)**xc) ) )
-
-
     CASE ('drag')
 
-       radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
+       radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi * ( alfa_1 ) ) )             &
+            ** ( 1.D0 / 3.D0 )
 
-       Rey = 2.D0 * radius_bubble * ABS( u_2 - u_1 ) / visc_1
+       Rey = 2.D0 * radius_bubble * CDABS( u_2 - u_1 ) / visc_1
 
        C_D = DREAL ( 24.0D0 / Rey * ( 1.0D0 + 1.0D0 / 8.0D0 * Rey**0.72) )
 
        effusive_drag = 3.D0 * C_D / ( 8.D0 * radius_bubble ) * rho_1            &
             * CDABS( u_2 - u_1 )
 
-       drag_funct = effusive_drag 
+       explosive_drag = effusive_drag
 
     CASE ( 'constant' )
 
-       drag_funct = 1.D0
+       effusive_drag = DCMPLX(1.D0,0.D0)
+
+       explosive_drag = effusive_drag
 
     CASE ( 'single_velocity' )
 
-       drag_funct = 1.D0
+       effusive_drag = DCMPLX(1.D0,0.D0)
+
+       explosive_drag = effusive_drag
 
     END SELECT
 
-    !drag_funct = drag_funct * ( max( (0.5D0 - REAL(alfa_2))/0.50D0,0.0D0)**4.D0)
+    drag_funct = effusive_drag ** ( 1.D0 - frag_eff ) *                         &
+         explosive_drag  ** frag_eff
 
     drag_funct = drag_funct_coeff * drag_funct
-
-    !drag_funct = DCMPLX(ABS(REAL(drag_funct)),0.0D0)
-
-    !WRITE(*,*) drag_funct
 
     velocity_relaxation = - drag_funct * ( u_1 - u_2 ) * ( rho_mix              &
          / ( rho_1 * rho_2 ) )
 
-    !velocity_relaxation = 0.0
+    IF ( drag_funct_model .EQ. eval ) THEN
+
+       velocity_relaxation = - drag_funct * ( u_1-u_2 ) / ( x_1 * x_2 * rho_mix )
+
+    ELSE
+
+       velocity_relaxation = - drag_funct * ( u_1 - u_2 ) * ( rho_mix           &
+            / ( rho_1 * rho_2 ) )
+       
+    END IF
+
+    IF ( verbose_level .GE. 3 ) THEN
+
+       WRITE(*,*)  drag_funct , ( u_1 - u_2 ) , x_1 , x_2 , rho_mix 
+       WRITE(*,*)  - drag_funct * ( u_1 - u_2 ) / ( x_1 * x_2 * rho_mix ) 
+       WRITE(*,*) 'velocity_relaxation',velocity_relaxation
+
+    END IF
 
   END SUBROUTINE vel_relax_term
 
@@ -2919,7 +2749,6 @@ CONTAINS
     CASE ('Costa2005')
 
        !-----------Costa
-
        c1 = 0.9995D0
        c2 = 0.4D0
        c3 = 1.D0

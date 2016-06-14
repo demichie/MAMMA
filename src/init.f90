@@ -128,7 +128,7 @@ CONTAINS
        beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
        
        r_u_1 = u_0
-       r_u_2 = u_0 + 1.D-5
+       r_u_2 = u_0 + 1.D-10
        
        ! evaluate the volume fractions of the two phases
        
