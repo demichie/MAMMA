@@ -25,8 +25,8 @@ MODULE inpout
 
   ! -- Variables for the namelist EXSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_g , cv_g , gamma_g , T0_g ,                     &
-       bar_e_g , visc_2 , lateral_degassing_flag , rho_cr , k_cr ,              &
-       alfa2_lat_thr , perm0, Pc_g, Tc_g, a_g, b_g, s0_g, gas_law
+       bar_e_g , visc_2 , lateral_degassing_flag , alfa2_lat_thr , perm0, Pc_g, &
+       Tc_g, a_g, b_g, s0_g, gas_law
 
   ! -- Variables for the namelist DISSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_d , C0_d , cv_d , gamma_d , p0_d , T0_d ,       &
@@ -56,6 +56,9 @@ MODULE inpout
 
   ! -- Variables for the namelist SOURCE_PARAMETERS
   USE constitutive, ONLY : grav
+
+  ! -- Variables for the namelist COUNTRY_ROCK_PARAMETERS
+  USE constitutive, ONLY : rho_cr, k_cr
 
   ! -- Variables for the namelist RELAXATION_PARAMETERS
   USE constitutive, ONLY : drag_funct_model , drag_funct_coeff , p_relax_model ,&
@@ -119,8 +122,7 @@ MODULE inpout
 
   NAMELIST / exsolved_gas_parameters / gas_law, Pc_g , Tc_g , cv_g , gamma_g ,  &
        rho0_g , T0_g , bar_e_g , s0_g, visc_2 , lateral_degassing_flag ,        &
-       alfa2_lat_thr , perm0 , rho_cr , log10_k_cr
-
+       alfa2_lat_thr , perm0
   NAMELIST / dissolved_gas_parameters / rho0_d , C0_d , cv_d , gamma_d , p0_d , &
        T0_d , bar_e_d , bar_p_d , s0_d , exsol_model , solub , solub_exp
 
@@ -143,6 +145,8 @@ MODULE inpout
 
   NAMELIST / source_parameters /  grav
 
+  NAMELIST / country_rock_parameters / rho_cr , log10_k_cr
+ 
   NAMELIST / relaxation_parameters / drag_funct_model , log10_drag_funct_coeff ,&
        p_relax_model , log10_tau_p_coeff, log10_tau_c , log10_tau_d
 
@@ -203,7 +207,7 @@ CONTAINS
     NAMELIST / exsolved_gas_parameters_init / gas_law_init, Pc_g_init ,       &
          Tc_g_init , cv_g_init , gamma_g_init , rho0_g_init , T0_g_init ,     &
          bar_e_g_init , s0_g_init, visc_2 , lateral_degassing_flag ,          &
-         alfa2_lat_thr , perm0 , rho_cr , log10_k_cr
+         alfa2_lat_thr , perm0
 
     NAMELIST / dissolved_gas_parameters_init / rho0_d_init ,                  &
          C0_d_init , cv_d_init , gamma_d_init , p0_d_init , T0_d_init ,       &
@@ -259,8 +263,6 @@ CONTAINS
     lateral_degassing_flag = .FALSE.
     alfa2_lat_thr = 1.1D0
     perm0 = 5.0D-3
-    rho_cr = 2600
-    log10_k_cr = -12
 
     n_gas_init = 1
     n_cry_init = 1
@@ -328,6 +330,12 @@ CONTAINS
     !-- Inizialization of the Variables for the namelist source_parameters
     grav = 9.81D0
 
+
+    !-- Inizialization of the Variables for the namelist country_rock_parameters
+    rho_cr = 2600
+    log10_k_cr = -12
+
+
     !-- Initialization of the variables for the namelist relaxation_parameters
     drag_funct_model = 'forchheimer'
     log10_drag_funct_coeff = 1.0D0
@@ -389,6 +397,12 @@ CONTAINS
        WRITE(input_unit, external_water_parameters )
 
        WRITE(input_unit, source_parameters )
+
+       IF ( lateral_degassing_flag ) THEN
+
+          WRITE(input_unit, country_rock_parameters )
+
+       END IF
 
        WRITE(input_unit, relaxation_parameters_init )
 
@@ -524,9 +538,6 @@ CONTAINS
        CALL abort
 
     END IF
-
-    k_cr = 10 ** log10_k_cr
-
 
     ! ------- READ dissolved_gas_parameters NAMELIST --------------------------
     READ(input_unit, dissolved_gas_parameters )
@@ -734,13 +745,22 @@ CONTAINS
 
     END IF
 
-    ! ------- READ external_water_parameters NAMELIST --------------------------
+    ! ------- READ external_water_parameters NAMELIST ---------------------------
     READ(input_unit, external_water_parameters)
 
-    ! ------- READ source_parameters NAMELIST ---------------------------------
+    ! ------- READ source_parameters NAMELIST -----------------------------------
     READ(input_unit, source_parameters)
 
-    ! ------- READ relaxation_parameters NAMELIST -----------------------------
+    ! ------- READ country_rock_parameters NAMELIST -----------------------------
+    IF ( lateral_degassing_flag ) THEN
+       
+       READ(input_unit, country_rock_parameters )
+       
+    END IF
+
+    k_cr = 10 ** log10_k_cr
+
+    ! ------- READ relaxation_parameters NAMELIST -------------------------------
     ALLOCATE( log10_tau_d(n_gas) )
     ALLOCATE( log10_tau_c(n_cry) )
 
@@ -819,6 +839,12 @@ CONTAINS
     WRITE(backup_unit, external_water_parameters )
 
     WRITE(backup_unit, source_parameters )
+
+    IF ( lateral_degassing_flag ) THEN
+       
+       WRITE(backup_unit, country_rock_parameters )
+       
+    END IF
 
     WRITE(backup_unit, relaxation_parameters )
 
@@ -911,6 +937,8 @@ CONTAINS
        steady_p_file = TRIM(run_name)//'_p.std'
 
        OPEN(steady_p_output_unit,FILE=steady_p_file,STATUS='UNKNOWN')
+
+       OPEN(steady_q_output_unit,FILE='test.out',STATUS='UNKNOWN')
        !WRITE(steady_p_output_unit,*) radius_fixed
        !WRITE(steady_p_output_unit,*) radius_min
        !WRITE(steady_p_output_unit,*) radius_max
@@ -948,6 +976,25 @@ CONTAINS
 
 1006 FORMAT(4e20.12) 
 
+
+    WRITE(steady_q_output_unit,1007,advance="no") zeta
+
+    DO i = 1,n_vars
+
+       WRITE(steady_q_output_unit,1007,advance="no") qp(i)
+
+    END DO
+
+    DO i = 1,1+n_cry+n_gas+n_gas+4
+
+       WRITE(steady_q_output_unit,1007,advance="no") qp2(i)
+
+    END DO
+       
+    WRITE(steady_q_output_unit,1007) radius
+
+1007 FORMAT(1x,e15.8)
+
     IF ( zeta .EQ. zeta_exit ) THEN
 
        rho1 = qp2(1)
@@ -979,6 +1026,7 @@ CONTAINS
 
 
        CLOSE(steady_p_output_unit)
+       CLOSE(steady_q_output_unit)
 
        OPEN( dakota_unit,FILE='MAMMA.out',STATUS='UNKNOWN')
 

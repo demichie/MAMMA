@@ -383,6 +383,7 @@ CONTAINS
        V_1 = 0.5D0 * ( V_0 + V_2 )
 
        WRITE(*,*) '********* V_inlet = ',V_1,'********** iter = ', iter
+       WRITE(*,*) 'V_0 = ',V_0,' V_1 = ',V_1,' V_2 = ',V_2
        WRITE(*,*) 'Delta V = ', 0.5D0 * ( V_2 - V_0 )
 
        u_inlet = V_1
@@ -493,16 +494,6 @@ CONTAINS
 
        END IF
 
-       IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                         &
-            ( zeta .GE. zN ) .AND. ( extrap_flag .NE. 4 )                       &
-            ! .AND. ( extrap_flag .NE. -3 )                                       & 
-          ) THEN
-
-          WRITE(*,*) 'Relative change in flow rate', ( V_2 - V_0 ) / V_0
-
-          check_flow_rate = .TRUE.
-
-       END IF
 
        IF ( ABS(r_p - p_out) .GT. p_out ) THEN
 
@@ -557,13 +548,16 @@ CONTAINS
 
        END IF
 
-       IF ( ABS( V_2 - V_0 ) .LT. 1.0D-15 ) THEN
+       IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                         &
+            ( zeta .GE. zN ) .AND. ( extrap_flag .NE. 4 )                       &
+            ! .AND. ( extrap_flag .NE. -3 )                                       & 
+          ) THEN
 
-          V_2 = 1.2*V_1
-          V_0 = 0.60*V_1           
+          WRITE(*,*) 'Relative change in flow rate', ( V_2 - V_0 ) / V_0
+
+          check_flow_rate = .TRUE.
 
        END IF
-
 
        IF ( verbose_level .GE. 1 ) READ(*,*)
 
@@ -763,8 +757,12 @@ CONTAINS
        zeta_lith = zeta
 
        CALL update_radius(zeta)
+       
+       IF ( verbose_level .GE. 1 ) THEN 
+       
+          WRITE(*,*) 'zeta, radius, counter',zeta, radius, counter
 
-       !WRITE(*,*) zeta, radius, counter
+       END IF
 
        CALL eval_fluxes_qp( r_qp = qp_old , r_flux = fluxes_old )
 

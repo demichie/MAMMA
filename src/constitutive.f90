@@ -2288,6 +2288,7 @@ CONTAINS
        ! Forchheimer (Eq. 16 Degruyter et al. 2012)
 
        IF ( REAL(alfa_2) .GT. 0.0001 ) THEN
+
           radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density  &
                * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
 
@@ -2297,7 +2298,6 @@ CONTAINS
 
           k_2 = throat_radius / friction_coefficient * alfa_2 ** ( ( 1.D0 +     &
                3.D0 * tortuosity_factor ) / 2.D0 )
-
 
           effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
 
@@ -2341,14 +2341,14 @@ CONTAINS
     END SELECT
 
     drag_funct = effusive_drag ** ( 1.D0 - frag_eff ) *                         &
-         explosive_drag  ** frag_eff
+         ( explosive_drag + 1.D-10 ) ** frag_eff
 
     drag_funct = drag_funct_coeff * drag_funct
 
     velocity_relaxation = - drag_funct * ( u_1 - u_2 ) * ( rho_mix              &
          / ( rho_1 * rho_2 ) )
 
-    IF ( drag_funct_model .EQ. eval ) THEN
+    IF ( drag_funct_model .EQ. 'eval' ) THEN
 
        velocity_relaxation = - drag_funct * ( u_1-u_2 ) / ( x_1 * x_2 * rho_mix )
 
