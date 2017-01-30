@@ -718,6 +718,28 @@ CONTAINS
 
     END IF
 
+    IF ( (.NOT. (bubbles_model .EQ. 'none' ) ) .AND.            & 
+         (.NOT. (bubbles_model .EQ. 'Costa2007' ) ) .AND.                      & 
+         (.NOT. (bubbles_model .EQ. 'Einstein' ) ) .AND.             & 
+         (.NOT. (bubbles_model .EQ. 'Quane-Russel' ) ) .AND.                         & 
+         (.NOT. (bubbles_model .EQ. 'Eilers' ) ) .AND.             & 
+         (.NOT. (bubbles_model .EQ. 'Sibree' ) ) ) THEN
+
+       WRITE(*,*) ''
+       WRITE(*,*) 'Wrong bubbles model chosen.'
+       WRITE(*,*) 'Please choose between:'
+       WRITE(*,*) ''
+       WRITE(*,*) 'none'
+       WRITE(*,*) 'Costa2007'
+       WRITE(*,*) 'Einstein'
+       WRITE(*,*) 'Quane-Russel'
+       WRITE(*,*) 'Eilers'
+       WRITE(*,*) 'Sibree'
+       WRITE(*,*) ''
+
+       CALL ABORT
+
+    END IF
 
 
     ! ------- READ temperature_parameters NAMELIST ----------------------------
