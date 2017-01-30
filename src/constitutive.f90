@@ -2868,7 +2868,10 @@ CONTAINS
   SUBROUTINE f_bubbles
 
     USE complexify 
+    USE geometry, ONLY : radius
     IMPLICIT NONE
+
+    REAL*8 :: Ca, gamma_Ca
 
     SELECT CASE ( bubbles_model )
 
@@ -2879,6 +2882,17 @@ CONTAINS
     CASE ( 'none' )
 
        visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+
+    CASE ( 'Costa2007' )
+
+       gamma_Ca = 0.25D0
+
+       Ca =  r_a * visc_melt * (8.00D0 * (u_mix * pi * radius**2)               &
+	         / (3.0D0 * pi * radius**3.0D0)) / gamma_Ca
+
+       visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                        & 
+	* ((1.0D0/(1.0D0-alfa_2))+ 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
+
 
     CASE ( 'Einstein' )
 
