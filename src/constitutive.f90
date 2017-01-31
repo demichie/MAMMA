@@ -411,6 +411,12 @@ MODULE constitutive
   !> - inst_vaporization = .FALSE.  => injection as liquid
   LOGICAL :: inst_vaporization
 
+  !> Aquifer type:\n
+  !> - 'confined'
+  !> - 'unconfined'
+  !> .
+  CHARACTER*30 :: aquifer_type
+
   !> Total water influx
   REAL*8 :: total_water_influx
 
@@ -1606,6 +1612,8 @@ CONTAINS
 
     IF ( ext_water ) THEN
 
+       rho_w = 971.80  ! 80C. For shallow aquifers, the effect of P is expected to be less important
+
        IF ( ( zeta_lith .GT. min_z_influx ) .AND.                               &
             ( zeta_lith .LT. min_z_influx + delta_z_influx ) ) THEN
 
@@ -1615,24 +1623,43 @@ CONTAINS
 
           ELSE
 
-             rho_w = 1000;
+             IF( aquifer_type .EQ. 'unconfined' ) THEN
+                
+		CALL hydrostatic_pressure
 
-             CALL hydrostatic_pressure
+                IF ( p_hydro .GE. REAL(p_1) ) THEN
+                  
+                   visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
 
-             IF ( p_hydro .GE. REAL(p_1) ) THEN
-
-                visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
-
-                water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr /    &
-                     visc_w * ( p_hydro - p_1 ) / radius
+                   water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr /   &
+                        visc_w * ( p_hydro - p_1 ) / radius
                      
-             ELSE
+                ELSE
 
-                water_mass_flux = DCMPLX( 0.D0 , 0.D0 )
+                   water_mass_flux = DCMPLX( 0.D0 , 0.D0 )
 
-             END IF
+                END IF
+	    
+	     ELSEIF( aquifer_type .EQ. 'confined') THEN
 
-          END IF
+                CALL lithostatic_pressure
+
+                IF ( p_lith .GE. REAL(p_1) ) THEN
+                
+                   visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
+
+                   water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr /   &
+                        visc_w * ( p_lith - p_1 ) / radius
+                     
+                ELSE
+
+                   water_mass_flux = DCMPLX( 0.D0 , 0.D0 )
+
+                END IF
+
+	    END IF
+
+       END IF
 
        ELSE
 
@@ -2125,7 +2152,7 @@ CONTAINS
     USE complexify 
     IMPLICIT NONE
 
-    p_hydro = (  min_z_influx + delta_z_influx - zeta_lith ) * rho_w * grav
+    p_hydro = ( zN - zeta_lith ) * rho_w * grav
 
   END SUBROUTINE hydrostatic_pressure
 
