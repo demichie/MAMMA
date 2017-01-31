@@ -13,18 +13,18 @@
 !> Version 1.0:\n
 !> - 1D steady flow for axysimmetric geometry with variable radius
 !> .
-!> \authors Mattia de' Michieli Vitturi (*,**), Giuseppe La Spina (***)\n
+!> \authors Mattia de' Michieli Vitturi (*), Giuseppe La Spina (**), Alvaro Aravena Ponce (***)\n
 !> (*) Istituto Nazionale di Geofisica e vulcanologia, sezione di Pisa\n
 !>     Via della Faggiola, 36\n
 !>     I-56126 Pisa, Italy \n
-!>     E-mail: demichie@pi.ingv.it \n
-!> (**) School of Earth and Space Exploration, Arizona State University \n
-!>      Tempe, AZ, USA \n
-!>      E-mail: mdemichi@asu.edu \n
-!> (***) School of Earth, Atmospheric and Environmental Sciences \n
+!>     E-mail: mattia.demichielivitturi@ingv.it \n
+!> (**) School of Earth, Atmospheric and Environmental Sciences \n
 !>       The University of Manchester, \n
 !>       Oxford Road, Manchester, M13 9PL. \n
 !>       E-mail: giuseppe.laspina@manchester.ac.uk \n
+!> (***) Dipertimento di Scienze della Terra \n
+!>       Universita di Firenze, \n
+!>       Florence, Italy
 !*********************************************************************
 
 !> \brief Main Program 
