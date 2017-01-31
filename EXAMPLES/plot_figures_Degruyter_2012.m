@@ -137,7 +137,6 @@ semilogx(p_mix,alfa_2,'r');
 title('(b)');
 xlabel('Pressure (Pa)');
 ylim([0,1]);
-set(gca,'YDir','reverse')
 legend('p_1','p_2','p_{mix}');
 hold all;
 xlim([1e5,1e9]);
