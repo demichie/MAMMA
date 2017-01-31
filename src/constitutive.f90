@@ -2061,16 +2061,16 @@ CONTAINS
        
     CASE ( 'alphaMelts') 
 
-       crystal_mass_fraction(1:n_cry) = ( fit(1,1:n_cry) * p_1_bar * p_1_bar    &
-            + fit(2,1:n_cry) * T_celsius * T_celsius                            &
-            + fit(3,1:n_cry) * x_d_md_wt_tot * x_d_md_wt_tot                    &
-            + fit(4,1:n_cry) * p_1_bar * T_celsius                              &
-            + fit(5,1:n_cry) * T_celsius * x_d_md_wt_tot                        &
-            + fit(6,1:n_cry) * x_d_md_wt_tot * p_1_bar                          &
-            + fit(7,1:n_cry) * p_1_bar                                          &
-            + fit(8,1:n_cry) * T_celsius                                        &
-            + fit(9,1:n_cry) * x_d_md_wt_tot                                    &
-            + fit(10,1:n_cry) ) / 100.D0
+       crystal_mass_fraction(1:n_cry) = ( fit(1:n_cry,1) * p_1_bar * p_1_bar    &
+            + fit(1:n_cry,2) * T_celsius * T_celsius                            &
+            + fit(1:n_cry,3) * x_d_md_wt_tot * x_d_md_wt_tot                    &
+            + fit(1:n_cry,4) * p_1_bar * T_celsius                              &
+            + fit(1:n_cry,5) * T_celsius * x_d_md_wt_tot                        &
+            + fit(1:n_cry,6) * x_d_md_wt_tot * p_1_bar                          &
+            + fit(1:n_cry,7) * p_1_bar                                          &
+            + fit(1:n_cry,8) * T_celsius                                        &
+            + fit(1:n_cry,9) * x_d_md_wt_tot                                    &
+            + fit(1:n_cry,10) ) / 100.D0
        
        DO j=1,n_cry
           
