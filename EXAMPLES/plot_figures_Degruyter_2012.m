@@ -130,14 +130,13 @@ legend('p_1','p_2','p_{mix}');
 hold all;
 
 subplot(1,3,2)
-semilogx(p_1,alfa_1,'k');
+semilogx(p_1,alfa_2,'k');
 hold on;
-semilogx(p_2,alfa_1,'k:');
-semilogx(p_mix,alfa_1,'r');
+semilogx(p_2,alfa_2,'k:');
+semilogx(p_mix,alfa_2,'r');
 title('(b)');
 xlabel('Pressure (Pa)');
 ylim([0,1]);
-ylabel('Gas volume fraction (m)');
 set(gca,'YDir','reverse')
 legend('p_1','p_2','p_{mix}');
 hold all;
