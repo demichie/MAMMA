@@ -1,5 +1,3 @@
 <map id="constitutive::vel_relax_term" name="constitutive::vel_relax_term">
-<area shape="rect" id="node2" href="$classconstitutive.html#a0fda27dcff7a4092924e8199d41a63f6" title="Mixture viscosity. " alt="" coords="238,23,378,65"/>
-<area shape="rect" id="node3" href="$classconstitutive.html#ada97267098e4c98be778d9c76713164f" title="Magma viscosity. " alt="" coords="431,5,577,32"/>
-<area shape="rect" id="node4" href="$classconstitutive.html#a63d78b8ba91e4bdd49119b67169edc16" title="constitutive::f_bubbles" alt="" coords="427,56,581,83"/>
+<area shape="rect" id="node2" href="$classconstitutive.html#afc328dcb0746d42517e1042ed1cb3cb4" title="Magma permeability. " alt="" coords="238,5,389,32"/>
 </map>

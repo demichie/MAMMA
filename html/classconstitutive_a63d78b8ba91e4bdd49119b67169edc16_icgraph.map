@@ -1,8 +1,7 @@
 <map id="constitutive::f_bubbles" name="constitutive::f_bubbles">
-<area shape="rect" id="node2" href="$classconstitutive.html#a09e4dcc6d17b5eed6c2114ec0a2579a0" title="Conservative to physical variables. " alt="" coords="415,5,564,32"/>
+<area shape="rect" id="node2" href="$classconstitutive.html#a09e4dcc6d17b5eed6c2114ec0a2579a0" title="Conservative to physical variables. " alt="" coords="397,5,547,32"/>
 <area shape="rect" id="node4" href="$classconstitutive.html#a0fda27dcff7a4092924e8199d41a63f6" title="Mixture viscosity. " alt="" coords="209,57,349,98"/>
-<area shape="rect" id="node3" href="$classinpout.html#a2c792d5cbba7c092600f8d7aa4bc4c7f" title="Write the steady solution on the output unit. " alt="" coords="629,5,776,32"/>
-<area shape="rect" id="node5" href="$classconstitutive.html#a516b12b759328c81b034b839ddb86337" title="Force terms. " alt="" coords="429,57,550,98"/>
-<area shape="rect" id="node6" href="$classconstitutive.html#aea435309cb10222a1bcbc1b20ded1f0c" title="Pressure relaxation term. " alt="" coords="425,122,554,163"/>
-<area shape="rect" id="node7" href="$classconstitutive.html#a6cc6e971b11378e51b6e95c135efdc87" title="Velocity relaxation term. " alt="" coords="398,188,581,215"/>
+<area shape="rect" id="node3" href="$classinpout.html#a2c792d5cbba7c092600f8d7aa4bc4c7f" title="Write the steady solution on the output unit. " alt="" coords="595,5,741,32"/>
+<area shape="rect" id="node5" href="$classconstitutive.html#a516b12b759328c81b034b839ddb86337" title="Force terms. " alt="" coords="411,57,533,98"/>
+<area shape="rect" id="node6" href="$classconstitutive.html#aea435309cb10222a1bcbc1b20ded1f0c" title="Pressure relaxation term. " alt="" coords="407,122,537,163"/>
 </map>

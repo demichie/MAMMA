@@ -1,7 +1,6 @@
 var searchData=
 [
   ['f_5falfa',['f_alfa',['../classconstitutive.html#ae22b267e5ec94ec0a0485142f1ad0c65',1,'constitutive']]],
-  ['f_5falfa2',['f_alfa2',['../classconstitutive.html#a18ecc90bb6a5adbec74edd4984b31884',1,'constitutive']]],
   ['f_5falfa3',['f_alfa3',['../classconstitutive.html#a671ae281e22c39423c189de3827132bc',1,'constitutive']]],
   ['f_5fbeta_5feq',['f_beta_eq',['../classconstitutive.html#ae3e1c288a8201a36d3909fbd555b019d',1,'constitutive']]],
   ['f_5fbubbles',['f_bubbles',['../classconstitutive.html#a63d78b8ba91e4bdd49119b67169edc16',1,'constitutive']]],

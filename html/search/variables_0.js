@@ -6,7 +6,6 @@ var searchData=
   ['alfa2_5flat_5fthr',['alfa2_lat_thr',['../classconstitutive.html#a94717a257d31e79eb366575d23a95678',1,'constitutive']]],
   ['alfa_5f1',['alfa_1',['../classconstitutive.html#a077e7ddf058fd3294039d370bc70be62',1,'constitutive']]],
   ['alfa_5f2',['alfa_2',['../classconstitutive.html#ab255ecf0fa0c43151e6a091339b122d9',1,'constitutive']]],
-  ['alfa_5fc_5f1',['alfa_c_1',['../classconstitutive.html#a8ec997901e9b3e9166d36e447257c74a',1,'constitutive']]],
   ['alfa_5fd_5f1',['alfa_d_1',['../classconstitutive.html#af8eb2ea24d411b3a8ef1504a78451f64',1,'constitutive']]],
   ['alfa_5fg',['alfa_g',['../classconstitutive.html#aeda0ac01998e9df99d8e158a3b8160ef',1,'constitutive']]],
   ['alfa_5fg_5f2',['alfa_g_2',['../classconstitutive.html#a303d3ce1f8dd85b489ef9077d63acda6',1,'constitutive']]],

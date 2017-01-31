@@ -1,6 +1,7 @@
 var searchData=
 [
   ['lambda_5fw',['lambda_w',['../classconstitutive.html#a2705f5bb82542189fae39027a72510ca',1,'constitutive']]],
+  ['lateral_5fdegassing',['lateral_degassing',['../classconstitutive.html#ac5243197589dc13e6620ff502df6c7d9',1,'constitutive']]],
   ['lateral_5fdegassing_5fflag',['lateral_degassing_flag',['../classconstitutive.html#a2bee6c818569b5e6bd6d172dd66ca62f',1,'constitutive']]],
   ['le_5fcc',['le_cc',['../interfacecomplexify_1_1operator_07_3_0A_08.html#a6aea6f20e1e4e95b019fa150554b7a10',1,'complexify::operator(&lt;=)::le_cc()'],['../classcomplexify.html#a1102ed384b910c69663be00fcc1b868a',1,'complexify::le_cc()']]],
   ['le_5fci',['le_ci',['../interfacecomplexify_1_1operator_07_3_0A_08.html#a7292e360659e9d051b80919325ddcb5d',1,'complexify::operator(&lt;=)::le_ci()'],['../classcomplexify.html#aaa331354a6d8f883a308035e98036283',1,'complexify::le_ci()']]],
@@ -16,6 +17,7 @@ var searchData=
   ['log10_5fbubble_5fnumber_5fdensity',['log10_bubble_number_density',['../classconstitutive.html#a338fcb5de909b45d34fb40cdc88e0990',1,'constitutive']]],
   ['log10_5fc',['log10_c',['../interfacecomplexify_1_1log10.html#a7718f6455cdfa3bddfdff5f519a77ec5',1,'complexify::log10::log10_c()'],['../classcomplexify.html#a613ac415b9dad60e230a2b7491f9be21',1,'complexify::log10_c()']]],
   ['log10_5fdrag_5ffunct_5fcoeff',['log10_drag_funct_coeff',['../classinpout.html#a30569975167484b732710aa1c04cedb9',1,'inpout']]],
+  ['log10_5fk_5fcr',['log10_k_cr',['../classinpout.html#a4e766283dbb7bd94bbbb40da53b68090',1,'inpout']]],
   ['log10_5ftau_5fc',['log10_tau_c',['../classinpout.html#a0caaf997eed5042d340c67c7f30f4b4e',1,'inpout']]],
   ['log10_5ftau_5fd',['log10_tau_d',['../classinpout.html#ae1cdc05f5500ed5f5f7892123ed4cc1b',1,'inpout']]],
   ['log10_5ftau_5fp_5fcoeff',['log10_tau_p_coeff',['../classinpout.html#a2a7ae204580582863d8abcc7597f6c15',1,'inpout']]],
