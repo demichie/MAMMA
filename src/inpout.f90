@@ -52,7 +52,7 @@ MODULE inpout
 
   ! -- Variables for the namelist EXTERNAL_WATER_PARAMETERS
   USE constitutive, ONLY : ext_water , total_water_influx , min_z_influx ,      &
-       delta_z_influx , T_w , inst_vaporization
+       delta_z_influx , T_w , inst_vaporization , aquifer_type
 
   ! -- Variables for the namelist SOURCE_PARAMETERS
   USE constitutive, ONLY : grav
@@ -141,7 +141,7 @@ MODULE inpout
        frag_thr
 
   NAMELIST / external_water_parameters / ext_water , total_water_influx ,       &
-       min_z_influx , delta_z_influx , T_w , inst_vaporization
+       min_z_influx , delta_z_influx , T_w , inst_vaporization , aquifer_type
 
   NAMELIST / source_parameters /  grav
 
@@ -326,7 +326,8 @@ CONTAINS
     delta_z_influx = 0.D0
     T_w = 0.D0
     inst_vaporization = .FALSE.
-
+    aquifer_type = "unconfined"
+    
     !-- Inizialization of the Variables for the namelist source_parameters
     grav = 9.81D0
 
@@ -769,6 +770,25 @@ CONTAINS
 
     ! ------- READ external_water_parameters NAMELIST ---------------------------
     READ(input_unit, external_water_parameters)
+
+    IF (ext_water) THEN
+
+	     IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.            & 
+            (.NOT. (aquifer_type .EQ. 'unconfined' ) ) ) THEN
+
+          WRITE(*,*) ''
+          WRITE(*,*) 'Wrong aquifer type chosen.'
+          WRITE(*,*) 'Please choose between:'
+          WRITE(*,*) ''
+          WRITE(*,*) 'confined'
+          WRITE(*,*) 'unconfined'
+          WRITE(*,*) ''
+
+          CALL ABORT
+
+       END IF
+    
+    END IF
 
     ! ------- READ source_parameters NAMELIST -----------------------------------
     READ(input_unit, source_parameters)
