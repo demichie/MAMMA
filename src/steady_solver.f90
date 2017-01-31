@@ -97,11 +97,11 @@ CONTAINS
 
        IF ( explosive ) THEN
 
-          V_temp = 1.0D+0
+          V_temp = u1_in
 
        ELSE
 
-          V_temp = 1.D-1
+          V_temp = u1_in
 
        END IF
 
