@@ -155,8 +155,8 @@ subplot(2,2,4)
 set(hLine1,'LineStyle','-');
 set(hLine2,'LineStyle','--');
 
-set(hLine1,'color','blue');
-set(hLine2,'color','blue');
+set(hLine1,'color','k');
+set(hLine2,'color','k');
 
 set(hAx,{'ycolor'},{'k';'k'}) 
 
