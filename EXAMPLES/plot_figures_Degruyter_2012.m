@@ -46,8 +46,6 @@ for i=1:N_GAS,
 
 end
 
-%frag_eff = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1,:);
-
 rho_1 = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1,:);
 
 rho_2 = zeros(N_GAS,comp_cells);
@@ -115,40 +113,58 @@ color_list_eq2=['b--','g--','r--','c--','m--','y--','k--'];
 
 zeta_grid_reverse = zN - zeta_grid;
 
-subplot(1,3,1)
+subplot(2,2,1)
 semilogx(p_1,zeta_grid_reverse,'k');
-hold on;
-semilogx(p_2,zeta_grid_reverse,'k:');
-semilogx(p_mix,zeta_grid_reverse,'r');
 title('(a)');
 xlabel('Pressure (Pa)');
 ylim([-50,ZN]);
 ylabel('Depth (m)');
 set(gca,'YDir','reverse')
 xlim([1e5,1e9]);
-legend('p_1','p_2','p_{mix}');
-hold all;
 
-subplot(1,3,2)
+subplot(2,2,2)
 semilogx(p_1,alfa_2,'k');
-hold on;
-semilogx(p_2,alfa_2,'k:');
-semilogx(p_mix,alfa_2,'r');
 title('(b)');
 xlabel('Pressure (Pa)');
 ylim([0,1]);
-legend('p_1','p_2','p_{mix}');
-hold all;
 xlim([1e5,1e9]);
 
-subplot(1,3,3)
-loglog(p_1,u_mix,'k');
+subplot(2,2,3)
+loglog(p_1,u_1,'k');
 hold on;
-loglog(p_2,u_mix,'k:');
-loglog(p_mix,u_mix,'r');
+loglog(p_1,u_2,'k--');
 title('(c)');
 xlabel('Pressure (Pa)');
-ylabel('Mixture velocity (m/s)');
+ylabel('Velocity (m/s)');
 xlim([1e5,1e9]);
-legend('p_1','p_2','p_{mix}');
+legend('u_{melt}','u_{gas}');
 ylim([1e-3,1e3]);
+
+radius_bubble = ( (1.0 - alfa_1) ./ ( 4.0 / 3.0 * pi *  10.^LOG10_BUBBLE_NUMBER_DENSITY .* ...
+    ( alfa_1 ) ) ).^( 1.0 / 3.0 ) ;
+
+throat_radius = radius_bubble * THROAT_BUBBLE_RATIO;
+
+k1 = 0.1250 * throat_radius.^2.0 .* (1.0 - alfa_1).^TORTUOSITY_FACTOR;
+
+k2 = throat_radius ./ FRICTION_COEFFICIENT .* (1.0 - alfa_1).^ ...
+    ( ( 1.0 + 3.0 * TORTUOSITY_FACTOR ) ./ 2.0 ) ;
+
+subplot(2,2,4)
+[hAx,hLine1,hLine2] = plotyy(p_1, k1, p_1, k2, @loglog);
+set(hLine1,'LineStyle','-');
+set(hLine2,'LineStyle','--');
+
+set(hLine1,'color','blue');
+set(hLine2,'color','blue');
+
+set(hAx,{'ycolor'},{'k';'k'}) 
+
+set(hAx(1),'YLim',[1e-17 1e-9]) 
+set(hAx(2),'YLim',[1e-14 1e-6]) 
+
+ylabel(hAx(1),'Permeability (m^2)') 
+ylabel(hAx(2),'Inertial Permeability (m)') 
+legend('Permeability','Inertial Permeability')
+box on;
+hold all;
