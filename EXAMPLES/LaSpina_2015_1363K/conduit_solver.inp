@@ -104,7 +104,7 @@
  GRAV=  9.8100000000000005     ,
  /
 &RELAXATION_PARAMETERS
- DRAG_FUNCT_MODEL="forchheimer         ",
+ DRAG_FUNCT_MODEL="forchheimer_wt         ",
  LOG10_DRAG_FUNCT_COEFF=  0.0000000000000000     ,
  P_RELAX_MODEL="constant            ",
  LOG10_TAU_P_COEFF= -8.0000000000000000     ,
