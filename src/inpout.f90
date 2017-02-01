@@ -412,7 +412,8 @@ CONTAINS
           WRITE(input_unit, bubbles_parameters )
 
        ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                          &
-            drag_funct_model .EQ. 'forchheimer' ) THEN
+            drag_funct_model .EQ. 'forchheimer' .OR.                            &
+            drag_funct_model .EQ. 'forchheimer_wt') THEN
 
           WRITE(input_unit, forchheimer_parameters )
 
@@ -821,7 +822,8 @@ CONTAINS
        READ(input_unit, bubbles_parameters )
        
     ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
-         ( drag_funct_model .EQ. 'forchheimer') ) THEN
+         ( drag_funct_model .EQ. 'forchheimer') .OR.                            & 
+         ( drag_funct_model .EQ. 'forchheimer_wt')) THEN
        
        READ(input_unit, forchheimer_parameters )
        
@@ -844,6 +846,7 @@ CONTAINS
        WRITE(*,*) 'drag'
        WRITE(*,*) 'darcy'
        WRITE(*,*) 'forchheimer'
+       WRITE(*,*) 'forchheimer_wt'
        WRITE(*,*) ''
 
        CALL ABORT
