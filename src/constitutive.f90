@@ -2337,6 +2337,36 @@ CONTAINS
 
        END IF
 
+
+    CASE ( 'forchheimer_wt' )
+
+       ! Forchheimer (Eq. 16 Degruyter et al. 2012) without transit. zone (phi_t)
+
+       IF ( REAL(alfa_2) .GT. 0.0001 ) THEN
+
+          radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density  &
+               * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
+
+          throat_radius = radius_bubble * throat_bubble_ratio
+
+          k_1 = 0.125D0 * throat_radius ** 2.D0 * alfa_2 ** tortuosity_factor
+
+          k_2 = throat_radius / friction_coefficient * alfa_2 ** ( ( 1.D0 +     &
+               3.D0 * tortuosity_factor ) / 2.D0 )
+
+          effusive_drag = visc_2 / k_1 + rho_2 / k_2 * CDABS( u_2 - u_1 )
+
+          explosive_drag = 3.D0 * C_D / ( 8.D0 * r_a ) * rho_2                  &
+               * CDABS( u_2 - u_1 ) 
+
+       ELSE
+
+          effusive_drag = DCMPLX(1.0E20,0.0)
+
+          explosive_drag = DCMPLX(0.0,0.0)
+
+       END IF
+
     CASE ('drag')
 
        radius_bubble = ( alfa_2 / ( 4.0 / 3.0 * pi * ( alfa_1 ) ) )             &
@@ -2365,8 +2395,17 @@ CONTAINS
 
     END SELECT
 
-    drag_funct = effusive_drag ** ( 1.D0 - t ) *                                &
-            ( explosive_drag + 1.D-10 ) ** t
+    IF ( drag_funct_model .EQ. 'forchheimer' ) THEN
+
+       drag_funct = effusive_drag ** ( 1.D0 - t ) *                                &
+               ( explosive_drag + 1.D-10 ) ** t
+	    
+    ELSE
+    
+       drag_funct = effusive_drag ** ( 1.D0 - frag_eff ) *                       &
+          ( explosive_drag + 1.D-10 ) ** frag_eff
+
+    END IF
 
     drag_funct = drag_funct_coeff * drag_funct
 
