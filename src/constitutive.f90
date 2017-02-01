@@ -1416,13 +1416,6 @@ CONTAINS
 
     INTEGER :: idx
 
-    REAL*8 :: frag_transition, t
-
-    frag_transition = frag_thr + 0.05D0
-
-    t = MIN(1.0D0,MAX(0.0D0, ( REAL(alfa_2) - frag_transition ) /               &
-         (frag_thr - frag_transition)))
-
     idx = 0
 
     force_term(1:n_eqns) = DCMPLX(0.D0,0.D0)
@@ -2245,9 +2238,14 @@ CONTAINS
     COMPLEX*16 :: k_1 , k_2
 
     COMPLEX*16 :: throat_radius
+    
+    REAL*8 :: frag_transition, t
 
-    !REAL*8 :: frag_transition, t
+    frag_transition = frag_thr + 0.05D0
 
+    t = MIN(1.0D0,MAX(0.0D0, ( REAL(alfa_2) - frag_thr ) /               &
+         (frag_transition - frag_thr )))
+	 
     SELECT CASE ( drag_funct_model )
 
     CASE DEFAULT
@@ -2367,8 +2365,8 @@ CONTAINS
 
     END SELECT
 
-    drag_funct = effusive_drag ** ( 1.D0 - frag_eff ) *                         &
-         ( explosive_drag + 1.D-10 ) ** frag_eff
+    drag_funct = effusive_drag ** ( 1.D0 - t ) *                                &
+            ( explosive_drag + 1.D-10 ) ** t
 
     drag_funct = drag_funct_coeff * drag_funct
 
