@@ -1,5 +1,7 @@
 !********************************************************************
 !> \brief Input/Output module
+!> @author 
+!> Mattia de' Michieli Vitturi
 !
 !> This module contains all the input/output subroutine and the 
 !> realted variables.
@@ -10,7 +12,7 @@ MODULE inpout
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
-  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars
+  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars , n_moms
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
@@ -25,8 +27,10 @@ MODULE inpout
 
   ! -- Variables for the namelist EXSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_g , cv_g , gamma_g , T0_g ,                     &
-       bar_e_g , visc_2 , lateral_degassing_flag , alfa2_lat_thr , perm0, Pc_g, &
+       bar_e_g , visc_2 , perm0, Pc_g, &
        Tc_g, a_g, b_g, s0_g, gas_law
+
+  USE equations, ONLY : lateral_degassing_flag , alfa2_lat_thr
 
   ! -- Variables for the namelist DISSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_d , C0_d , cv_d , gamma_d , p0_d , T0_d ,       &
@@ -45,13 +49,13 @@ MODULE inpout
        theta_fixed
 
   ! -- Variables for the namelist TEMPERATURE_PARAMETERS
-  USE constitutive, ONLY : isothermal , fixed_temp
+  USE equations, ONLY : isothermal , fixed_temp
 
   ! -- Variables for the namelist FRAGMENTATION_PARAMETERS
   USE constitutive, ONLY : explosive , fragmentation_model , frag_thr
 
   ! -- Variables for the namelist EXTERNAL_WATER_PARAMETERS
-  USE constitutive, ONLY : ext_water , total_water_influx , min_z_influx ,      &
+  USE equations, ONLY : ext_water , total_water_influx , min_z_influx ,      &
        delta_z_influx , T_w , inst_vaporization , aquifer_type
 
   ! -- Variables for the namelist SOURCE_PARAMETERS
@@ -115,7 +119,7 @@ MODULE inpout
   NAMELIST / geometry_parameters / z0 , zN , radius_model , radius_fixed ,      &
        radius_min, radius_max, radius_z, radius_z_sig,  comp_cells
 
-  NAMELIST / phases_parameters / n_gas , n_cry
+  NAMELIST / phases_parameters / n_gas , n_cry , n_moms
 
   NAMELIST / steady_boundary_conditions / T_in , p1_in , delta_p_in ,           &
        x_ex_dis_in , p_out , u1_in , eps_conv, shooting
@@ -161,14 +165,16 @@ MODULE inpout
 
 CONTAINS
 
-  !*********************************************************************
+  !******************************************************************************
   !> \brief Initialization of the variables read from the input file
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !
   !> This subroutine initialize the input variables with default values
   !> that solve for a Riemann problem. If the input file does not exist
   !> one is created with the default values.
   !> \date 26/08/2011
-  !*********************************************************************
+  !******************************************************************************
 
   SUBROUTINE init_param
 
@@ -267,6 +273,8 @@ CONTAINS
     n_gas_init = 1
     n_cry_init = 1
 
+    n_moms = 1
+    
     n_vars = 5 + 2 * n_gas_init + n_cry_init
     n_eqns = n_vars
 
@@ -432,15 +440,17 @@ CONTAINS
 
   END SUBROUTINE init_param
 
-  !*********************************************************************
+  !******************************************************************************
   !> \brief Read the input file
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !
   !> This subroutine read the input parameters from the file 
   !> "two_phases.inp" and write a backup file of the input parameters 
   !> with name "run_name.bak", where run_name is read from the input
   !> file.
   !> \date 26/08/2011
-  !*********************************************************************
+  !******************************************************************************
 
   SUBROUTINE read_param
 
@@ -461,7 +471,7 @@ CONTAINS
     OPEN(input_unit,FILE=input_file,STATUS='old')
 
 
-    ! ------- READ run_parameters NAMELIST -----------------------------------
+    ! ------- READ run_parameters NAMELIST --------------------------------------
 
     READ(input_unit, run_parameters )
 
@@ -483,10 +493,20 @@ CONTAINS
     END IF
               
 
-    ! ------- READ phases_parameters NAMELIST --------------------------
+    ! ------- READ phases_parameters NAMELIST -----------------------------------
     READ(input_unit, phases_parameters )
 
-    n_vars = 5 + 2 * n_gas + n_cry
+    IF ( n_moms .LE. 1 ) THEN
+
+       WRITE(*,*) 'Solving for crystal volume fraction only'
+
+    ELSE
+
+       WRITE(*,*) 'Solving for ',n_moms,' moments for each crystal phase'
+
+    END IF
+    
+    n_vars = 5 + 2 * n_gas + n_cry * n_moms
     n_eqns = n_vars
 
     ALLOCATE( beta_in(n_cry) )
@@ -512,7 +532,7 @@ CONTAINS
     END IF
 
 
-    ! ------- READ exsolved_gas_parameters NAMELIST --------------------------
+    ! ------- READ exsolved_gas_parameters NAMELIST ----------------------------
     READ(input_unit, exsolved_gas_parameters )
 
     IF ( gas_law .EQ. 'IDEAL' )  THEN
@@ -541,7 +561,7 @@ CONTAINS
 
     END IF
 
-    ! ------- READ dissolved_gas_parameters NAMELIST --------------------------
+    ! ------- READ dissolved_gas_parameters NAMELIST ---------------------------
     READ(input_unit, dissolved_gas_parameters )
 
     T0_d(1:n_gas) = C0_d(1:n_gas) **2.D0 / ( cv_d(1:n_gas) * gamma_d(1:n_gas)   &
@@ -551,7 +571,7 @@ CONTAINS
          gamma_d(1:n_gas) * p0_d(1:n_gas) ) / gamma_d(1:n_gas)
 
 
-    ! ------- READ crystals_parameters NAMELIST ------------------------------
+    ! ------- READ crystals_parameters NAMELIST ---------------------------------
     READ(input_unit, crystals_parameters )
 
     T0_c(1:n_cry) = C0_c(1:n_cry) **2.D0 / ( cv_c(1:n_cry) * gamma_c(1:n_cry)   &
@@ -629,13 +649,13 @@ CONTAINS
     END IF
 
 
-    ! ------- READ melt_parameters NAMELIST -----------------------------------
+    ! ------- READ melt_parameters NAMELIST -------------------------------------
     READ(input_unit, melt_parameters )
 
     T0_m = C0_m **2.D0 / ( cv_m * gamma_m * ( gamma_m - 1.D0 ) )
     bar_p_m = ( rho0_m * C0_m ** 2.d0 - gamma_m * p0_m ) / gamma_m
 
-    ! ------- READ viscosity_parameters NAMELIST ------------------------------
+    ! ------- READ viscosity_parameters NAMELIST --------------------------------
     READ(input_unit, viscosity_parameters)
 
 
@@ -720,11 +740,11 @@ CONTAINS
 
     END IF
 
-    IF ( (.NOT. (bubbles_model .EQ. 'none' ) ) .AND.            & 
-         (.NOT. (bubbles_model .EQ. 'Costa2007' ) ) .AND.                      & 
-         (.NOT. (bubbles_model .EQ. 'Einstein' ) ) .AND.             & 
-         (.NOT. (bubbles_model .EQ. 'Quane-Russel' ) ) .AND.                         & 
-         (.NOT. (bubbles_model .EQ. 'Eilers' ) ) .AND.             & 
+    IF ( (.NOT. (bubbles_model .EQ. 'none' ) ) .AND.                            & 
+         (.NOT. (bubbles_model .EQ. 'Costa2007' ) ) .AND.                       & 
+         (.NOT. (bubbles_model .EQ. 'Einstein' ) ) .AND.                        & 
+         (.NOT. (bubbles_model .EQ. 'Quane-Russel' ) ) .AND.                    & 
+         (.NOT. (bubbles_model .EQ. 'Eilers' ) ) .AND.                          & 
          (.NOT. (bubbles_model .EQ. 'Sibree' ) ) ) THEN
 
        WRITE(*,*) ''
@@ -744,7 +764,7 @@ CONTAINS
     END IF
 
 
-    ! ------- READ temperature_parameters NAMELIST ----------------------------
+    ! ------- READ temperature_parameters NAMELIST ------------------------------
     READ(input_unit, temperature_parameters)
 
     IF ( isothermal ) THEN
@@ -753,7 +773,7 @@ CONTAINS
 
     END IF
 
-    ! ------- READ fragmentation_parameters NAMELIST --------------------------
+    ! ------- READ fragmentation_parameters NAMELIST ----------------------------
     READ(input_unit, fragmentation_parameters)
 
     IF (fragmentation_model .NE. 1 ) THEN
@@ -774,7 +794,7 @@ CONTAINS
 
     IF (ext_water) THEN
 
-	     IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.            & 
+	     IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.                & 
             (.NOT. (aquifer_type .EQ. 'unconfined' ) ) ) THEN
 
           WRITE(*,*) ''
@@ -936,8 +956,10 @@ CONTAINS
 
   END SUBROUTINE read_param
 
-  !*********************************************************************
+  !******************************************************************************
   !> \brief Write the steady solution on the output unit
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !
   !> This subroutine write the parameters of the grid, the output time 
   !> and the solution to a file with the name "run_name.q****", where  
@@ -946,16 +968,22 @@ CONTAINS
   !> \param[in]   zeta    vertical coordinate
   !> \param[in]   qp      array of physical variables
   !> \date 25/09/2012
-  !*********************************************************************
+  !******************************************************************************
 
   SUBROUTINE output_steady(zeta,qp,radius)
 
+    ! External variables
     USE parameters, ONLY : n_vars , n_cry , n_gas
+
+    USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,          &
+         idx_alfa_first , idx_alfa_last , idx_beta_first , idx_beta_last
+
     USE geometry, ONLY : zeta_exit
 
-    USE constitutive, ONLY : eval_qp2
+    ! External subroutine
     USE constitutive, ONLY : sound_speeds
     USE constitutive, ONLY : frag_eff
+    USE equations, ONLY : eval_qp2
 
     IMPLICIT NONE
 
@@ -1061,11 +1089,11 @@ CONTAINS
 
        END DO
 
-       mix_velocity = (1.0D0 - gasTotVolFrac) * rho1 / rho_mix * qp(n_gas + 3)
+       mix_velocity = (1.0D0 - gasTotVolFrac) * rho1 / rho_mix * qp(idx_u1)
 
        DO j=1,n_gas
 
-          mix_velocity = mix_velocity + qp(j) * rho2(j) / rho_mix * qp(n_gas + 4)
+          mix_velocity = mix_velocity + qp(j) * rho2(j) / rho_mix * qp(idx_u2)
 
        END DO
 
@@ -1078,14 +1106,13 @@ CONTAINS
        pi = 4.D0 * ATAN(1.D0)
 
        WRITE(dakota_unit,*) 'Total Gas volume fraction', gasTotVolFrac
-       WRITE(dakota_unit,*) 'Pressure 1',qp(n_gas + 1)
-       WRITE(dakota_unit,*) 'Pressure 2',qp(n_gas + 2)
-       WRITE(dakota_unit,*) 'Liquid/particles velocity',qp(n_gas + 3 )
-       WRITE(dakota_unit,*) 'Gas velocity',qp(n_gas + 4)
-       WRITE(dakota_unit,*) 'Exit Temperature',qp(n_gas + 5)
-       WRITE(dakota_unit,*) 'Plagioclase volume fraction',qp(n_gas + 6)
-       WRITE(dakota_unit,*) 'Pyroxene volume fraction',qp(n_gas + 7)
-       WRITE(dakota_unit,*) 'Olivine volume fraction',qp(n_gas + 8)
+       WRITE(dakota_unit,*) 'Pressure 1',qp(idx_p1)
+       WRITE(dakota_unit,*) 'Pressure 2',qp(idx_p2)
+       WRITE(dakota_unit,*) 'Liquid/particles velocity',qp(idx_u1)
+       WRITE(dakota_unit,*) 'Gas velocity',qp(idx_u2)
+       WRITE(dakota_unit,*) 'Exit Temperature',qp(idx_T)
+       WRITE(dakota_unit,*) 'Crystals volume fraction',SUM(qp(idx_beta_first:   &
+            idx_beta_last))
 
        CALL sound_speeds(C_mix,mach) 
        CALL update_radius(zeta)
@@ -1103,13 +1130,11 @@ CONTAINS
        pi = 4.D0 * ATAN(1.D0)
 
        WRITE(dakota_unit2,*) gasTotVolFrac
-       WRITE(dakota_unit2,*) qp(n_gas + 1)
-       WRITE(dakota_unit2,*) qp(n_gas + 2)
-       WRITE(dakota_unit2,*) qp(n_gas + 3)
-       WRITE(dakota_unit2,*) qp(n_gas + 4)
-       WRITE(dakota_unit2,*) qp(n_gas + 5)
-       WRITE(dakota_unit2,*) qp(n_gas + 6)
-       WRITE(dakota_unit2,*) qp(n_gas + 7)
+       WRITE(dakota_unit2,*) qp(idx_p1)
+       WRITE(dakota_unit2,*) qp(idx_p2)
+       WRITE(dakota_unit2,*) qp(idx_u1)
+       WRITE(dakota_unit2,*) qp(idx_u2)
+       WRITE(dakota_unit2,*) qp(idx_T)
        WRITE(dakota_unit2,*) mach
        WRITE(dakota_unit2,*) mix_velocity
        WRITE(dakota_unit2,*) pi * radius * radius * mix_velocity * rho_mix
@@ -1122,12 +1147,14 @@ CONTAINS
        OPEN( exit_unit,FILE=exit_file,STATUS='UNKNOWN')
 
        WRITE(exit_unit,*) 'Mass_flow_rate',mass_flow_rate
-       WRITE(exit_unit,*) 'Gas volume fraction',1.D0-qp(1)
-       WRITE(exit_unit,*) 'Pressure 1',qp(2)
-       WRITE(exit_unit,*) 'Pressure 2',qp(3)
-       WRITE(exit_unit,*) 'Crystals volume fraction',qp(7)
-       WRITE(exit_unit,*) 'Liquid/particles velocity',qp(4)
-       WRITE(exit_unit,*) 'Gas velocity',qp(5)
+       WRITE(exit_unit,*) 'Gas volume fraction',1.D0-SUM(qp(idx_alfa_first:     &
+            idx_alfa_last))
+       WRITE(exit_unit,*) 'Pressure 1',qp(idx_p1)
+       WRITE(exit_unit,*) 'Pressure 2',qp(idx_p2)
+       WRITE(exit_unit,*) 'Crystals volume fraction',SUM(qp(idx_beta_first:     &
+            idx_beta_last))
+       WRITE(exit_unit,*) 'Liquid/particles velocity',qp(idx_u1)
+       WRITE(exit_unit,*) 'Gas velocity',qp(idx_u2)
        WRITE(exit_unit,*) 'Mach number',mach
 
        CLOSE( exit_unit )
@@ -1135,19 +1162,18 @@ CONTAINS
 
     END IF
 
-
   END SUBROUTINE output_steady
 
-
-
-  !----------------------------------------------------------------------
+  !------------------------------------------------------------------------------
   !> \brief Numeric to String conversion
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !
   !> This function convert the integer in input into a numeric string for
   !> the subfix of the output files.
   !> \date 27/20/2009
   !> \param   k      integer to convert             (\b input)           
-  !----------------------------------------------------------------------
+  !------------------------------------------------------------------------------
 
   CHARACTER*4 FUNCTION lettera(k)
     IMPLICIT NONE

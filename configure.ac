@@ -1,14 +1,18 @@
-# initial information about the project
-AC_INIT([MAMMA], [0.9], [mattia.demichielivitturi@ingv.it])
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
 
-# check if the source folder is available
-AC_CONFIG_SRCDIR([src/c_main.f90])
+AC_PREREQ([2.69])
+AC_INIT(MAMMA,1.0,mattia.demichielivitturi@ingv.it)
+AM_INIT_AUTOMAKE(1.0)
 
-# check for fortran compiler
+AC_CONFIG_SRCDIR(src/c_main.f90)
+
+# Checks for programs.
 AC_PROG_FC
 
-# automake initialization (mandatory) including a check for automake API version >= 1.9
-AM_INIT_AUTOMAKE([1.9])
+# Checks for libraries.
+
+
 
 # files to generate via autotools (prepare .am or .in source files)
 AC_CONFIG_FILES([Makefile])

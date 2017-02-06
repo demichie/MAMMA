@@ -1,14 +1,27 @@
 !*********************************************************************
 !> \brief Initial solution
+!> @author 
+!> Mattia de' Michieli Vitturi
 !
 !> This module contains the variables and the subroutine for the
 !> initialization of the solution for a Riemann problem.
+!> \date 04/02/2017
 !*********************************************************************
 
 MODULE init
 
   USE parameters, ONLY : n_vars , n_cry , n_gas
 
+  USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
+       idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
+       idx_beta_first , idx_beta_last
+
+  USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
+       idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
+       idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
+       idx_cry_eqn_first , idx_cry_eqn_last
+
+  
   IMPLICIT none
 
   REAL*8 :: alfa1_in         !< Inlet first phase volume fraction
@@ -148,8 +161,8 @@ CONTAINS
        
        IF ( n_gas .EQ. 1 ) THEN
           
-          CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) , beta_in(1:n_cry) ,  &
-               r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
+          CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) ,               &
+               beta_in(1:n_cry) , r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
           
        ELSE
           
@@ -186,63 +199,81 @@ CONTAINS
     ! initialize the fragmentation efficiency to zero
     
     r_frag_eff = frag_eff_in
+
+    ! -------- define the indexes of variables and equations --------------------
     
-    ! define the vector of primitive variables
-    
-    idx = 0
-    
-    DO i = 1,n_gas
-       
-       idx = idx + 1
-       
-       qp(idx) = alfa_g_in(i)
-       
-    END DO
+    idx_p1 = 1
+    idx_p2 = 2
+    idx_u1 = 3
+    idx_u2 = 4
+    idx_T = 5
+    idx_xd_first = 5+1
+    idx_xd_last = 5+n_gas
+    idx_alfa_first = 5+n_gas+1
+    idx_alfa_last = 5+2*n_gas
+    idx_beta_first = 5+2*n_gas+1
+    idx_beta_last = 5+2*n_gas+n_cry
+
+    idx_mix_mass_eqn = 1
+    idx_vol1_eqn = 2
+    idx_mix_mom_eqn = 3
+    idx_rel_vel_eqn = 4
+    idx_mix_engy_eqn = 5
+    idx_dis_gas_eqn_first = 5+1
+    idx_dis_gas_eqn_last = 5+n_gas
+    idx_ex_gas_eqn_first = 5+n_gas+1
+    idx_ex_gas_eqn_last = 5+2*n_gas 
+    idx_cry_eqn_first = 5+2*n_gas+1
+    idx_cry_eqn_last = 5+2*n_gas+n_cry
+
+    ! --------- define the vector of primitive variables ------------------------
     
     ! Frist phase pressure
-    idx = idx + 1
-    
-    qp(idx) = p1_in
+    qp(idx_p1) = p1_in
     
     ! Second phase pressure
-    idx = idx + 1
-    
-    qp(idx) = p2_in
+    qp(idx_p2) = p2_in
 
     ! Frist phase velocity
-    idx = idx + 1
-
-    qp(idx) = r_u_1
+    qp(idx_u1) = r_u_1
 
     ! Second phase velocity
-    idx = idx + 1
-
-    qp(idx) = r_u_2
+    qp(idx_u2) = r_u_2
 
     ! Temperature
-    idx = idx + 1
-    qp(idx) = T_in
-
-    ! Crystal volume fractions
-    
-    DO i = 1,n_cry
-
-       idx = idx + 1
-
-       qp(idx) = beta_in(i)
-
-    END DO
+    qp(idx_T) = T_in
 
     ! Dissolved gas mass fractions
-
+    idx = idx_xd_first
     DO i = 1,n_gas
-
-       idx = idx + 1
 
        qp(idx) = xd_md_in(i)
 
+       idx = idx + 1
+
     END DO
 
+    ! Exsolved gas volume fraction
+    idx = idx_alfa_first
+    DO i = 1,n_gas
+              
+       qp(idx) = alfa_g_in(i)
+
+       idx = idx + 1
+
+    END DO
+    
+    ! Crystal volume fractions
+    idx = idx_beta_first
+    DO i = 1,n_cry
+
+       qp(idx) = beta_in(i)
+
+       idx = idx + 1
+
+    END DO
+
+    
   END SUBROUTINE init_steady
 
 END MODULE init

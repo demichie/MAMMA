@@ -7,15 +7,24 @@ MODULE steady_solver
   USE parameters, ONLY : max_nl_iter
   USE parameters, ONLY : verbose_level
 
-  USE constitutive, ONLY : lateral_degassing_flag
-  USE constitutive, ONLY : lateral_degassing
-  USE constitutive, ONLY : alfa2_lat_thr
+  USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
+       idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
+       idx_beta_first , idx_beta_last
+  
+  USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
+       idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
+       idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
+       idx_cry_eqn_first , idx_cry_eqn_last
+  
+  USE equations, ONLY : lateral_degassing_flag
+  USE equations, ONLY : lateral_degassing
+  USE equations, ONLY : alfa2_lat_thr
 
   USE constitutive, ONLY : explosive
 
   USE init, ONLY : p_out
 
-  USE constitutive, ONLY : isothermal
+  USE equations, ONLY : isothermal
 
   IMPLICIT NONE
 
@@ -46,8 +55,9 @@ CONTAINS
   SUBROUTINE steady_shooting
 
     ! external procedures
-    USE constitutive, ONLY : phys_var_qp , eos
+    USE constitutive, ONLY : eos
     USE constitutive, ONLY : eval_densities
+    USE equations, ONLY : phys_var_qp
     USE init, ONLY : init_steady
 
     ! external variables
@@ -60,7 +70,6 @@ CONTAINS
     USE parameters, ONLY : shooting
     USE parameters, ONLY : eps_conv
     USE geometry, ONLY : update_radius
-    USE parameters, ONLY : n_gas !, n_cry
 
     IMPLICIT NONE
 
@@ -126,11 +135,11 @@ CONTAINS
     CALL eval_densities
 
     IF ( verbose_level .GE. 1 ) THEN
-       p_1 = DCMPLX( qp(n_gas+1) , 0.D0 ) 
-       p_2 = DCMPLX( qp(n_gas+2) , 0.D0 )
-       u_1 = DCMPLX( qp(n_gas+1) , 0.D0 ) 
-       u_2 = DCMPLX( qp(n_gas+2) , 0.D0 ) 
-       T = DCMPLX( qp(n_gas+5) , 0.D0 )
+       p_1 = DCMPLX( qp(idx_p1) , 0.D0 ) 
+       p_2 = DCMPLX( qp(idx_p2) , 0.D0 )
+       u_1 = DCMPLX( qp(idx_u1) , 0.D0 ) 
+       u_2 = DCMPLX( qp(idx_u2) , 0.D0 ) 
+       T = DCMPLX( qp(idx_T) , 0.D0 )
 
        WRITE(*,*) ''
        WRITE(*,*) '<<<<<<<<<<<< ThermoPhysical quantities >>>>>>>>>>>'
@@ -183,7 +192,7 @@ CONTAINS
 
     CALL update_radius(zeta)
 
-    initial_mass_flow_rate = REAL(rho_mix * u_mix)*3.14*radius*radius
+    initial_mass_flow_rate = REAL(rho_mix * u_mix)*3.1415*radius*radius
 
     WRITE(*,*) 'Initial mass flow rate = ',initial_mass_flow_rate,' kg/s'
 
@@ -203,14 +212,14 @@ CONTAINS
        WRITE(*,*) ''
        WRITE(*,*) 'Saving solution for V at the inlet',V_temp
 
-       CALL integrate_equations(qp , flag_output , extrap_z , extrap_z_p ,         &
+       CALL integrate_equations(qp , flag_output , extrap_z , extrap_z_p ,      &
             extrap_z_mach , extrap_flag , r_p_1 , r_p_2 , mach )
 
     END IF
 
     CALL update_radius(zeta)
 
-    final_mass_flow_rate = REAL(rho_mix * u_mix)*3.14*radius*radius
+    final_mass_flow_rate = REAL(rho_mix * u_mix)*3.1415*radius*radius
 
     WRITE(*,*) 'Initial mass flow rate = ',initial_mass_flow_rate,' kg/s'
     WRITE(*,*) 'Final mass flow rate   = ',final_mass_flow_rate,' kg/s'
@@ -301,13 +310,13 @@ CONTAINS
 
        zeta = z0
        CALL update_radius(zeta)
-       initial_mass_flow_rate = REAL(rho_mix * u_mix)*3.14*radius*radius
+       initial_mass_flow_rate = REAL(rho_mix * u_mix)*3.1415*radius*radius
 
        CALL integrate_equations(qp , flag_output , extrap_z , extrap_z_p ,      &
             extrap_z_mach , extrap_flag , r_p_1 , r_p_2 , mach )
 
        CALL update_radius(zeta)
-       final_mass_flow_rate = REAL(rho_mix * u_mix)*3.14*radius*radius
+       final_mass_flow_rate = REAL(rho_mix * u_mix)*3.1415*radius*radius
 
        WRITE(*,*) 'Initial mass flow rate = ',initial_mass_flow_rate,' kg/s'
        WRITE(*,*) 'Final mass flow rate   = ',final_mass_flow_rate,' kg/s'
@@ -550,7 +559,7 @@ CONTAINS
 
        IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                         &
             ( zeta .GE. zN ) .AND. ( extrap_flag .NE. 4 )                       &
-            ! .AND. ( extrap_flag .NE. -3 )                                       & 
+            ! .AND. ( extrap_flag .NE. -3 )                                     & 
           ) THEN
 
           WRITE(*,*) 'Relative change in flow rate', ( V_2 - V_0 ) / V_0
@@ -602,18 +611,21 @@ CONTAINS
   !> \date 15/08/2011
   !******************************************************************************
 
-  SUBROUTINE integrate_equations( qp , flag_output , extrap_z , extrap_z_p , &
+  SUBROUTINE integrate_equations( qp , flag_output , extrap_z , extrap_z_p ,    &
        extrap_z_mach , extrap_flag , r_p_1 , r_p_2 , mach )
 
     ! external procedures
-    USE constitutive, ONLY : eval_nonhyperbolic_terms_qp
-    USE constitutive, ONLY : eval_fluxes_qp
-    USE constitutive, ONLY : phys_var_qp , eos
+    USE constitutive, ONLY : eos
     USE constitutive, ONLY : sound_speeds
 
     USE constitutive, ONLY : eval_densities
     USE constitutive, ONLY : f_alfa3, f_alfa
 
+    USE equations, ONLY : eval_nonhyperbolic_terms_qp
+    USE equations, ONLY : eval_fluxes_qp
+    USE equations, ONLY : phys_var_qp
+
+    
     USE geometry, ONLY : update_radius
 
     ! external variables
@@ -653,7 +665,8 @@ CONTAINS
 
     LOGICAL :: fragmentation
 
-    INTEGER :: idx_zeta,idx_temperature, idx_pressure1
+    INTEGER :: idx_zeta
+
     REAL*8 :: coeff_zeta
 
     !> Solution at the computational grid point
@@ -695,8 +708,6 @@ CONTAINS
     delta_full = 0.D0
     delta_half2 = 0.D0
 
-    idx_pressure1 = n_gas + 1
-    idx_temperature = n_gas + 5
 
     zeta = z0
 
@@ -706,7 +717,8 @@ CONTAINS
 
     CALL update_radius(zeta)
 
-    IF ( ( .NOT. shooting ) .OR. ( flag_output ) ) CALL output_steady(zeta,qp,radius)
+    IF ( ( .NOT. shooting ) .OR. ( flag_output ) ) CALL output_steady( zeta , &
+         qp , radius )
 
     dz_max = ( zN - z0 ) / comp_cells
 
@@ -733,7 +745,7 @@ CONTAINS
 
     frag_eff = 0.D0
 
-    u_1_old = qp(n_gas+3) 
+    u_1_old = qp(idx_u1) 
     strain_rate_qp = 0.0
 
     zeta_integration:DO
@@ -752,7 +764,7 @@ CONTAINS
 
        qp_old = qp
 
-       u_1_old = qp_old(n_gas+3) 
+       u_1_old = qp_old(idx_u1) 
 
        zeta_lith = zeta
 
@@ -779,8 +791,8 @@ CONTAINS
 
        IF ( isothermal ) THEN
 
-          fluxes_old(idx_temperature) = qp_old(idx_temperature)
-          nh_terms_old(idx_temperature) = 0.D0
+          fluxes_old(idx_mix_engy_eqn) = qp_old(idx_T)
+          nh_terms_old(idx_mix_engy_eqn) = 0.D0
 
        END IF
 
@@ -891,8 +903,8 @@ CONTAINS
 
              IF ( isothermal ) THEN
 
-                fluxes_old(idx_temperature) = qp_old(idx_temperature)
-                nh_terms_old(idx_temperature) = 0.D0
+                fluxes_old(idx_mix_engy_eqn) = qp_old(idx_T)
+                nh_terms_old(idx_mix_engy_eqn) = 0.D0
 
              END IF
 
@@ -937,24 +949,24 @@ CONTAINS
              WRITE(*,*) '<<<<<<<<< check_convergence >>>>>>>> ',check_convergence
              READ(*,*)
           END IF
-
+          
           IF ( check_convergence ) THEN
-
+             
              ! -------- compare the solutions obtained with dz and twice dz/2 ---
-
-             check_error = MAXVAL(ABS( qp_full(1:n_vars) -                    &
-                  qp_half2(1:n_vars) ) / ( tol_abs + tol_rel *                &
-                  MAX( ABS( qp_full(1:n_vars) ) ,                             &
+             
+             check_error = MAXVAL(ABS( qp_full(1:n_vars) -                      &
+                  qp_half2(1:n_vars) ) / ( tol_abs + tol_rel *                  &
+                  MAX( ABS( qp_full(1:n_vars) ) ,                               &
                   ABS( qp_half2(1:n_vars) ) ) ) ) 
 
-             delta_full = MAXVAL(ABS( qp_full(1:n_vars) -                     &
-                  qp_guess(1:n_vars) ) / ( tol_abs + tol_rel *                &
-                  MAX( ABS( qp_full(1:n_vars) ) ,                             &
+             delta_full = MAXVAL(ABS( qp_full(1:n_vars) -                       &
+                  qp_guess(1:n_vars) ) / ( tol_abs + tol_rel *                  &
+                  MAX( ABS( qp_full(1:n_vars) ) ,                               &
                   ABS( qp_guess(1:n_vars) ) ) ) ) 
 
-             delta_half2 = MAXVAL(ABS( qp_half2(1:n_vars) -                   &
-                  qp_guess(1:n_vars) ) / ( tol_abs + tol_rel *                &
-                  MAX( ABS( qp_half2(1:n_vars) ) ,                            &
+             delta_half2 = MAXVAL(ABS( qp_half2(1:n_vars) -                     &
+                  qp_guess(1:n_vars) ) / ( tol_abs + tol_rel *                  &
+                  MAX( ABS( qp_half2(1:n_vars) ) ,                              &
                   ABS( qp_guess(1:n_vars) ) ) ) ) 
 
              IF ( verbose_level .GE. 1 ) THEN
@@ -963,12 +975,12 @@ CONTAINS
 
              END IF
 
-             IF ( MAX( qp_half2(idx_pressure1) , qp_half2(idx_pressure1 + 1) )  &
+             IF ( MAX( qp_half2(idx_p1) , qp_half2(idx_p2) )  &
                   .LT. p_out) THEN
 
                 check_convergence = .FALSE.
                 IF ( verbose_level .GE. 1 ) WRITE(*,*) 'pressure',              &
-                     MAX( qp_half2(idx_pressure1) , qp_half2(idx_pressure1+1) )
+                     MAX( qp_half2(idx_p1) , qp_half2(idx_p2) )
 
              ELSE
 
@@ -994,9 +1006,9 @@ CONTAINS
 
           IF ( EXPLOSIVE ) THEN
 
-             alfa_2_half2 = SUM(qp_half2(1:n_gas)) 
-             alfa_2_full = SUM(qp_full(1:n_gas)) 
-             alfa_2_qp = SUM(qp(1:n_gas))
+             alfa_2_half2 = SUM(qp_half2(idx_alfa_first:idx_alfa_last)) 
+             alfa_2_full = SUM(qp_full(idx_alfa_first:idx_alfa_last)) 
+             alfa_2_qp = SUM(qp(idx_alfa_first:idx_alfa_last))
 
              IF ( alfa_2_half2 .GT. frag_thr ) THEN
 
@@ -1022,7 +1034,7 @@ CONTAINS
              IF ( ( .NOT.fragmentation )                                        &
                   .AND. ( fragmentation_half2 .OR. fragmentation_full )         &
                   .AND. ( frag_thr - alfa_2_qp .GT. 1.D-4 )                     &
-!                  .AND. ( MAX(alfa_2_half2,alfa_2_full) - frag_thr .GT. 1.D-4 ) & 
+!                 .AND. ( MAX(alfa_2_half2,alfa_2_full) - frag_thr .GT. 1.D-4 ) &
                 ) THEN
 
                 check_convergence = .FALSE.
@@ -1066,8 +1078,8 @@ CONTAINS
                 WRITE(*,*) 'qp ='
                 WRITE(*,*) qp
                 WRITE(*,*) ''
-                WRITE(*,*) 'alfa_2 =',SUM(qp(1:n_gas)), ' fragmentation = ',    &
-                     frag_eff, 'Mass flow rate = ',                        &
+                WRITE(*,*) 'alfa_2 =',SUM(qp(idx_alfa_first:idx_alfa_last)),    &
+                     ' fragmentation = ', frag_eff, 'Mass flow rate = ',        &
                      REAL(rho_mix * u_mix)*3.14*radius*radius
                 WRITE(*,*)''
                 READ(*,*)
@@ -1135,10 +1147,10 @@ CONTAINS
 
        ! ----- Evaluate some phys. variables to pass out of the subroutine ------
 
-       r_alfa_2 = SUM(qp_half2(1:n_gas))
+       r_alfa_2 = SUM(qp_half2(idx_alfa_first:idx_alfa_last))
 
-       r_p_1 = qp(idx_pressure1)
-       r_p_2 = qp(idx_pressure1 + 1)
+       r_p_1 = qp(idx_p1)
+       r_p_2 = qp(idx_p2)
 
        CALL phys_var_qp( r_qp = qp )
        CALL eos
@@ -1172,7 +1184,7 @@ CONTAINS
 
        IF ( EXPLOSIVE ) THEN
 
-          alfa_2_qp = SUM(qp(1:n_gas))
+          alfa_2_qp = SUM(qp(idx_alfa_first:idx_alfa_last))
 
           IF ( ( alfa_2_qp .GT. frag_thr) .AND.                                 &	 
                ( .NOT. fragmentation ) )THEN
@@ -1217,58 +1229,20 @@ CONTAINS
 
   SUBROUTINE perturbe_qp(qp)
 
-    USE parameters, ONLY : n_cry , n_gas
-
     IMPLICIT NONE
-
-
 
     REAL*8, INTENT(INOUT) :: qp(n_vars)
 
-    !REAL*8 :: r_p_1
-    !REAL*8 :: r_p_2
-    !REAL*8 :: r_alfa_2
-    INTEGER :: idx,i
+    !Pressure phase 2 
+    qp(idx_p2) = qp(idx_p2) + 1.D-2
 
-    idx = 0
+    !Velocity phase 1 
+    IF ( qp(idx_u1) - qp(idx_u2) .GT. -1D-7 )  THEN
 
-    !Exsolved gas volume fraction------------
-    DO i = 1,n_gas
-       idx = idx + 1
-    END DO
-
-    !Pressure phase 1 --------------------
-    idx = idx + 1
-
-    !Pressure phase 2 --------------------
-    idx = idx + 1
-    qp(idx) = qp(idx) + 1.D-2
-
-    !Velocity phase 1 --------------------
-    idx = idx + 1
-
-    IF ( qp(idx) - qp(idx+1) .GT. -1D-7 )  THEN
-
-       qp(idx+1) = qp(idx+1) * ( 1.0001D0 )
+       qp(idx_u2) = qp(idx_u2) * ( 1.0001D0 )
 
     END IF
-
-    !Velocity phase 2 --------------------
-    idx = idx + 1
-
-    !Temperature --------------------
-    idx = idx + 1
-
-    !Crystals --------------------
-    DO i=1,n_cry
-       idx = idx + 1
-    END DO
-
-    !Dissolved gas mass fraction --------------------
-    DO i=1,n_gas
-       idx = idx + 1
-    END DO
-
+    
   END SUBROUTINE perturbe_qp
 
   !******************************************************************************
@@ -1286,9 +1260,10 @@ CONTAINS
 
     ! external variables
     USE parameters, ONLY : alfa_impl
-    USE parameters, ONLY : n_cry , n_gas
 
-    USE constitutive, ONLY : phys_var_qp , eos
+    ! external subroutines
+    USE constitutive, ONLY : eos
+    USE equations, ONLY : phys_var_qp
 
     IMPLICIT none
 
@@ -1441,24 +1416,36 @@ CONTAINS
 
                 qp_rel = qp_rel_NR_old + desc_dir
 
-                CALL eval_f( qp_rel , qp_org , dz , coeff_f , right_term , scal_f )
+                CALL eval_f( qp_rel , qp_org , dz , coeff_f , right_term ,      &
+                     scal_f )
 
              END IF
 
-             DO i=1,n_cry+n_gas
+             DO i=idx_xd_first,idx_xd_last
 
-                qp_rel(n_gas + 5 + i) = MAX(qp_rel(n_gas + 5 + i),0.0)
+                qp_rel(i) = MAX(qp_rel(i),0.D0)
 
              END DO
 
+             DO i=idx_beta_first,idx_beta_last
+
+                qp_rel(i) = MAX(qp_rel(i),0.D0)
+
+             END DO
 
           ELSE
 
              qp_rel = qp_rel_NR_old + desc_dir
 
-             DO i=1,n_cry+n_gas
+             DO i=idx_xd_first,idx_xd_last
 
-                qp_rel(n_gas + 5 + i) = MAX(qp_rel(n_gas + 5 + i),0.0)
+                qp_rel(i) = MAX(qp_rel(i),0.D0)
+
+             END DO
+
+             DO i=idx_beta_first,idx_beta_last
+
+                qp_rel(i) = MAX(qp_rel(i),0.D0)
 
              END DO
 
@@ -1471,13 +1458,18 @@ CONTAINS
           ! crystal content and the dissolved gas to be non-negative.
 
 
-          DO i=1,n_cry+n_gas
-
-             qp_rel(n_gas + 5 + i) = MAX(qp_rel(n_gas + 5 + i),0.0)
-
+          DO i=idx_xd_first,idx_xd_last
+             
+             qp_rel(i) = MAX(qp_rel(i),0.D0)
+             
           END DO
-
-
+          
+          DO i=idx_beta_first,idx_beta_last
+             
+             qp_rel(i) = MAX(qp_rel(i),0.D0)
+             
+          END DO
+          
           qp = qp_rel * qp_org
 
           arg_check = ABS( qp_rel(1:n_vars) - qp_rel_NR_old(1:n_vars) ) /       &
@@ -1505,13 +1497,13 @@ CONTAINS
              WRITE(*,*) ''
 
              WRITE(*,*) 'scal_f = '
-             WRITE(*,*) scal_f_init,scal_f,scal_f/scal_f_old,       &
+             WRITE(*,*) scal_f_init , scal_f , scal_f/scal_f_old ,              &
                   scal_f/scal_f_init
              WRITE(*,*) ''
 
              WRITE(*,*) 'check_NR_error = '
-             WRITE(*,*) check_NR_error, idx_max, &
-                  qp_rel(idx_max) * qp_org(idx_max), &
+             WRITE(*,*) check_NR_error, idx_max,                                &
+                  qp_rel(idx_max) * qp_org(idx_max),                            &
                   qp_rel_NR_old(idx_max) * qp_org(idx_max)
              WRITE(*,*) ''
              WRITE(*,*) 'zeta = '
@@ -1522,13 +1514,6 @@ CONTAINS
 
           END IF
 
-          !WRITE(*,*) 'left_matrix'
-
-          !DO j=1,n_eqns
-          !    WRITE(*,*) left_matrix(j,:)
-          !END DO
-
-          !READ(*,*)          
        ELSE 
 
           IF ( verbose_level .GE. 3 ) THEN
@@ -1560,13 +1545,13 @@ CONTAINS
 
        IF ( check_NR_error .LT. 0.10D0 ) THEN
 
-          IF ( scal_f / scal_f_init .LT. 1.d-10 ) check_convergence = .TRUE.  ! Era 10
+          IF ( scal_f / scal_f_init .LT. 1.d-10 ) check_convergence = .TRUE. 
 
           EXIT
 
        END IF
 
-       IF ( scal_f / scal_f_init .LT. 1.d-14 ) THEN   ! Era 14
+       IF ( scal_f / scal_f_init .LT. 1.d-14 ) THEN  
 
           check_convergence = .TRUE.
 
@@ -1576,15 +1561,27 @@ CONTAINS
 
     END DO
 
-    IF ( scal_f / scal_f_init .LT. 1.d-11 ) check_convergence = .TRUE.  ! Era 14
+    IF ( scal_f / scal_f_init .LT. 1.d-11 ) check_convergence = .TRUE. 
 
-    IF ( qp_rel(1) .LT. 0.0D0 ) THEN
+    IF ( SUM(qp_rel(idx_alfa_first:idx_alfa_last)) .LT. 0.0D0 ) THEN
 
        check_convergence = .FALSE.
 
+       EXIT
+       
     END IF
 
+    IF ( SUM(qp_rel(idx_alfa_first:idx_alfa_last)) .GE. 1.0D0 ) THEN
+
+       check_convergence = .FALSE.
+
+       EXIT
+       
+    END IF
+
+    
     IF ( verbose_level .GE. 1 ) THEN
+
        WRITE(*,*)''
        WRITE(*,*) 'scal_f = ' , nl_iter , idx_max ,    &
             scal_f/scal_f_init,check_NR_error, idx_max, ok
@@ -1592,7 +1589,6 @@ CONTAINS
        WRITE(*,*)'qp_new = '
        WRITE(*,*) qp_rel * qp_org 
 
-       !READ(*,*)	
     END IF
 
   END SUBROUTINE advance_dz
@@ -1613,11 +1609,10 @@ CONTAINS
 
   SUBROUTINE eval_f( qp_rel , qp_org , dz , coeff_f , right_term  , scal_f )
 
-    USE constitutive, ONLY : eval_fluxes_qp
-    USE constitutive, ONLY : eval_nonhyperbolic_terms_qp
+    USE equations, ONLY : eval_fluxes_qp
+    USE equations, ONLY : eval_nonhyperbolic_terms_qp
 
-    ! external variables
-    USE parameters, ONLY : alfa_impl, n_gas
+    USE parameters, ONLY : alfa_impl
 
     IMPLICIT NONE
 
@@ -1631,8 +1626,6 @@ CONTAINS
     REAL*8 :: qp(n_vars)
     REAL*8 :: fluxes(n_eqns)
     REAL*8 :: nh_terms(n_eqns)
-
-    INTEGER :: idx_temperature
 
 
     qp = qp_rel * qp_org
@@ -1652,19 +1645,29 @@ CONTAINS
 
     IF ( isothermal ) THEN
 
-       idx_temperature = n_gas + 5
-
-       fluxes(idx_temperature) = qp(idx_temperature)
-       nh_terms(idx_temperature) = 0.D0
-       right_term(idx_temperature) = fluxes(idx_temperature) - fluxes_old(idx_temperature)
+       fluxes(idx_mix_engy_eqn) = qp(idx_T)
+       nh_terms(idx_mix_engy_eqn) = 0.D0
+       right_term(idx_mix_engy_eqn) = fluxes(idx_mix_engy_eqn)                  &
+            - fluxes_old(idx_mix_engy_eqn)
 
     END IF
 
     right_term = ( fluxes - fluxes_old ) - dz * ( alfa_impl * nh_terms          &
          + ( 1.d0 - alfa_impl ) * nh_terms_old )     
-
+    
     right_term = right_term * coeff_f
 
+    IF ( verbose_level .GE. 3 ) THEN
+
+       WRITE(*,*) 'eval_f'
+       WRITE(*,*) 'fluxes',REAL(fluxes)
+       WRITE(*,*) 'fluxes_old',REAL(fluxes_old)
+       WRITE(*,*) 'nh_terms',REAL(nh_terms)
+       WRITE(*,*) 'nh_terms_old',REAL(nh_terms_old)
+       READ(*,*)
+
+    END IF
+    
     scal_f = 0.5D0 * DOT_PRODUCT( right_term , right_term )
 
   END SUBROUTINE eval_f
@@ -1686,10 +1689,10 @@ CONTAINS
   SUBROUTINE eval_jacobian( qp_rel , qp_org , dz , coeff_f , left_matrix)
 
     ! external procedures
-    USE constitutive, ONLY : eval_fluxes_qp
-    USE constitutive, ONLY : eval_nonhyperbolic_terms_qp
+    USE equations, ONLY : eval_fluxes_qp
+    USE equations, ONLY : eval_nonhyperbolic_terms_qp
 
-    USE parameters, ONLY : alfa_impl, n_gas
+    USE parameters, ONLY : alfa_impl
 
     IMPLICIT NONE
 
@@ -1709,9 +1712,7 @@ CONTAINS
     REAL*8 :: Jacob_fluxes(n_eqns,n_eqns)
     REAL*8 :: Jacob_nh(n_eqns,n_eqns)
 
-    INTEGER :: i, idx_temperature
-
-    idx_temperature = n_gas + 5   
+    INTEGER :: i
 
     h = n_eqns * epsilon(1.d0)
 
@@ -1729,8 +1730,8 @@ CONTAINS
 
        IF ( isothermal ) THEN
 
-          fluxes_cmplx(idx_temperature) = qp_cmplx(idx_temperature)
-          nh_terms_cmplx(idx_temperature) = DCMPLX( 0.D0 , 0.D0)
+          fluxes_cmplx(idx_mix_engy_eqn) = qp_cmplx(idx_T)
+          nh_terms_cmplx(idx_mix_engy_eqn) = DCMPLX( 0.D0 , 0.D0)
 
        END IF
 
@@ -1854,7 +1855,7 @@ CONTAINS
 
     slope = DOT_PRODUCT(grad_f,desc_dir)
 
-    alamin = TOLX / MAXVAL( ABS( desc_dir(:)) / MAX( ABS( x_rel_init(:)) ,        &
+    alamin = TOLX / MAXVAL( ABS( desc_dir(:)) / MAX( ABS( x_rel_init(:)) ,      &
          1.D0 ) )
 
     alamin = 1.D-20
@@ -1986,12 +1987,13 @@ CONTAINS
        extrap_z_mach,extrap_flag)
 
     ! external procedures
-    USE constitutive, ONLY : phys_var_qp , eos , alfa_2
-    USE constitutive, ONLY : sound_speeds, x_d_md, x_ex_dis_in
-
+    USE constitutive, ONLY : eos , alfa_2
+    USE constitutive, ONLY : sound_speeds
+    USE equations, ONLY : phys_var_qp
+    
     ! external variables
+    USE constitutive, ONLY : x_d_md, x_ex_dis_in
     USE init, ONLY : p1_in , p2_in
-    USE parameters, ONLY : n_gas
 
     IMPLICIT NONE
 
@@ -2024,18 +2026,15 @@ CONTAINS
 
     REAL*8 :: r_alfa_2
 
-    INTEGER :: idx_pressure1
-
     eps_extrap = 1.D-10
 
     extrap_flag = 0
 
     !--- check on small values of the phisical variables ------------------------
 
-    idx_pressure1 = n_gas + 1
 
-    r_p_1 = qp(idx_pressure1)
-    r_p_2 = qp(idx_pressure1 + 1)
+    r_p_1 = qp(idx_p1)
+    r_p_2 = qp(idx_p2)
 
     IF ( qp(n_vars) .GT. 0.D0 ) THEN
 
@@ -2139,8 +2138,8 @@ CONTAINS
 
     ! --------------------------------------------------------------------------
 
-    r_p_1_old = qp_old(idx_pressure1)
-    r_p_2_old = qp_old(idx_pressure1 + 1)
+    r_p_1_old = qp_old(idx_p1)
+    r_p_2_old = qp_old(idx_p2)
 
     CALL phys_var_qp( r_qp = qp_old )
     CALL eos

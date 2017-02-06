@@ -1,3 +1,4 @@
+
 AUTOMAKE_OPTIONS = foreign
 
 ###############################################################################
@@ -5,28 +6,26 @@ AUTOMAKE_OPTIONS = foreign
 ###############################################################################
 
 # the program to build (the names of the final binaries)
-bin_PROGRAMS = PLUMEMoM
+bin_PROGRAMS = MAMMA
 bindir=@bindir@
 
 # list of sources for the binary
-PLUMEMoM_SOURCES = \
-		moments.f90 \
-		plume.f90 \
-                variables.f90 \
-		meteo.f90 \
-		particles.f90 \
-                mixture.f90 \
-                solver_rise.f90 \
+MAMMA_SOURCES = \
+                geometry.f90 \
+                parameters.f90 \
+		complexify.f90 \
+                constitutive.f90 \
+		equations.f90 \
+                init.f90 \
                 inpout.f90 \
-		rise.f90 \
-                plume_model.f90
+                steady_solver.f90 \
+                c_main.f90
 
-FCFLAGS         = -g -O3 -ffast-math
+FCFLAGS         = -Wunused -O3 -funroll-all-loops
 FCDEBUGFLAGS    = -Wall -g
 
-LIBS            = -lz -lm -llapack
+LIBS            = -lm -llapack
 
 FC              = gfortran
 MPFC            = gfortran
 LINKER          = gfortran
-

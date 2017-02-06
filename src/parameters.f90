@@ -1,8 +1,11 @@
 !*********************************************************************
 !> \brief Parameters
+!> @author 
+!> Mattia de' Michieli Vitturi
 !
 !> This module contains the parameters for numerical solution of the
 !> model.
+!> \date 04/02/2017
 !*********************************************************************
 MODULE parameters
 
@@ -29,7 +32,33 @@ MODULE parameters
   INTEGER :: n_vars        !< Number of conservative variables
   INTEGER :: n_eqns        !< Number of equations
 
+  INTEGER :: n_moms        !> Number of moments for each crystal phase
 
+  INTEGER :: idx_p1        !< Index of p1 in the qp array
+  INTEGER :: idx_p2        !< Index of p2 in the qp array
+  INTEGER :: idx_u1        !< Index of u1 in the qp array
+  INTEGER :: idx_u2        !< Index of u2 in the qp array
+  INTEGER :: idx_T         !< Index of T in the qp array
+  INTEGER :: idx_xd_first        !< First index of xd in the qp array
+  INTEGER :: idx_xd_last         !< Last index of xd in the qp array
+  INTEGER :: idx_alfa_first        !< First index of alfa in the qp array
+  INTEGER :: idx_alfa_last         !< Last index of alfa in the qp array
+  INTEGER :: idx_beta_first        !< First index of beta in the qp array
+  INTEGER :: idx_beta_last         !< Last index of beta in the qp array
+  
+  INTEGER :: idx_mix_mass_eqn      !> Index of the mixture mass equation
+  INTEGER :: idx_vol1_eqn          !> Index of the first phase volume equation
+  INTEGER :: idx_mix_mom_eqn       !> Index of the mixture momentum equation
+  INTEGER :: idx_rel_vel_eqn       !> Index of the relative velocity equation
+  INTEGER :: idx_mix_engy_eqn      !> Index of the mixture energy equation
+  INTEGER :: idx_dis_gas_eqn_first !> Index of the first dis. gas equation
+  INTEGER :: idx_dis_gas_eqn_last  !> Index of the last dis. gas equation
+  INTEGER :: idx_ex_gas_eqn_first  !> Index of the first ex. gas equation
+  INTEGER :: idx_ex_gas_eqn_last   !> Index of the last ex. gas equation
+  INTEGER :: idx_cry_eqn_first     !> Index of the first cry. equation
+  INTEGER :: idx_cry_eqn_last     !> Index of the last cry. equation
+
+  
   INTEGER :: n_nh
 
   INTEGER :: n_RK     !< Runge-Kutta order
@@ -75,6 +104,13 @@ MODULE parameters
   !> .
   LOGICAL :: shooting
 
+  !> Flag for the crystal moments:\n
+  !> - T   => the code solve for crystal moments
+  !> - F   => the code solve for crystals volume fraction only
+  !> .
+  LOGICAL :: moments_flag
+
+ 
   !> Residual for the convergence of the shooting method. The solution is 
   !> accepted if one of these conditions is satisfied:
   !> - ( P_exit - P_out ) / P_out < eps_conv
