@@ -869,8 +869,6 @@ CONTAINS
        
     END IF
     
-    source_term(idx_mix_mass_eqn) = DCMPLX(0.D0,0.D0)
-
     ! --- FIRST PHASE VOLUME FRACTION -------------------------------------------
     source_term(idx_vol1_eqn) = DCMPLX(0.D0,0.D0)
 
