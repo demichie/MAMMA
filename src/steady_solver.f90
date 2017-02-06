@@ -1567,16 +1567,12 @@ CONTAINS
 
        check_convergence = .FALSE.
 
-       EXIT
-       
     END IF
 
     IF ( SUM(qp_rel(idx_alfa_first:idx_alfa_last)) .GE. 1.0D0 ) THEN
 
        check_convergence = .FALSE.
 
-       EXIT
-       
     END IF
 
     
