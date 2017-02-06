@@ -23,20 +23,20 @@ zeta_grid = data_reshaped(1,:);
 z0 = Z0;
 zN = ZN;
 
-alfa_2(1:N_GAS,:) = data_reshaped(1+1:1+N_GAS,:);
+alfa_2(1:N_GAS,:) = data_reshaped(6+N_GAS+1:6+N_GAS+N_GAS,:);
 alfa_1(1,:) = 1.D0 - sum(alfa_2,1);
 
-p_1 = data_reshaped(1+N_GAS+1,:);
-p_2 = data_reshaped(1+N_GAS+2,:);
-u_1 = data_reshaped(1+N_GAS+3,:);
-u_2 = data_reshaped(1+N_GAS+4,:);
-T =   data_reshaped(1+N_GAS+5,:);
+p_1 = data_reshaped(1+1,:);
+p_2 = data_reshaped(1+2,:);
+u_1 = data_reshaped(1+3,:);
+u_2 = data_reshaped(1+4,:);
+T =   data_reshaped(1+5,:);
 
 beta = zeros(N_CRY,comp_cells);
 
 for i=1:N_CRY,
 
-    beta(i,:) = data_reshaped(1+N_GAS+5+i,:);
+    beta(i,:) = data_reshaped(6+2*N_GAS+i,:);
 
 end
 
@@ -44,19 +44,17 @@ x_d = zeros(N_GAS,comp_cells);
 
 for i=1:N_GAS,
 
-    x_d(i,:) = data_reshaped(1+N_GAS+5+N_CRY+i,:);
+    x_d(i,:) = data_reshaped(1+5+i,:);
 
 end
 
-%frag_eff = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1,:);
-
-rho_1 = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1,:);
+rho_1 = data_reshaped(7+2*N_GAS+N_CRY,:);
 
 rho_2 = zeros(N_GAS,comp_cells);
 
 for i=1:N_GAS,
 
-    rho_2(i,:) = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+i,:);
+    rho_2(i,:) = data_reshaped(7+2*N_GAS+N_CRY+i,:);
 
 end
 
@@ -64,7 +62,7 @@ beta_eq = zeros(N_CRY,comp_cells);
 
 for i=1:N_CRY,
 
-    beta_eq(i,:) = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+i,:);
+    beta_eq(i,:) = data_reshaped(7+3*N_GAS+N_CRY+i,:);
 
 end
 
@@ -72,7 +70,7 @@ x_d_eq = zeros(N_GAS,comp_cells);
 
 for i=1:N_GAS,
 
-    x_d_eq(i,:) = data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+N_CRY+i,:);
+    x_d_eq(i,:) = data_reshaped(7+3*N_GAS+2*N_CRY+i,:);
 
 end
 
