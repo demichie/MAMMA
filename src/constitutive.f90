@@ -194,13 +194,11 @@ MODULE constitutive
   !> .
   REAL*8 :: drag_funct_coeff
 
-
   ! parameters of the Forchheimer model
 
   !> bubble number density
   REAL*8 :: bubble_number_density
   REAL*8 :: log10_bubble_number_density
-
 
   !> tortuosity factor
   REAL*8 :: tortuosity_factor
@@ -216,7 +214,6 @@ MODULE constitutive
 
   ! ash particl size
   REAL*8 :: r_a
-
 
   !> pressure relaxation model\n
   !> - 'constant'    => tau_p = 1
@@ -318,18 +315,19 @@ MODULE constitutive
   !> relative viscosity due to bubbles
   COMPLEX*16 :: visc_rel_bubbles
 
-  !> Parameter to choose the model for the influence of crystal on the mixture 
-  !> viscosity according:\n
-  !> - theta_model = 1 => \f$ \theta = \left( 1 - \frac{\beta}{0.7}\right)^{-3,4}\f$ 
-  !>                      (Einstein-Roscoe with constants from Lejeune & Richter '95);
-  !> - theta_model = 2 => \f$ \theta = \left( 1+0.75\frac{\beta/0.84}{1-\beta/0.84} \right)^2\f$
-  !>                        (Dingwell et al '93);
-  !> - theta_model = 3 => \f$ \theta = \theta_0 \f$ Melnik & Sparks '99
-  !> - theta_model = 4 => \f$ \theta = \left[ 1 - c_1 erf\left(0.5 * \sqrt\pi (1+\frac{c_2}{(1-\beta)^{c_3}})
-  !>                          \right)\right]^\frac{-2.5}{c_1}\f$  (Costa)
-  !> - theta_model = 5 => \f$ \theta = c_1 \cdot 10 ^{arctan(c_2(\beta-c_3))+\frac{\pi}{2}} \f$
-  !>                          (Melnik & Sparks '05).  
-  !> .
+  !> Parameter to choose the model for the influence of crystal on the mixture:
+  !> 'Lejeune_and_Richet1995'
+  !> 'Dingwell1993'
+  !> 'Melnik_and_Sparks1999'
+  !> 'Costa2005'
+  !> 'Melnik_and_Sparks2005'
+  !> 'Vona_et_al2011'
+  !> 'Vona_et_al2011_mod'
+  !> 'Vona_et_al2013_eq19'
+  !> 'Vona_et_al2013_eq20'
+  !> 'Vona_et_al2013_eq21'
+  !> 'Fixed_value'
+  !> .  
   CHARACTER*30 :: theta_model
 
   !> Relative viscosity of the crystals
@@ -352,9 +350,14 @@ MODULE constitutive
 
   !> Parameter to choose the model for the influence of the bubbles on the mixture:\n 
   !> - 'Einstein' 
-  !> - 'Quane-Russel  -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
-  !> - 'Eilers'       -> Mader et al. 2013
-  !> - 'Sibree'       -> Mader et al. 2013
+  !> - 'Quane-Russel         -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+  !> - 'Eilers'              -> Mader et al. 2013
+  !> - 'Sibree'              -> Mader et al. 2013
+  !> - 'Taylor'              -> Mader et al. 2013
+  !> - 'Mackenzie'           -> Mader et al. 2013
+  !> - 'DucampRaj'           -> Mader et al. 2013
+  !> - 'BagdassarovDingwell' -> Mader et al. 2013
+  !> - 'Rahaman'             -> Mader et al. 2013
   !> .
   CHARACTER*20 :: bubbles_model
 
@@ -1789,6 +1792,21 @@ CONTAINS
 
        theta =  theta_fixed * (1.D0 + var_phi ** delta )/( ( 1.D0 - (1.D0 - csi)&
             * errorf ) ** (Einstein_coeff * phi_star) ) 
+	    
+    CASE ('Vona_et_al2013_eq19')
+
+       theta = ( 1.D0 - SUM(beta(1:n_cry)) / (1.D0 - alfa_2 ) ) ** ( - 5.D0 / 2.D0) &
+           * ( 1 - alfa_2 ) ** (- 1.D0)
+
+    CASE ('Vona_et_al2013_eq20')
+
+       theta = ( 1.D0 - SUM(beta(1:n_cry)) - alfa_2 )  ** ( - ( 5.D0 * SUM(beta(1:n_cry)) &
+           + 2.D0 * alfa_2 ) / ( 2.D0 * ( SUM(beta(1:n_cry)) + alfa_2 ) ) )
+
+    CASE ('Vona_et_al2013_eq21')
+
+       theta = ( 1.D0 - alfa_2 / (1.D0 - SUM(beta(1:n_cry)) ) ) ** ( -1.0 ) &
+           * ( 1 - SUM(beta(1:n_cry)) ) ** (- 5.D0/2.D0)
 
     END SELECT
 
@@ -1807,54 +1825,93 @@ CONTAINS
 
     REAL*8 :: Ca, gamma_Ca
 
-    SELECT CASE ( bubbles_model )
+    IF(  (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.              & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) ) THEN
 
-    CASE DEFAULT
+       SELECT CASE ( bubbles_model )
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+       CASE DEFAULT
 
-    CASE ( 'none' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+       CASE ( 'none' )
 
-    CASE ( 'Costa2007' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
 
-       gamma_Ca = 0.25D0
+       CASE ( 'Costa2007' )
 
-       Ca =  r_a * visc_melt * (8.00D0 * (u_mix * pi * radius**2)               &
+          gamma_Ca = 0.25D0
+
+          Ca =  r_a * visc_melt * (8.00D0 * (u_mix * pi * radius**2)               &
 	         / (3.0D0 * pi * radius**3.0D0)) / gamma_Ca
 
-       visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                        & 
-	* ((1.0D0/(1.0D0-alfa_2))+ 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
+          visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                        & 
+	   * ((1.0D0/(1.0D0-alfa_2))+ 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
 
 
-    CASE ( 'Einstein' )
+      CASE ( 'Einstein' )
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) / ( 1.d0 - alfa_2 )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) / ( 1.d0 - alfa_2 )
 
-    CASE ( 'Quane-Russel' )
+      CASE ( 'Quane-Russel' )
 
-       ! For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+         ! For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( ( - 0.63 * alfa_2 )      &
-            / ( 1.D0 - alfa_2 ) )
+         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( ( - 0.63 * alfa_2 )      &
+             / ( 1.D0 - alfa_2 ) )
 
-    CASE ( 'Eilers' )
+      CASE ( 'Eilers' )
 
-       ! Eq. (17) Mader et al. 2013
+         ! Eq. (17) Mader et al. 2013
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_2)      &
-            / (1.0D0 - 1.29 * alfa_2) ) ** 2.0D0
+         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_2)      &
+              / (1.0D0 - 1.29 * alfa_2) ) ** 2.0D0
 
-    CASE ( 'Sibree' )
+      CASE ( 'Sibree' )
 
-       ! Eq. (18) Mader et al. 2013
+         ! Eq. (18) Mader et al. 2013
 
-       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 / (1.0D0 - (1.2 * alfa_2)&
-            ** 0.33333D0 ))
+         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 / (1.0D0 - (1.2 * alfa_2)&
+              ** 0.33333D0 ))
+	      
+    	CASE ( 'Taylor' )
 
+       	 ! Eq. (16) Mader et al. 2013
+
+       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + alfa_2)
+
+    	CASE ( 'Mackenzie' )
+
+       	 ! Eq. (19) Mader et al. 2013
+
+       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 - (5.D0 / 3.D0) * alfa_2)
+
+    	CASE ( 'DucampRaj' )
+
+       	 ! Eq. (21) Mader et al. 2013, using b = 3
+
+       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * EXP( -3.D0 * ( alfa_2 / ( 1.D0 - alfa_2 ) ) )
+
+    	CASE ( 'BagdassarovDingwell' )
+
+       	 ! Eq. (22) Mader et al. 2013
+
+       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * ( 1.D0 / (1.D0 + 22.4D0 * alfa_2 ) )
+
+    	CASE ( 'Rahaman' )
+
+       	 ! Eq. (20) Mader et al. 2013
+
+       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * EXP( - 11.2D0 * alfa_2 )
+	      
     END SELECT
+    
+  ELSE
 
+    visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+
+  END IF
 
   END SUBROUTINE f_bubbles
 
