@@ -720,6 +720,9 @@ CONTAINS
          (.NOT. (theta_model .EQ. 'Melnik_and_Sparks2005' ) ) .AND.             & 
          (.NOT. (theta_model .EQ. 'Vona_et_al2011' ) ) .AND.                    & 
          (.NOT. (theta_model .EQ. 'Vona_et_al2011_mod' ) ) .AND.                & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) .AND.   	        &
          (.NOT. (theta_model .EQ. 'Fixed_value' ) ) ) THEN
 
        WRITE(*,*) ''
@@ -733,10 +736,22 @@ CONTAINS
        WRITE(*,*) 'Melnik_and_Sparks2005'
        WRITE(*,*) 'Vona_et_al2011'
        WRITE(*,*) 'Vona_et_al2011_mod'
+       WRITE(*,*) 'Vona_et_al2013_eq19'
+       WRITE(*,*) 'Vona_et_al2013_eq20'
+       WRITE(*,*) 'Vona_et_al2013_eq21'       
        WRITE(*,*) 'Fixed_value'
        WRITE(*,*) ''
 
        CALL ABORT
+
+    END IF
+
+    IF ( (theta_model .EQ. 'Vona_et_al2013_eq19' ) .OR.             & 
+         (theta_model .EQ. 'Vona_et_al2013_eq20' ) .OR.                    & 
+         (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) THEN
+
+	WRITE(*,*) 'WARNING: bubbles_model not used.' 
+        WRITE(*,*) 'Effect of bubbles is included by using Vona 2013 equations'	 
 
     END IF
 
@@ -745,8 +760,16 @@ CONTAINS
          (.NOT. (bubbles_model .EQ. 'Einstein' ) ) .AND.                        & 
          (.NOT. (bubbles_model .EQ. 'Quane-Russel' ) ) .AND.                    & 
          (.NOT. (bubbles_model .EQ. 'Eilers' ) ) .AND.                          & 
-         (.NOT. (bubbles_model .EQ. 'Sibree' ) ) ) THEN
-
+         (.NOT. (bubbles_model .EQ. 'Sibree' ) ) .AND.                          &
+         (.NOT. (bubbles_model .EQ. 'Taylor' ) ) .AND.                          & 
+         (.NOT. (bubbles_model .EQ. 'Mackenzie' ) ) .AND.                       &
+         (.NOT. (bubbles_model .EQ. 'DucampRaj' ) ) .AND.                       & 
+         (.NOT. (bubbles_model .EQ. 'BagdassarovDingwell' ) ) .AND.             & 
+         (.NOT. (bubbles_model .EQ. 'Rahaman' ) ) .AND.                         & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) ) THEN
+	 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong bubbles model chosen.'
        WRITE(*,*) 'Please choose between:'
@@ -757,12 +780,16 @@ CONTAINS
        WRITE(*,*) 'Quane-Russel'
        WRITE(*,*) 'Eilers'
        WRITE(*,*) 'Sibree'
+       WRITE(*,*) 'Taylor'
+       WRITE(*,*) 'Mackenzie'
+       WRITE(*,*) 'DucampRaj'
+       WRITE(*,*) 'BagdassarovDingwell'
+       WRITE(*,*) 'Rahaman'       
        WRITE(*,*) ''
 
        CALL ABORT
 
     END IF
-
 
     ! ------- READ temperature_parameters NAMELIST ------------------------------
     READ(input_unit, temperature_parameters)
@@ -1040,15 +1067,12 @@ CONTAINS
 
     END DO
 
-
-
     WRITE(steady_p_output_unit, *) (zeta)
     WRITE(steady_p_output_unit, 1006) (qp(i), i=1,n_vars)
     WRITE(steady_p_output_unit, 1006) (qp2(i), i=1,1+n_cry+n_gas+n_gas+4)
     WRITE(steady_p_output_unit, *) radius
 
 1006 FORMAT(4e20.12) 
-
 
     WRITE(steady_q_output_unit,1007,advance="no") zeta
 
@@ -1096,7 +1120,6 @@ CONTAINS
           mix_velocity = mix_velocity + qp(j) * rho2(j) / rho_mix * qp(idx_u2)
 
        END DO
-
 
        CLOSE(steady_p_output_unit)
        CLOSE(steady_q_output_unit)
@@ -1159,7 +1182,6 @@ CONTAINS
 
        CLOSE( exit_unit )
 
-
     END IF
 
   END SUBROUTINE output_steady
@@ -1195,7 +1217,6 @@ CONTAINS
     !
     RETURN
   END FUNCTION lettera
-
 
 END MODULE inpout
 
