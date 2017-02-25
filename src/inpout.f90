@@ -454,29 +454,67 @@ CONTAINS
 
   SUBROUTINE read_param
 
+    ! external subroutines
+    USE constitutive, ONLY : allocate_phases_parameters
+
+    ! external variables
+    USE constitutive, ONLY : n_drag_models , available_drag_models
+    USE constitutive, ONLY : n_theta_models , available_theta_models
+    USE constitutive, ONLY : n_bubble_models, available_bubble_models
+    USE constitutive, ONLY : n_visc_melt_models , available_visc_melt_models
     USE constitutive, ONLY : T0_c , bar_p_c !, bar_e_c
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
 
     USE init, ONLY : beta_in , xd_md_in
 
-    USE constitutive, ONLY : allocate_phases_parameters
 
+    
+    
     IMPLICIT none
 
     INTEGER :: i
     LOGICAL :: tend1
     CHARACTER(LEN=80) :: card
 
+    LOGICAL :: check_model
+    
+    INTEGER :: ios
 
     OPEN(input_unit,FILE=input_file,STATUS='old')
 
 
     ! ------- READ run_parameters NAMELIST --------------------------------------
 
-    READ(input_unit, run_parameters )
+    READ(input_unit, run_parameters , IOSTAT = ios )
 
-    READ(input_unit,geometry_parameters)
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist RUN_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+    
+    READ(input_unit,geometry_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist GEOMETRY_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+    
     IF ( radius_model == 'fixed' ) THEN
 
        IF ( radius_min .NE. 0.D0 ) WRITE(*,*) 'WARNING: radius_min not used'
@@ -494,8 +532,22 @@ CONTAINS
               
 
     ! ------- READ phases_parameters NAMELIST -----------------------------------
-    READ(input_unit, phases_parameters )
+    READ(input_unit, phases_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist PHASES_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF ( n_moms .LE. 1 ) THEN
 
        WRITE(*,*) 'Solving for crystal volume fraction only'
@@ -514,8 +566,22 @@ CONTAINS
 
     CALL allocate_phases_parameters
 
-    READ(input_unit,steady_boundary_conditions)
+    READ(input_unit,steady_boundary_conditions , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist STEADY_BOUNDARY_CONDITIONS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF ( u1_in .GT. 0.D0 ) THEN
 
        IF ( shooting .EQV. .TRUE.) THEN
@@ -533,8 +599,22 @@ CONTAINS
 
 
     ! ------- READ exsolved_gas_parameters NAMELIST ----------------------------
-    READ(input_unit, exsolved_gas_parameters )
+    READ(input_unit, exsolved_gas_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist EXSOLVED_GAS_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF ( gas_law .EQ. 'IDEAL' )  THEN
 
        a_g(1:n_gas) = 0.D0
@@ -562,8 +642,22 @@ CONTAINS
     END IF
 
     ! ------- READ dissolved_gas_parameters NAMELIST ---------------------------
-    READ(input_unit, dissolved_gas_parameters )
+    READ(input_unit, dissolved_gas_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist DISSOLVED_GAS_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     T0_d(1:n_gas) = C0_d(1:n_gas) **2.D0 / ( cv_d(1:n_gas) * gamma_d(1:n_gas)   &
          * ( gamma_d(1:n_gas) - 1.D0 ) )
 
@@ -572,7 +666,7 @@ CONTAINS
 
 
     ! ------- READ crystals_parameters NAMELIST ---------------------------------
-    READ(input_unit, crystals_parameters )
+    READ(input_unit, crystals_parameters , IOSTAT = ios )
 
     T0_c(1:n_cry) = C0_c(1:n_cry) **2.D0 / ( cv_c(1:n_cry) * gamma_c(1:n_cry)   &
          * ( gamma_c(1:n_cry) - 1.D0 ) )
@@ -635,7 +729,6 @@ CONTAINS
        DO i = 1, n_coeffs
 
           READ(input_unit,*) fit(1:n_cry,i)
-
           IF ( verbose_level .GE. 1 ) WRITE(*,*) i,fit(1:n_cry,i)
 
        END DO
@@ -650,37 +743,41 @@ CONTAINS
 
 
     ! ------- READ melt_parameters NAMELIST -------------------------------------
-    READ(input_unit, melt_parameters )
+    READ(input_unit, melt_parameters , IOSTAT = ios )
 
     T0_m = C0_m **2.D0 / ( cv_m * gamma_m * ( gamma_m - 1.D0 ) )
     bar_p_m = ( rho0_m * C0_m ** 2.d0 - gamma_m * p0_m ) / gamma_m
 
     ! ------- READ viscosity_parameters NAMELIST --------------------------------
-    READ(input_unit, viscosity_parameters)
+    READ(input_unit, viscosity_parameters , IOSTAT = ios )
 
+    check_model = .FALSE.
 
-    IF ( (.NOT. (visc_melt_model .EQ. 'Hess_and_Dingwell1996' ) ) .AND.         & 
-         (.NOT. (visc_melt_model .EQ. 'Giordano_et_al2008' ) ) .AND.            & 
-         (.NOT. (visc_melt_model .EQ. 'Di_Genova_et_al2013_eqn_3,5' ) ) .AND.   & 
-         (.NOT. (visc_melt_model .EQ. 'Di_Genova_et_al2013_eqn_4,5' ) ) .AND.   & 
-         (.NOT. (visc_melt_model .EQ. 'Giordano_et_al2009' ) ) .AND.            & 
-         (.NOT. (visc_melt_model .EQ. 'Romano_et_al2003' ) ) ) THEN
+    DO i=1,n_visc_melt_models
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong melt viscosity model chosen.'
+       IF ( TRIM(visc_melt_model) .EQ. TRIM(available_visc_melt_models(i)) ) THEN
+          
+          check_model = .TRUE.
+
+       END IF
+
+    END DO
+
+    IF ( .NOT.check_model ) THEN
+
+       WRITE(*,*) 'Wrong drag_funct_model chosen.'
        WRITE(*,*) 'Please choose between:'
-       WRITE(*,*) ''
-       WRITE(*,*) 'Hess_and_Dingwell1996'
-       WRITE(*,*) 'Romano_et_al2003'
-       WRITE(*,*) 'Giordano_et_al2008'
-       WRITE(*,*) 'Giordano_et_al2009'
-       WRITE(*,*) 'Di_Genova_et_al2013_eqn_3,5'
-       WRITE(*,*) 'Di_Genova_et_al2013_eqn_4,5'
-       WRITE(*,*) ''
+       
+       DO i=1,n_visc_melt_models
+          
+          WRITE(*,*) available_visc_melt_models(i)
 
-       CALL ABORT
+       END DO
+
+       STOP
 
     END IF
+
 
     IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
        
@@ -713,36 +810,30 @@ CONTAINS
 
     END IF
 
-    IF ( (.NOT. (theta_model .EQ. 'Lejeune_and_Richet1995' ) ) .AND.            & 
-         (.NOT. (theta_model .EQ. 'Dingwell1993' ) ) .AND.                      & 
-         (.NOT. (theta_model .EQ. 'Melnik_and_Sparks1999' ) ) .AND.             & 
-         (.NOT. (theta_model .EQ. 'Costa2005' ) ) .AND.                         & 
-         (.NOT. (theta_model .EQ. 'Melnik_and_Sparks2005' ) ) .AND.             & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2011' ) ) .AND.                    & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2011_mod' ) ) .AND.                & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) .AND.   	        &
-         (.NOT. (theta_model .EQ. 'Fixed_value' ) ) ) THEN
+    check_model = .FALSE.
 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong theta model chosen.'
+    DO i=1,n_theta_models
+
+       IF ( TRIM(theta_model) .EQ. TRIM(available_theta_models(i)) ) THEN
+          
+          check_model = .TRUE.
+
+       END IF
+
+    END DO
+
+    IF ( .NOT.check_model ) THEN
+
+       WRITE(*,*) 'Wrong theta_model chosen.'
        WRITE(*,*) 'Please choose between:'
-       WRITE(*,*) ''
-       WRITE(*,*) 'Lejeune_and_Richet1995'
-       WRITE(*,*) 'Dingwell1993'
-       WRITE(*,*) 'Melnik_and_Sparks1999'
-       WRITE(*,*) 'Costa2005'
-       WRITE(*,*) 'Melnik_and_Sparks2005'
-       WRITE(*,*) 'Vona_et_al2011'
-       WRITE(*,*) 'Vona_et_al2011_mod'
-       WRITE(*,*) 'Vona_et_al2013_eq19'
-       WRITE(*,*) 'Vona_et_al2013_eq20'
-       WRITE(*,*) 'Vona_et_al2013_eq21'       
-       WRITE(*,*) 'Fixed_value'
-       WRITE(*,*) ''
+       
+       DO i=1,n_theta_models
+          
+          WRITE(*,*) available_theta_models(i)
 
-       CALL ABORT
+       END DO
+
+       STOP
 
     END IF
 
@@ -755,41 +846,33 @@ CONTAINS
 
     END IF
 
-    IF ( (.NOT. (bubbles_model .EQ. 'none' ) ) .AND.                            & 
-         (.NOT. (bubbles_model .EQ. 'Costa2007' ) ) .AND.                       & 
-         (.NOT. (bubbles_model .EQ. 'Einstein' ) ) .AND.                        & 
-         (.NOT. (bubbles_model .EQ. 'Quane-Russel' ) ) .AND.                    & 
-         (.NOT. (bubbles_model .EQ. 'Eilers' ) ) .AND.                          & 
-         (.NOT. (bubbles_model .EQ. 'Sibree' ) ) .AND.                          &
-         (.NOT. (bubbles_model .EQ. 'Taylor' ) ) .AND.                          & 
-         (.NOT. (bubbles_model .EQ. 'Mackenzie' ) ) .AND.                       &
-         (.NOT. (bubbles_model .EQ. 'DucampRaj' ) ) .AND.                       & 
-         (.NOT. (bubbles_model .EQ. 'BagdassarovDingwell' ) ) .AND.             & 
-         (.NOT. (bubbles_model .EQ. 'Rahaman' ) ) .AND.                         & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) ) THEN
-	 
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong bubbles model chosen.'
-       WRITE(*,*) 'Please choose between:'
-       WRITE(*,*) ''
-       WRITE(*,*) 'none'
-       WRITE(*,*) 'Costa2007'
-       WRITE(*,*) 'Einstein'
-       WRITE(*,*) 'Quane-Russel'
-       WRITE(*,*) 'Eilers'
-       WRITE(*,*) 'Sibree'
-       WRITE(*,*) 'Taylor'
-       WRITE(*,*) 'Mackenzie'
-       WRITE(*,*) 'DucampRaj'
-       WRITE(*,*) 'BagdassarovDingwell'
-       WRITE(*,*) 'Rahaman'       
-       WRITE(*,*) ''
+    check_model = .FALSE.
 
-       CALL ABORT
+    DO i=1,n_bubble_models
+
+       IF ( TRIM(bubbles_model) .EQ. TRIM(available_bubble_models(i)) ) THEN
+          
+          check_model = .TRUE.
+
+       END IF
+
+    END DO
+
+    IF ( .NOT.check_model ) THEN
+
+       WRITE(*,*) 'Wrong bubbles_model chosen.'
+       WRITE(*,*) 'Please choose between:'
+       
+       DO i=1,n_bubble_models
+          
+          WRITE(*,*) available_bubble_models(i)
+
+       END DO
+
+       STOP
 
     END IF
+
 
     ! ------- READ temperature_parameters NAMELIST ------------------------------
     READ(input_unit, temperature_parameters)
@@ -801,7 +884,7 @@ CONTAINS
     END IF
 
     ! ------- READ fragmentation_parameters NAMELIST ----------------------------
-    READ(input_unit, fragmentation_parameters)
+    READ(input_unit, fragmentation_parameters , IOSTAT = ios )
 
     IF (fragmentation_model .NE. 1 ) THEN
 
@@ -817,7 +900,7 @@ CONTAINS
     END IF
 
     ! ------- READ external_water_parameters NAMELIST ---------------------------
-    READ(input_unit, external_water_parameters)
+    READ(input_unit, external_water_parameters , IOSTAT = ios )
 
     IF (ext_water) THEN
 
@@ -839,12 +922,12 @@ CONTAINS
     END IF
 
     ! ------- READ source_parameters NAMELIST -----------------------------------
-    READ(input_unit, source_parameters)
+    READ(input_unit, source_parameters , IOSTAT = ios )
 
     ! ------- READ country_rock_parameters NAMELIST -----------------------------
     IF ( lateral_degassing_flag ) THEN
        
-       READ(input_unit, country_rock_parameters )
+       READ(input_unit, country_rock_parameters , IOSTAT = ios )
        
     END IF
 
@@ -854,7 +937,7 @@ CONTAINS
     ALLOCATE( log10_tau_d(n_gas) )
     ALLOCATE( log10_tau_c(n_cry) )
 
-    READ(input_unit, relaxation_parameters )
+    READ(input_unit, relaxation_parameters , IOSTAT = ios )
 
     drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
     tau_p_coeff = 10.D0 ** log10_tau_p_coeff
@@ -862,17 +945,44 @@ CONTAINS
     tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
 
+    check_model = .FALSE.
+
+    DO i=1,n_drag_models
+
+       IF ( TRIM(drag_funct_model) .EQ. TRIM(available_drag_models(i)) ) THEN
+          
+          check_model = .TRUE.
+
+       END IF
+
+    END DO
+
+    IF ( .NOT.check_model ) THEN
+
+       WRITE(*,*) 'Wrong drag_funct_model chosen.'
+       WRITE(*,*) 'Please choose between:'
+       
+       DO i=1,n_drag_models
+          
+          WRITE(*,*) available_drag_models(i)
+
+       END DO
+
+       STOP
+
+    END IF
+       
     IF ( (drag_funct_model .EQ. 'eval' ) .OR.                                   &
          ( drag_funct_model .EQ. 'Klug_and_Cashman' ) .OR.                      &
          (drag_funct_model .EQ. 'drag' ) ) THEN
 
-       READ(input_unit, bubbles_parameters )
+       READ(input_unit, bubbles_parameters , IOSTAT = ios )
        
     ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
          ( drag_funct_model .EQ. 'forchheimer') .OR.                            & 
          ( drag_funct_model .EQ. 'forchheimer_wt')) THEN
        
-       READ(input_unit, forchheimer_parameters )
+       READ(input_unit, forchheimer_parameters , IOSTAT = ios )
        
        bubble_number_density = 10.0D0 ** log10_bubble_number_density
        
@@ -880,23 +990,7 @@ CONTAINS
          (drag_funct_model .EQ. 'forchheimer_mod2') .OR.                        &
          (drag_funct_model .EQ. 'forchheimer_mod3') ) THEN
 
-       READ(input_unit, permeability_parameters )
-
-
-    ELSE
-
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong drag_funct_model chosen.'
-       WRITE(*,*) 'Please choose between:'
-       WRITE(*,*) ''
-       WRITE(*,*) 'eval'
-       WRITE(*,*) 'drag'
-       WRITE(*,*) 'darcy'
-       WRITE(*,*) 'forchheimer'
-       WRITE(*,*) 'forchheimer_wt'
-       WRITE(*,*) ''
-
-       CALL ABORT
+       READ(input_unit, permeability_parameters , IOSTAT = ios )
 
     END IF
 

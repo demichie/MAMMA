@@ -174,6 +174,10 @@ MODULE constitutive
   COMPLEX*16 :: C_1        !< first phase local sound speed
   COMPLEX*16 :: C_2        !< second phase local sound speed
 
+  INTEGER :: n_drag_models
+
+  CHARACTER (LEN=30), DIMENSION(20) :: available_drag_models
+  
   !> drag function model\n
   !> - 'constant'        => drag_funct = 1
   !> - 'eval'            => drag_funct = f(q)
@@ -315,6 +319,10 @@ MODULE constitutive
   !> relative viscosity due to bubbles
   COMPLEX*16 :: visc_rel_bubbles
 
+  INTEGER :: n_theta_models 
+
+  CHARACTER (LEN=30), DIMENSION(20) :: available_theta_models
+  
   !> Parameter to choose the model for the influence of crystal on the mixture:
   !> 'Lejeune_and_Richet1995'
   !> 'Dingwell1993'
@@ -348,6 +356,10 @@ MODULE constitutive
   !> Elevation above the bottom for the evaluation of the lithostatic pressure
   REAL*8 :: zeta_lith
 
+  INTEGER :: n_bubble_models
+
+  CHARACTER (LEN=30), DIMENSION(20) :: available_bubble_models
+  
   !> Parameter to choose the model for the influence of the bubbles on the mixture:\n 
   !> - 'Einstein' 
   !> - 'Quane-Russel         -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
@@ -373,6 +385,10 @@ MODULE constitutive
   REAL*8 :: alfa_switch
   REAL*8 :: a_2nd , b_2nd , perm0
 
+  INTEGER :: n_visc_melt_models
+
+  CHARACTER (LEN=30), DIMENSION(20) :: available_visc_melt_models
+  
   !> Parameter to select the melt viscosity (bubbles and crystal-free) model:\n
   !> - 'Hess_and_Dingwell1996'
   !> - 'Romano_et_al2003'
@@ -396,6 +412,60 @@ MODULE constitutive
 
 CONTAINS
 
+  SUBROUTINE initialize_models
+
+    IMPLICIT NONE
+
+    n_drag_models = 6
+    
+    available_drag_models(1) = 'constant'
+    available_drag_models(2) = 'eval'
+    available_drag_models(3) = 'darcy'
+    available_drag_models(4) = 'forchheimer'
+    available_drag_models(5) = 'drag'
+    available_drag_models(6) = 'single_velocity'
+
+
+    n_theta_models = 11
+
+    available_theta_models(1) = 'Lejeune_and_Richet1995'
+    available_theta_models(2) = 'Dingwell1993'
+    available_theta_models(3) = 'Melnik_and_Sparks1999'
+    available_theta_models(4) = 'Costa2005'
+    available_theta_models(5) = 'Melnik_and_Sparks2005'
+    available_theta_models(6) = 'Vona_et_al2011'
+    available_theta_models(7) = 'Vona_et_al2011_mod'
+    available_theta_models(8) = 'Vona_et_al2013_eq19'
+    available_theta_models(9) = 'Vona_et_al2013_eq20'
+    available_theta_models(10) = 'Vona_et_al2013_eq21'
+    available_theta_models(11) = 'Fixed_value'
+
+    n_bubble_models = 11
+
+    available_bubble_models(1) = 'none'
+    available_bubble_models(2) = 'Costa2007'
+    available_bubble_models(3) = 'Einstein'
+    available_bubble_models(4) = 'Quane-Russel'
+    available_bubble_models(5) = 'Eilers'
+    available_bubble_models(6) = 'Sibree'
+    available_bubble_models(7) = 'Taylor'
+    available_bubble_models(8) = 'Mackenzie'
+    available_bubble_models(9) = 'DucampRaj'
+    available_bubble_models(10) = 'BagdassarovDingwell'
+    available_bubble_models(11) = 'Rahaman'
+
+
+    n_visc_melt_models = 6
+
+    available_visc_melt_models(1) = 'Hess_and_Dingwell1996'
+    available_visc_melt_models(2) = 'Romano_et_al2003'
+    available_visc_melt_models(3) = 'Giordano_et_al2008'
+    available_visc_melt_models(4) = 'Giordano_et_al2009'
+    available_visc_melt_models(5) = 'Di_Genova_et_al2013_eqn_3,5'
+    available_visc_melt_models(6) = 'Di_Genova_et_al2013_eqn_4,5'
+    
+  END SUBROUTINE initialize_models
+  
   !******************************************************************************
   !> @author 
   !> Mattia de' Michieli Vitturi

@@ -30,6 +30,7 @@
 !> \brief Main Program 
 PROGRAM MAMMA_main
 
+  USE constitutive, ONLY : initialize_models
   USE inpout, ONLY : init_param , read_param
   USE geometry, ONLY : init_grid
   USE steady_solver, ONLY : steady_shooting
@@ -40,6 +41,8 @@ PROGRAM MAMMA_main
 
   CALL cpu_time(t1)
 
+  CALL initialize_models
+  
   CALL init_param
 
   CALL read_param
