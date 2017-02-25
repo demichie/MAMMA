@@ -837,8 +837,8 @@ CONTAINS
 
     END IF
 
-    IF ( (theta_model .EQ. 'Vona_et_al2013_eq19' ) .OR.             & 
-         (theta_model .EQ. 'Vona_et_al2013_eq20' ) .OR.                    & 
+    IF ( (theta_model .EQ. 'Vona_et_al2013_eq19' ) .OR.                         & 
+         (theta_model .EQ. 'Vona_et_al2013_eq20' ) .OR.                         & 
          (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) THEN
 
 	WRITE(*,*) 'WARNING: bubbles_model not used.' 
@@ -972,10 +972,10 @@ CONTAINS
 
     END IF
        
-    IF ( (drag_funct_model .EQ. 'eval' ) .OR.                                   &
+    IF ( ( drag_funct_model .EQ. 'eval' ) .OR.                                  &
          ( drag_funct_model .EQ. 'Klug_and_Cashman' ) .OR.                      &
-         (drag_funct_model .EQ. 'drag' ) ) THEN
-
+         ( drag_funct_model .EQ. 'drag' ) ) THEN
+       
        READ(input_unit, bubbles_parameters , IOSTAT = ios )
        
     ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
@@ -986,9 +986,9 @@ CONTAINS
        
        bubble_number_density = 10.0D0 ** log10_bubble_number_density
        
-    ELSEIF ( (drag_funct_model .EQ. 'forchheimer_mod') .OR.                     &
-         (drag_funct_model .EQ. 'forchheimer_mod2') .OR.                        &
-         (drag_funct_model .EQ. 'forchheimer_mod3') ) THEN
+    ELSEIF ( ( drag_funct_model .EQ. 'forchheimer_mod' ) .OR.                   &
+         ( drag_funct_model .EQ. 'forchheimer_mod2' ) .OR.                      &
+         ( drag_funct_model .EQ. 'forchheimer_mod3' ) ) THEN
 
        READ(input_unit, permeability_parameters , IOSTAT = ios )
 
@@ -1038,7 +1038,7 @@ CONTAINS
 
        WRITE(backup_unit, bubbles_parameters )
 
-    ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR.                                &
+    ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR.                               &
          drag_funct_model .EQ. 'forchheimer' ) THEN
 
        WRITE(backup_unit, forchheimer_parameters )

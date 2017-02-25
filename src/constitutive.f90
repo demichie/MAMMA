@@ -1896,7 +1896,7 @@ CONTAINS
     REAL*8 :: Ca, gamma_Ca
 
     IF(  (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
-         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.              & 
+         (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
          (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) ) THEN
 
        SELECT CASE ( bubbles_model )
@@ -1913,75 +1913,79 @@ CONTAINS
 
           gamma_Ca = 0.25D0
 
-          Ca =  r_a * visc_melt * (8.00D0 * (u_mix * pi * radius**2)               &
-	         / (3.0D0 * pi * radius**3.0D0)) / gamma_Ca
+          Ca =  r_a * visc_melt * (8.00D0 * (u_mix * pi * radius**2)            &
+               / (3.0D0 * pi * radius**3.0D0)) / gamma_Ca
 
-          visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                        & 
-	   * ((1.0D0/(1.0D0-alfa_2))+ 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
+          visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                     & 
+               * ( 1.0D0 / (1.0D0-alfa_2)                                       &
+               + 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
 
 
-      CASE ( 'Einstein' )
+       CASE ( 'Einstein' )
 
           visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) / ( 1.d0 - alfa_2 )
 
-      CASE ( 'Quane-Russel' )
+       CASE ( 'Quane-Russel' )
 
-         ! For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+          ! For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
 
-         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( ( - 0.63 * alfa_2 )      &
-             / ( 1.D0 - alfa_2 ) )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( ( - 0.63 * alfa_2 )   &
+               / ( 1.D0 - alfa_2 ) )
 
-      CASE ( 'Eilers' )
+       CASE ( 'Eilers' )
 
-         ! Eq. (17) Mader et al. 2013
+          ! Eq. (17) Mader et al. 2013
 
-         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_2)      &
-              / (1.0D0 - 1.29 * alfa_2) ) ** 2.0D0
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_2)   &
+               / (1.0D0 - 1.29 * alfa_2) ) ** 2.0D0
 
-      CASE ( 'Sibree' )
+       CASE ( 'Sibree' )
 
-         ! Eq. (18) Mader et al. 2013
+          ! Eq. (18) Mader et al. 2013
 
-         visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 / (1.0D0 - (1.2 * alfa_2)&
-              ** 0.33333D0 ))
-	      
-    	CASE ( 'Taylor' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * ( 1.0D0 / ( 1.0D0            &
+               - (1.2 * alfa_2)** 0.33333D0 ) )
 
-       	 ! Eq. (16) Mader et al. 2013
+       CASE ( 'Taylor' )
 
-       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + alfa_2)
+          ! Eq. (16) Mader et al. 2013
 
-    	CASE ( 'Mackenzie' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + alfa_2)
 
-       	 ! Eq. (19) Mader et al. 2013
+       CASE ( 'Mackenzie' )
 
-       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 - (5.D0 / 3.D0) * alfa_2)
+          ! Eq. (19) Mader et al. 2013
 
-    	CASE ( 'DucampRaj' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 - (5.D0 / 3.D0)       &
+               * alfa_2)
 
-       	 ! Eq. (21) Mader et al. 2013, using b = 3
+       CASE ( 'DucampRaj' )
 
-       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * EXP( -3.D0 * ( alfa_2 / ( 1.D0 - alfa_2 ) ) )
+          ! Eq. (21) Mader et al. 2013, using b = 3
 
-    	CASE ( 'BagdassarovDingwell' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( -3.D0 * ( alfa_2      &
+               / ( 1.D0 - alfa_2 ) ) )
 
-       	 ! Eq. (22) Mader et al. 2013
+       CASE ( 'BagdassarovDingwell' )
 
-       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * ( 1.D0 / (1.D0 + 22.4D0 * alfa_2 ) )
+          ! Eq. (22) Mader et al. 2013
 
-    	CASE ( 'Rahaman' )
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * ( 1.D0 / (1.D0 + 22.4D0      &
+               * alfa_2 ) )
 
-       	 ! Eq. (20) Mader et al. 2013
+       CASE ( 'Rahaman' )
 
-       	 visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * EXP( - 11.2D0 * alfa_2 )
-	      
-    END SELECT
-    
-  ELSE
+          ! Eq. (20) Mader et al. 2013
 
-    visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( - 11.2D0 * alfa_2 )
 
-  END IF
+       END SELECT
+
+    ELSE
+
+       visc_rel_bubbles = DCMPLX(1.0D0,0.0D0)
+
+    END IF
 
   END SUBROUTINE f_bubbles
 
