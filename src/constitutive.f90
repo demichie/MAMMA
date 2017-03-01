@@ -141,6 +141,9 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
   COMPLEX*16, ALLOCATABLE :: mom_cry(:,:)  !< moments of the crystal referred to the melt-crystals phase
+
+  COMPLEX*16, ALLOCATABLE :: growth_rate(:)     !< growth rate for the crystals 
+  COMPLEX*16, ALLOCATABLE :: nucleation_rate(:) !< nulceation rate for the crystals 
   
   REAL*8, ALLOCATABLE :: fit(:,:)
 
@@ -504,6 +507,8 @@ CONTAINS
     IF ( n_mom .GT. 1 ) THEN
 
        ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
+       ALLOCATE( growth_rate(n_cry) )
+       ALLOCATE( nucleation_rate(n_cry) )
 
     END IF
 
@@ -1057,7 +1062,56 @@ CONTAINS
 
   END SUBROUTINE f_beta_eq
 
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief
+  !
+  !> This subroutine compute the growth rates for the different crystal phases
+  !> \date 01/03/2017       
+  !******************************************************************************
 
+  SUBROUTINE f_growth_rate
+
+    USE complexify 
+    IMPLICIT NONE
+
+    integer :: i
+    
+    DO i = 1,n_cry
+
+       growth_rate(i) = 0.D0
+       
+    END DO
+    
+  END SUBROUTINE f_growth_rate
+
+
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief Lithostatic pressure
+  !
+  !> This subroutine compute the growth rates for the different crystal phases
+  !> \date 01/03/2017       
+  !******************************************************************************
+
+  SUBROUTINE f_nucleation_rate
+
+    USE complexify 
+    IMPLICIT NONE
+
+    integer :: i
+    
+    DO i = 1,n_cry
+
+       nucleation_rate(i) = 0.D0
+       
+    END DO
+
+    
+  END SUBROUTINE f_nucleation_rate
+    
   !******************************************************************************
   !> @author 
   !> Mattia de' Michieli Vitturi
