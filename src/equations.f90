@@ -13,7 +13,7 @@ MODULE equations
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_eqns , n_vars
-  USE parameters, ONLY : n_cry , n_gas
+  USE parameters, ONLY : n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
@@ -217,7 +217,7 @@ CONTAINS
 
     COMPLEX*16 :: qp(n_vars)
 
-    INTEGER :: i 
+    INTEGER :: i
 
     DO i = 1,n_vars
 
@@ -283,6 +283,8 @@ CONTAINS
 
     COMPLEX*16 :: qp(n_eqns)
     COMPLEX*16 :: flux(n_eqns)
+
+    INTEGER :: i , j
 
 
     IF ( present(c_qp) .AND. present(c_flux) ) THEN
@@ -396,8 +398,8 @@ CONTAINS
     END IF
 
     !---- Mass Fraction Exsolved Gas Phases -------------------------------------
-    flux(idx_ex_gas_eqn_first:idx_ex_gas_eqn_last) =                            &
-         alfa_g(1:n_gas) * rho_g(1:n_gas) * u_2 * radius**2
+    flux(idx_ex_gas_eqn_first:idx_ex_gas_eqn_last) = alfa_g(1:n_gas) *          &
+         rho_g(1:n_gas) * u_2 * radius**2
 
     IF ( verbose_level .GE. 3 ) THEN
 
@@ -407,14 +409,32 @@ CONTAINS
     END IF
 
     !----- Crystal Phases -------------------------------------------------------
-    flux(idx_cry_eqn_first:idx_cry_eqn_last) =                                  &
-         ( alfa_1 * rho_c(1:n_cry) * beta(1:n_cry) * u_1 ) * radius**2
 
-    IF ( verbose_level .GE. 3 ) THEN
+    IF ( n_mom .LE. 1 ) THEN
+       
+       flux(idx_cry_eqn_first:idx_cry_eqn_last) = alfa_1 * rho_c(1:n_cry) *     &
+            beta(1:n_cry) * u_1 * radius**2
 
-       WRITE(*,*) 'Crystal volume fraction'
-       WRITE(*,*) flux(idx_cry_eqn_first:idx_cry_eqn_last)
+       IF ( verbose_level .GE. 3 ) THEN
+       
+          WRITE(*,*) 'Crystal volume fraction'
+          WRITE(*,*) flux(idx_cry_eqn_first:idx_cry_eqn_last)
+          
+       END IF
 
+    ELSE
+
+       DO i=1,n_cry
+
+          DO j=0,n_mom-1
+
+             flux(idx_cry_eqn_first+n_mom*(i-1)+j) = alfa_1 * mom_cry(i,j) *    &
+                  u_1 * radius**2
+
+          END DO
+
+       END DO
+       
     END IF
        
     IF ( present(c_qp) .AND. present(c_flux) ) THEN

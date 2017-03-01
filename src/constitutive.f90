@@ -11,7 +11,7 @@ MODULE constitutive
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_eqns , n_vars
-  USE parameters, ONLY : n_cry , n_gas
+  USE parameters, ONLY : n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
@@ -140,8 +140,9 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
+  COMPLEX*16, ALLOCATABLE :: mom_cry(:,:)  !< moments of the crystal referred to the melt-crystals phase
+  
   REAL*8, ALLOCATABLE :: fit(:,:)
-
 
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -499,6 +500,12 @@ CONTAINS
     ALLOCATE( tau_c(n_cry) )
     ALLOCATE( beta0(n_cry) )
     ALLOCATE( beta_max(n_cry) )
+
+    IF ( n_mom .GT. 1 ) THEN
+
+       ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
+
+    END IF
 
     ALLOCATE( cv_d(n_gas) )
     ALLOCATE( C0_d(n_gas) )
