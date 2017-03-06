@@ -12,7 +12,7 @@ MODULE inpout
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
-  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars , n_moms
+  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars , n_mom
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
@@ -76,6 +76,9 @@ MODULE inpout
   !  USE parameters, ONLY : atmospheric_pressure, chocked_flow
 
 
+  ! -- Variables for the card alphaMelts
+  USE constitutive, ONLY : fit , n_coeffs
+
   ! -- Variables for the card meltcomposition
   USE constitutive, ONLY : wt_init
 
@@ -116,7 +119,7 @@ MODULE inpout
   NAMELIST / geometry_parameters / z0 , zN , radius_model , radius_fixed ,      &
        radius_min, radius_max, radius_z, radius_z_sig,  comp_cells
 
-  NAMELIST / phases_parameters / n_gas , n_cry , n_moms
+  NAMELIST / phases_parameters / n_gas , n_cry , n_mom
 
   NAMELIST / steady_boundary_conditions / T_in , p1_in , delta_p_in ,           &
        x_ex_dis_in , p_out , u1_in , eps_conv, shooting
@@ -270,9 +273,9 @@ CONTAINS
     n_gas_init = 1
     n_cry_init = 1
 
-    n_moms = 1
+    n_mom = 1
     
-    n_vars = 5 + 2 * n_gas_init + n_cry_init
+    n_vars = 5 + 2 * n_gas_init + n_cry_init * n_mom
     n_eqns = n_vars
 
     ! dissolved gas parameters
@@ -463,9 +466,6 @@ CONTAINS
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
 
     USE init, ONLY : beta_in , xd_md_in
-
-
-    
     
     IMPLICIT none
 
@@ -545,17 +545,17 @@ CONTAINS
     END IF
 
     
-    IF ( n_moms .LE. 1 ) THEN
+    IF ( n_mom .LE. 1 ) THEN
 
        WRITE(*,*) 'Solving for crystal volume fraction only'
 
     ELSE
 
-       WRITE(*,*) 'Solving for ',n_moms,' moments for each crystal phase'
+       WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'
 
     END IF
     
-    n_vars = 5 + 2 * n_gas + n_cry * n_moms
+    n_vars = 5 + 2 * n_gas + n_cry * n_mom
     n_eqns = n_vars
 
     ALLOCATE( beta_in(n_cry) )
@@ -665,6 +665,20 @@ CONTAINS
     ! ------- READ crystals_parameters NAMELIST ---------------------------------
     READ(input_unit, crystals_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist CRYSTALS_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     T0_c(1:n_cry) = C0_c(1:n_cry) **2.D0 / ( cv_c(1:n_cry) * gamma_c(1:n_cry)   &
          * ( gamma_c(1:n_cry) - 1.D0 ) )
 
@@ -672,13 +686,15 @@ CONTAINS
          gamma_c(1:n_cry) * p0_c(1:n_cry) ) / gamma_c(1:n_cry)
 
 
-    IF (.NOT. (crystallization_model .EQ. 'Vitturi2010' )) THEN
+    IF ( (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) ) .AND.             & 
+         (.NOT. (crystallization_model .EQ. 'alphaMelts' ) ) ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
        WRITE(*,*) 'Please choose between:'
        WRITE(*,*) ''
        WRITE(*,*) 'Vitturi2010'
+       WRITE(*,*) 'alphaMelts'
        WRITE(*,*) ''
 
        CALL ABORT
@@ -697,15 +713,83 @@ CONTAINS
 
     END IF
 
+    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
+       
+      tend1 = .FALSE.
+
+       WRITE(*,*) 'search alphaMelts fitting coefficients'
+
+       alphaMelts_search: DO
+
+          READ(input_unit,*, END = 200 ) card
+
+          IF( TRIM(card) == 'ALPHAMELTS_COEFFS' ) THEN
+
+             EXIT alphaMelts_search
+
+          END IF
+
+       END DO alphaMelts_search
+
+       READ(input_unit,*) n_coeffs
+
+       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'n_coeffs',n_coeffs
+
+       ALLOCATE( fit(n_cry,n_coeffs) )
+
+       DO i = 1, n_coeffs
+
+          READ(input_unit,*) fit(1:n_cry,i)
+          IF ( verbose_level .GE. 1 ) WRITE(*,*) i,fit(1:n_cry,i)
+
+       END DO
+
+       GOTO 210
+200    tend1 = .TRUE.
+210    CONTINUE
+
+       REWIND(input_unit)
+
+    END IF
+
+
     ! ------- READ melt_parameters NAMELIST -------------------------------------
     READ(input_unit, melt_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist MELT_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     T0_m = C0_m **2.D0 / ( cv_m * gamma_m * ( gamma_m - 1.D0 ) )
     bar_p_m = ( rho0_m * C0_m ** 2.d0 - gamma_m * p0_m ) / gamma_m
 
     ! ------- READ viscosity_parameters NAMELIST --------------------------------
     READ(input_unit, viscosity_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist VISCOSITY_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     check_model = .FALSE.
 
     DO i=1,n_visc_melt_models
@@ -830,8 +914,22 @@ CONTAINS
 
 
     ! ------- READ temperature_parameters NAMELIST ------------------------------
-    READ(input_unit, temperature_parameters)
+    READ(input_unit, temperature_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist TEMPERATURE_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF ( isothermal ) THEN
 
        T_in = fixed_temp
@@ -841,6 +939,20 @@ CONTAINS
     ! ------- READ fragmentation_parameters NAMELIST ----------------------------
     READ(input_unit, fragmentation_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist FRAGMENTATION_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF (fragmentation_model .NE. 1 ) THEN
 
        WRITE(*,*) ''
@@ -857,6 +969,20 @@ CONTAINS
     ! ------- READ external_water_parameters NAMELIST ---------------------------
     READ(input_unit, external_water_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist EXTERNAL_WATER_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     IF (ext_water) THEN
 
 	     IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.                & 
@@ -879,11 +1005,38 @@ CONTAINS
     ! ------- READ source_parameters NAMELIST -----------------------------------
     READ(input_unit, source_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist SOURCE_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     ! ------- READ country_rock_parameters NAMELIST -----------------------------
     IF ( lateral_degassing_flag ) THEN
        
        READ(input_unit, country_rock_parameters , IOSTAT = ios )
-       
+
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist COUNTRY_ROCK_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+          
+          REWIND(input_unit)
+          
+       END IF
+              
     END IF
 
     k_cr = 10 ** log10_k_cr
@@ -894,6 +1047,20 @@ CONTAINS
 
     READ(input_unit, relaxation_parameters , IOSTAT = ios )
 
+    IF ( ios .NE. 0 ) THEN
+       
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist RELAXATION_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
+       
+    ELSE
+       
+       REWIND(input_unit)
+       
+    END IF
+
+    
     drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
     tau_p_coeff = 10.D0 ** log10_tau_p_coeff
     tau_d(1:n_gas) = 10.D0 ** log10_tau_d(1:n_gas)
@@ -932,13 +1099,39 @@ CONTAINS
          ( drag_funct_model .EQ. 'drag' ) ) THEN
        
        READ(input_unit, bubbles_parameters , IOSTAT = ios )
-       
+
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist BUBBLES_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+          
+          REWIND(input_unit)
+          
+       END IF
+              
     ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
          ( drag_funct_model .EQ. 'forchheimer') .OR.                            & 
          ( drag_funct_model .EQ. 'forchheimer_wt')) THEN
        
        READ(input_unit, forchheimer_parameters , IOSTAT = ios )
+
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist FORCHHEIMER_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
        
+          REWIND(input_unit)
+          
+       END IF
+              
        bubble_number_density = 10.0D0 ** log10_bubble_number_density
        
     ELSEIF ( ( drag_funct_model .EQ. 'forchheimer_mod' ) .OR.                   &
@@ -947,6 +1140,19 @@ CONTAINS
 
        READ(input_unit, permeability_parameters , IOSTAT = ios )
 
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist PERMEABILITY_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+          
+          REWIND(input_unit)
+          
+       END IF       
+       
     END IF
 
     CLOSE( input_unit )
@@ -989,17 +1195,41 @@ CONTAINS
 
     WRITE(backup_unit, relaxation_parameters )
 
-    IF ( drag_funct_model .EQ. 'eval' ) THEN
 
+    IF ( ( drag_funct_model .EQ. 'eval' ) .OR.                                  &
+         ( drag_funct_model .EQ. 'Klug_and_Cashman' ) .OR.                      &
+         ( drag_funct_model .EQ. 'drag' ) ) THEN
+       
        WRITE(backup_unit, bubbles_parameters )
-
-    ELSEIF ( (drag_funct_model .EQ. 'darcy') .OR.                               &
-         drag_funct_model .EQ. 'forchheimer' ) THEN
-
+              
+    ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                             & 
+         ( drag_funct_model .EQ. 'forchheimer') .OR.                            & 
+         ( drag_funct_model .EQ. 'forchheimer_wt')) THEN
+       
        WRITE(backup_unit, forchheimer_parameters )
+       
+    ELSEIF ( ( drag_funct_model .EQ. 'forchheimer_mod' ) .OR.                   &
+         ( drag_funct_model .EQ. 'forchheimer_mod2' ) .OR.                      &
+         ( drag_funct_model .EQ. 'forchheimer_mod3' ) ) THEN
 
+       WRITE(backup_unit, permeability_parameters  )
+       
     END IF
 
+    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
+       
+       WRITE(backup_unit,*) '''ALPHAMELTS_COEFFS'''
+       WRITE(backup_unit,*) n_coeffs
+       
+       DO i = 1, n_coeffs
+          
+          WRITE(backup_unit,106) fit(1:n_cry,i)
+
+       END DO
+          
+106    FORMAT(7(1x,e14.7))
+       
+    END IF
     
     IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
        
@@ -1011,8 +1241,6 @@ CONTAINS
        
     END IF
     
-    
-
 
     CLOSE(backup_unit)
 

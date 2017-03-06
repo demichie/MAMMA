@@ -11,7 +11,7 @@ MODULE constitutive
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_eqns , n_vars
-  USE parameters, ONLY : n_cry , n_gas
+  USE parameters, ONLY : n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
@@ -140,6 +140,12 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
+  COMPLEX*16, ALLOCATABLE :: mom_cry(:,:)  !< moments of the crystal referred to the melt-crystals phase
+
+  COMPLEX*16, ALLOCATABLE :: growth_rate(:)     !< growth rate for the crystals 
+  COMPLEX*16, ALLOCATABLE :: nucleation_rate(:) !< nulceation rate for the crystals 
+  
+  REAL*8, ALLOCATABLE :: fit(:,:)
 
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -247,6 +253,7 @@ MODULE constitutive
 
   !> Model for the equilibrium crystal volume fraction:\n
   !> - 'Vitturi2010'    => Eq. 4 of de' Michieli Vitturi et al. 2010;
+  !> - 'alphaMelts'     => Equilibrium from fitting of alphaMelts results;
   !> .
   CHARACTER*20 :: crystallization_model
 
@@ -404,6 +411,9 @@ MODULE constitutive
 
   REAL*8 :: xa,xb,xc
 
+  ! number of coefficients for the alphaMelts fitting
+  INTEGER :: n_coeffs
+
 CONTAINS
 
   SUBROUTINE initialize_models
@@ -493,6 +503,14 @@ CONTAINS
     ALLOCATE( tau_c(n_cry) )
     ALLOCATE( beta0(n_cry) )
     ALLOCATE( beta_max(n_cry) )
+
+    IF ( n_mom .GT. 1 ) THEN
+
+       ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
+       ALLOCATE( growth_rate(n_cry) )
+       ALLOCATE( nucleation_rate(n_cry) )
+
+    END IF
 
     ALLOCATE( cv_d(n_gas) )
     ALLOCATE( C0_d(n_gas) )
@@ -1016,12 +1034,84 @@ CONTAINS
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
           
        END DO
+       
+    CASE ( 'alphaMelts') 
+
+       crystal_mass_fraction(1:n_cry) = ( fit(1:n_cry,1) * p_1_bar * p_1_bar    &
+            + fit(1:n_cry,2) * T_celsius * T_celsius                            &
+            + fit(1:n_cry,3) * x_d_md_wt_tot * x_d_md_wt_tot                    &
+            + fit(1:n_cry,4) * p_1_bar * T_celsius                              &
+            + fit(1:n_cry,5) * T_celsius * x_d_md_wt_tot                        &
+            + fit(1:n_cry,6) * x_d_md_wt_tot * p_1_bar                          &
+            + fit(1:n_cry,7) * p_1_bar                                          &
+            + fit(1:n_cry,8) * T_celsius                                        &
+            + fit(1:n_cry,9) * x_d_md_wt_tot                                    &
+            + fit(1:n_cry,10) ) / 100.D0
+       
+       DO j=1,n_cry
+          
+          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
 
     END SELECT
 
   END SUBROUTINE f_beta_eq
 
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief
+  !
+  !> This subroutine compute the growth rates for the different crystal phases
+  !> \date 01/03/2017       
+  !******************************************************************************
 
+  SUBROUTINE f_growth_rate
+
+    USE complexify 
+    IMPLICIT NONE
+
+    integer :: i
+    
+    DO i = 1,n_cry
+
+       growth_rate(i) = 0.D0
+       
+    END DO
+    
+  END SUBROUTINE f_growth_rate
+
+
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief Lithostatic pressure
+  !
+  !> This subroutine compute the growth rates for the different crystal phases
+  !> \date 01/03/2017       
+  !******************************************************************************
+
+  SUBROUTINE f_nucleation_rate
+
+    USE complexify 
+    IMPLICIT NONE
+
+    integer :: i
+    
+    DO i = 1,n_cry
+
+       nucleation_rate(i) = 0.D0
+       
+    END DO
+
+    
+  END SUBROUTINE f_nucleation_rate
+    
   !******************************************************************************
   !> @author 
   !> Mattia de' Michieli Vitturi
