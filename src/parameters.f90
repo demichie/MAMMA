@@ -32,7 +32,7 @@ MODULE parameters
   INTEGER :: n_vars        !< Number of conservative variables
   INTEGER :: n_eqns        !< Number of equations
 
-  INTEGER :: n_moms        !> Number of moments for each crystal phase
+  INTEGER :: n_mom         !< Number of moments for each crystal phase
 
   INTEGER :: idx_p1        !< Index of p1 in the qp array
   INTEGER :: idx_p2        !< Index of p2 in the qp array

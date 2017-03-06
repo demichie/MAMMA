@@ -10,7 +10,7 @@
 
 MODULE init
 
-  USE parameters, ONLY : n_vars , n_cry , n_gas
+  USE parameters, ONLY : n_vars , n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
@@ -88,7 +88,7 @@ CONTAINS
 
     REAL*8 :: xtot_in
 
-    INTEGER :: i,idx,iter,max_iter
+    INTEGER :: i,j,idx,iter,max_iter
     REAL*8 :: error_iter
 
     p2_in = p1_in + delta_p_in
@@ -212,7 +212,7 @@ CONTAINS
     idx_alfa_first = 5+n_gas+1
     idx_alfa_last = 5+2*n_gas
     idx_beta_first = 5+2*n_gas+1
-    idx_beta_last = 5+2*n_gas+n_cry
+    idx_beta_last = 5+2*n_gas+n_cry*n_mom
 
     idx_mix_mass_eqn = 1
     idx_vol1_eqn = 2
@@ -224,7 +224,7 @@ CONTAINS
     idx_ex_gas_eqn_first = 5+n_gas+1
     idx_ex_gas_eqn_last = 5+2*n_gas 
     idx_cry_eqn_first = 5+2*n_gas+1
-    idx_cry_eqn_last = 5+2*n_gas+n_cry
+    idx_cry_eqn_last = 5+2*n_gas+n_cry*n_mom
 
     ! --------- define the vector of primitive variables ------------------------
     
@@ -265,15 +265,33 @@ CONTAINS
     
     ! Crystal volume fractions
     idx = idx_beta_first
-    DO i = 1,n_cry
 
-       qp(idx) = beta_in(i)
+    IF ( n_mom .LE. 1 ) THEN
 
-       idx = idx + 1
+       DO i = 1,n_cry
 
-    END DO
+          qp(idx) = beta_in(i)
+          
+          idx = idx + 1
+          
+       END DO
 
-    
+    ELSE
+
+       DO i = 1,n_cry
+
+          DO j = 0,n_mom-1
+             
+             ! qp(idx) = mom_cry_in(i,j)
+             
+             idx = idx + 1
+       
+          END DO
+
+       END DO
+
+    END IF
+       
   END SUBROUTINE init_steady
 
 END MODULE init
