@@ -145,8 +145,6 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: growth_rate(:)     !< growth rate for the crystals 
   COMPLEX*16, ALLOCATABLE :: nucleation_rate(:) !< nulceation rate for the crystals 
   
-  REAL*8, ALLOCATABLE :: fit(:,:)
-
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
 
@@ -253,7 +251,6 @@ MODULE constitutive
 
   !> Model for the equilibrium crystal volume fraction:\n
   !> - 'Vitturi2010'    => Eq. 4 of de' Michieli Vitturi et al. 2010;
-  !> - 'alphaMelts'     => Equilibrium from fitting of alphaMelts results;
   !> .
   CHARACTER*20 :: crystallization_model
 
@@ -411,8 +408,6 @@ MODULE constitutive
 
   REAL*8 :: xa,xb,xc
 
-  ! number of coefficients for the alphaMelts fitting
-  INTEGER :: n_coeffs
 
 CONTAINS
 
@@ -1034,29 +1029,6 @@ CONTAINS
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
           
        END DO
-       
-    CASE ( 'alphaMelts') 
-
-       crystal_mass_fraction(1:n_cry) = ( fit(1:n_cry,1) * p_1_bar * p_1_bar    &
-            + fit(1:n_cry,2) * T_celsius * T_celsius                            &
-            + fit(1:n_cry,3) * x_d_md_wt_tot * x_d_md_wt_tot                    &
-            + fit(1:n_cry,4) * p_1_bar * T_celsius                              &
-            + fit(1:n_cry,5) * T_celsius * x_d_md_wt_tot                        &
-            + fit(1:n_cry,6) * x_d_md_wt_tot * p_1_bar                          &
-            + fit(1:n_cry,7) * p_1_bar                                          &
-            + fit(1:n_cry,8) * T_celsius                                        &
-            + fit(1:n_cry,9) * x_d_md_wt_tot                                    &
-            + fit(1:n_cry,10) ) / 100.D0
-       
-       DO j=1,n_cry
-          
-          beta_eq(j) = crystal_mass_fraction(j) * rho_1 / rho_c(j) 
-          
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
-          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
-
-       END DO
-
 
     END SELECT
 

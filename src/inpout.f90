@@ -75,10 +75,6 @@ MODULE inpout
 
   !  USE parameters, ONLY : atmospheric_pressure, chocked_flow
 
-
-  ! -- Variables for the card alphaMelts
-  USE constitutive, ONLY : fit , n_coeffs
-
   ! -- Variables for the card meltcomposition
   USE constitutive, ONLY : wt_init
 
@@ -686,15 +682,13 @@ CONTAINS
          gamma_c(1:n_cry) * p0_c(1:n_cry) ) / gamma_c(1:n_cry)
 
 
-    IF ( (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) ) .AND.             & 
-         (.NOT. (crystallization_model .EQ. 'alphaMelts' ) ) ) THEN
+    IF (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
        WRITE(*,*) 'Please choose between:'
        WRITE(*,*) ''
        WRITE(*,*) 'Vitturi2010'
-       WRITE(*,*) 'alphaMelts'
        WRITE(*,*) ''
 
        CALL ABORT
@@ -712,46 +706,6 @@ CONTAINS
        CALL ABORT
 
     END IF
-
-    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
-       
-      tend1 = .FALSE.
-
-       WRITE(*,*) 'search alphaMelts fitting coefficients'
-
-       alphaMelts_search: DO
-
-          READ(input_unit,*, END = 200 ) card
-
-          IF( TRIM(card) == 'ALPHAMELTS_COEFFS' ) THEN
-
-             EXIT alphaMelts_search
-
-          END IF
-
-       END DO alphaMelts_search
-
-       READ(input_unit,*) n_coeffs
-
-       IF ( verbose_level .GE. 1 ) WRITE(*,*) 'n_coeffs',n_coeffs
-
-       ALLOCATE( fit(n_cry,n_coeffs) )
-
-       DO i = 1, n_coeffs
-
-          READ(input_unit,*) fit(1:n_cry,i)
-          IF ( verbose_level .GE. 1 ) WRITE(*,*) i,fit(1:n_cry,i)
-
-       END DO
-
-       GOTO 210
-200    tend1 = .TRUE.
-210    CONTINUE
-
-       REWIND(input_unit)
-
-    END IF
-
 
     ! ------- READ melt_parameters NAMELIST -------------------------------------
     READ(input_unit, melt_parameters , IOSTAT = ios )
@@ -1216,20 +1170,6 @@ CONTAINS
        
     END IF
 
-    IF ( crystallization_model .EQ. 'alphaMelts' ) THEN
-       
-       WRITE(backup_unit,*) '''ALPHAMELTS_COEFFS'''
-       WRITE(backup_unit,*) n_coeffs
-       
-       DO i = 1, n_coeffs
-          
-          WRITE(backup_unit,106) fit(1:n_cry,i)
-
-       END DO
-          
-106    FORMAT(7(1x,e14.7))
-       
-    END IF
     
     IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
        
