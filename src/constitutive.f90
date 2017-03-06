@@ -1826,7 +1826,7 @@ CONTAINS
        betas = 0.62d0
        theta0 = 3.5d0
 
-       theta = theta0 * 10.D0 ** ( 0.5D0 * pi + ATAN( omega * ( SUM(           &
+       theta = theta0 * 10.D0 ** ( 0.5D0 * pi + ATAN( omega * ( SUM(            &
             beta(1:n_cry) ) - betas )))
 
     CASE ('Vona_et_al2011')
@@ -1851,13 +1851,13 @@ CONTAINS
 
        var_phi = SUM( beta(1:n_cry) * rho_c(1:n_cry) / rho_1 ) / phi_star
 
-       arg_erf = 0.5D0 * DSQRT(pi) / (1.0D0 - csi) * var_phi * ( 1.D0 +        &
+       arg_erf = 0.5D0 * DSQRT(pi) / (1.0D0 - csi) * var_phi * ( 1.D0 +         &
             var_phi ** 0.84D0 ) 
 
        t = 1.D0 / ( 1.D0 + p * arg_erf )
 
-       errorf = 1.D0 - ( a1 * t + a2 * t**2.0D0 + a3 * t**3.0D0 + a4 * t**4.0D0 + a5 * t**5.0D0)&
-            * CDEXP( - arg_erf ** 2.0D0 )
+       errorf = 1.D0 - ( a1 * t + a2 * t**2.0D0 + a3 * t**3.0D0                 &
+            + a4 * t**4.0D0 + a5 * t**5.0D0) * CDEXP( - arg_erf ** 2.0D0 )
 
        theta =  theta_fixed * (1.D0 + var_phi ** delta ) /                      &
             ( ( 1.D0 - (1.D0 - csi) * errorf ) ** (Einstein_coeff * phi_star) ) 
@@ -1898,27 +1898,40 @@ CONTAINS
 	    
     CASE ('Vona_et_al2013_eq19')
 
-       theta = ( 1.D0 - SUM(beta(1:n_cry)) / (1.D0 - alfa_2 ) ) ** ( - 5.D0 / 2.D0) &
-           * ( 1 - alfa_2 ) ** (- 1.D0)
+       theta = ( 1.D0 - SUM(beta(1:n_cry)) / (1.D0 - alfa_2 ) ) ** ( - 5.D0     &
+            / 2.D0) * ( 1 - alfa_2 ) ** (- 1.D0)
 
     CASE ('Vona_et_al2013_eq20')
 
-       theta = ( 1.D0 - SUM(beta(1:n_cry)) - alfa_2 )  ** ( - ( 5.D0 * SUM(beta(1:n_cry)) &
-           + 2.D0 * alfa_2 ) / ( 2.D0 * ( SUM(beta(1:n_cry)) + alfa_2 ) ) )
+       theta = ( 1.D0 - SUM(beta(1:n_cry)) - alfa_2 )  ** ( - ( 5.D0 *          &
+            SUM(beta(1:n_cry)) + 2.D0 * alfa_2 ) / ( 2.D0 * ( SUM(beta(1:n_cry))&
+            + alfa_2 ) ) )
 
     CASE ('Vona_et_al2013_eq21')
 
-       theta = ( 1.D0 - alfa_2 / (1.D0 - SUM(beta(1:n_cry)) ) ) ** ( -1.0 ) &
+       theta = ( 1.D0 - alfa_2 / (1.D0 - SUM(beta(1:n_cry)) ) ) ** ( -1.0 )     &
            * ( 1 - SUM(beta(1:n_cry)) ) ** (- 5.D0/2.D0)
 
     END SELECT
 
   END SUBROUTINE f_theta
 
-  !*****************************************************************************
-  !>
-  !>
-  !*****************************************************************************
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief Exsolved gas relative viscosity
+  !
+  !> This subrotine evaluates the relative viscosity due to the influence of 
+  !> exsolved gas on the mixture viscosity according to the model 
+  !> specified in the input file with the parameter bubbles_model:\n
+  !> - bubbles_model = Costa 2007   => 
+  !> - bubbles_model = Einstein     => 
+  !> - bubbles_model = Quane-Russel => 
+  !> - bubbles_model = Eilers       => 
+  !> - bubbles_model = Sibree       =>
+  !> .
+  !> \date 02/10/2012       
+  !******************************************************************************
 
   SUBROUTINE f_bubbles
 
@@ -1960,7 +1973,7 @@ CONTAINS
 
        CASE ( 'Quane-Russel' )
 
-          ! For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
+          ! For Campi-Flegrei we use 0.63 as reported in 2004 Report (Task2.2)
 
           visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * CDEXP( ( - 0.63 * alfa_2 )   &
                / ( 1.D0 - alfa_2 ) )
