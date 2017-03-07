@@ -41,15 +41,15 @@ MODULE steady_solver
 CONTAINS
 
   !******************************************************************************
-  !> @author 
-  !> Mattia de' Michieli Vitturi
-  !> @brief Shooting Method
+  !> \brief Shooting Method
   !
   !> This subroutine search for the steady solution using a Shooting Method for 
   !> Two-Point Boundary Value Problems. A bisection method is used to find the
   !> value of inlet velocity, in order to reach the desired prescribed boundary
   !> condition at the exit.
   !> \date 13/03/2013
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE steady_shooting
@@ -591,9 +591,7 @@ CONTAINS
   END SUBROUTINE steady_shooting
 
   !******************************************************************************
-  !> @author 
-  !> Mattia de' Michieli Vitturi
-  !> @brief Steady state integration
+  !> \brief Steady state integration
   !
   !> This subroutine integrate the steady equations for magma ascent along the 
   !> conduit, givent the state qp at the base of the conduit. The integration
@@ -601,14 +599,16 @@ CONTAINS
   !> top of the conduit is reached.
   !> \param[in,out] qp           physical variables at the inlet
   !> \param[in]     flag_output  flag to determine if the output has to be saved
-  !> \param[out]    extrap_z     depht at which the boundary condition is reached
-  !> \param[out]    extrap_z_p   depht at which the boundary condition is reached
-  !> \param[out]   extrap_z_mach depht at which the boundary condition is reached
-  !> \param[out]    extrap_flag  flag for the boundary condition reached
+  !> \param[out]    extrap_z     depht at which the bdry condition is reached
+  !> \param[out]    extrap_z_p   depht at which the bdry condition is reached
+  !> \param[out]    extrap_z_mach depht at which the bdry condition is reached
+  !> \param[out]    extrap_flag  flag for the bdry condition reached
   !> \param[out]    r_p_1        exit phase 1 pressure
   !> \param[out]    r_p_2        exit phase 2 (exsolved gas) pressure
   !> \param[out]    mach         Mach at the exit 
   !> \date 15/08/2011
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE integrate_equations( qp , flag_output , extrap_z , extrap_z_p ,    &
@@ -1180,7 +1180,7 @@ CONTAINS
 
        END IF
 
-       ! ---- Check if the fragmentation threshold is reached ---------------
+       ! ---- Check if the fragmentation threshold is reached -------------------
 
        IF ( EXPLOSIVE ) THEN
 
@@ -1217,14 +1217,14 @@ CONTAINS
   END SUBROUTINE integrate_equations
 
   !******************************************************************************
-  !> @author 
-  !> Mattia de' Michieli Vitturi
-  !> @brief Solution preturbation
+  !> \brief Solution preturbation
   !
   !> This subroutine perturbes the initial guess for the Newthon-Raphson method
   !> in order to improve the convergence.
   !> \param[in,out] qp           physical variables 
   !> \date 08/07/2013
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE perturbe_qp(qp)
@@ -1254,6 +1254,8 @@ CONTAINS
   !> \param[in]      dz                  integration step
   !> \param[out]     check_convergence   logical for convergence check
   !> \date 07/09/2012
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE advance_dz( qp , dz , check_convergence )
@@ -1602,6 +1604,8 @@ CONTAINS
   !> \param[out] right_term   array of residuals
   !> \param[out] scal_f       magnitude of the array of residuals
   !> \date 07/09/2012
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE eval_f( qp_rel , qp_org , dz , coeff_f , right_term  , scal_f )
@@ -1681,6 +1685,8 @@ CONTAINS
   !> \param[in]  coeff_f      weighting coefficients
   !> \param[out] left_matrix  Jacobian matrix
   !> \date 07/09/2012
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE eval_jacobian( qp_rel , qp_org , dz , coeff_f , left_matrix)
@@ -1766,6 +1772,8 @@ CONTAINS
   !> \param[out]    check           logical for convergence
   !> \param[in]     callf           name of the subroutine for the function f
   !> \date 07/09/2012
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE steady_lnsrch( x_rel_init , x_org , scal_f_old , grad_f , desc_dir &
@@ -1978,6 +1986,8 @@ CONTAINS
   !> \param[out] extrap_z_mach     zeta at which the boundary condition is reached
   !> \param[out] extrap_flag  flag for the boundary condition reached first 
   !> \date 07/09/2012
+  !> @author 
+  !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
   SUBROUTINE linear_extrapolation(zeta_old,qp_old,zeta,qp,extrap_z,extrap_z_p,  &

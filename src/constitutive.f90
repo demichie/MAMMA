@@ -28,9 +28,9 @@ MODULE constitutive
 
   !~   REAL*8 :: C0_2        !< exsolved gas sound speed at atmospheric conditions
   REAL*8 :: C0_m             !< melt sound speed at atmospheric conditions
-  REAL*8, ALLOCATABLE :: C0_c(:)      !< crystals sound speed at atmospheric conditions
-  REAL*8, ALLOCATABLE :: C0_d(:)      !< dissolved gas sound speed at atmospheric conditions
-  REAL*8, ALLOCATABLE :: C0_g(:)      !< exsolved gas sound speed at atmospheric conditions
+  REAL*8, ALLOCATABLE :: C0_c(:)   !< crystals sound speed at atm conditions
+  REAL*8, ALLOCATABLE :: C0_d(:)   !< dissolved gas sound speed at atm conditions
+  REAL*8, ALLOCATABLE :: C0_g(:)   !< exsolved gas sound speed at atm conditions
 
   REAL*8 :: gamma_2          !< exsolved gas adiabatic exponent 
   REAL*8 :: gamma_m          !< melt adiabatic exponent 
