@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['init',['init',['../classinit.html',1,'']]],
-  ['inpout',['inpout',['../classinpout.html',1,'']]]
+  ['max',['max',['../interfacecomplexify_1_1max.html',1,'complexify']]],
+  ['min',['min',['../interfacecomplexify_1_1min.html',1,'complexify']]]
 ];
