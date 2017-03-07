@@ -1,3 +1,12 @@
+!*********************************************************************
+!> \brief Steady state equations integration
+!
+!> This module contains the subroutine for the integration of the 
+!> model equations with the shooting technique.
+!> \date 07/09/2012
+!> @author 
+!> Mattia de' Michieli Vitturi
+!*********************************************************************
 
 MODULE steady_solver
   ! external variables

@@ -1,19 +1,22 @@
 !*********************************************************************
-!> \mainpage   MAMMA - Magma Ascent finite volume solver
+!> \mainpage   MAMMA - Magma Ascent Mathematical Modeling and Analysis
 !> MAMMA is a FORTRAN90 code designed to solved a conservative model
-!> for magma ascent in a volcanic conduit, described as a compressible 
-!> two-phase flow by finite volume methods.\n 
+!> for steady magma ascent in a volcanic conduit, described as a 
+!> compressible multicomponent two-phase flow.\n 
 !> The governing multiphase equations for two-phase compressible flow 
-!> are derived using the theory of thermodynamically compatible systems 
+!> are derived from the theory of thermodynamically compatible systems 
 !> (Romenski et al., 2010).\n 
-!> The model is one-dimensional with different phase velocities and 
-!> pressures but a single temperature for the two phases.\n
-!> The finite volume solver is based on a semidiscrete central scheme 
-!> and it is not tied on the specific eigenstructure of the model.\n
+!> The model is one-dimensional (with variable radius) , with 
+!> different phase velocities and pressures but a single temperature 
+!> for the two phases.\n
+!> The solver uses a shooting technique: for a given magma-chamber 
+!> pressure, the model adjusts the inlet flow rate until the 
+!> prescribed boundary conditions at exit are reached.\n
 !> Version 1.0:\n
 !> - 1D steady flow for axysimmetric geometry with variable radius
 !> .
-!> \authors Mattia de' Michieli Vitturi (*), Giuseppe La Spina (**), Alvaro Aravena Ponce (***)\n
+!> \authors Mattia de' Michieli Vitturi (*), Giuseppe La Spina (**), 
+!> Alvaro Aravena Ponce (***)\n
 !> (*) Istituto Nazionale di Geofisica e vulcanologia, sezione di Pisa\n
 !>     Via della Faggiola, 36\n
 !>     I-56126 Pisa, Italy \n
