@@ -909,68 +909,6 @@ CONTAINS
 
           x_d_md_eq(1:n_gas) = 1.0D-2 * ( aa * CDSQRT(pp) + bb * pp + cc        &
                * pp ** 1.5D0 )
-
-       CASE ( 'H20-CO2-S-CL' )
-
-          ! Henry's law (s is global variable and is a constant for rhyolite)
-          
-          melt_volume=1.0 !%m3
-          
-          melt_mass=melt_volume*rho_md
-          
-          !water exsolved mass
-          h2o_exs_mass=melt_mass*x_g(1)
-          
-          !co2 exsolved mass
-          co2_exs_mass=melt_mass*x_g(2)
-          
-          !S exsolved mass
-          S_exs_mass=melt_mass*x_g(3)
-          
-          !Cl exsolved mass
-          Cl_exs_mass=melt_mass*x_g(4)
-          
-          !Total volatile mass
-          gas_mass=co2_exs_mass+h2o_exs_mass+S_exs_mass+Cl_exs_mass 
-          
-          !Ratio_exs_dis is ratio of all gas mass to melt mass
-          Ratio_exs_dis=gas_mass/melt_mass 
-          
-          !Pressure in bar
-          P_bar = p_2 / 1e5;
-          
-          !fitting coefficient
-          beta_S = [4.8095e+02, -4.5850e+02, 3.0240e-03, -2.7519e-07] 
-          
-          !Solubility for S and Cl            
-          log10Ds = beta(1) * P_bar**(-0.0075) + beta(2) + beta(3) * P_bar      &
-               + beta(4) * P_bar**(2.0)
-          Ds = 10**(log10Ds) 
-          Dcl = DCMPLX(2.D0, 0.D0)
-          
-          !Equilibrium dissolved water    
-          x_d_md_eq(1) = solub(1) * (alfa_g_2(1) * p_2) ** solub_exp(1)
-          !Equilibrium dissolved co2      
-          x_d_md_eq(2) = solub(2) * (alfa_g_2(2) * p_2) ** solub_exp(2)
-
-          !Total mass of S
-          S_mass=melt_mass*x_ex_dis_in(3)
-          
-          !Dissolved mass of S 
-          S_dis_mass=S_mass - (Ds*Ratio_exs_dis/(Ds*Ratio_exs_dis + 1.0))*S_mass
-          
-          !Equilibrium dissolved S
-          x_d_md_eq(3)=S_dis_mass/melt_mass 
-          
-          !Total mass of S
-          Cl_mass=melt_mass*x_ex_dis_in(4)
-          
-          !Dissolved mass of Cl 
-          Cl_dis_mass=Cl_mass- (Dcl*Ratio_exs_dis/(Dcl* Ratio_exs_dis + 1.0))   &
-               *Cl_mass
-          
-          !Equilibrium dissolved Cl
-          x_d_md_eq(4)=Cl_dis_mass/melt_mass 
           
        END SELECT
 
