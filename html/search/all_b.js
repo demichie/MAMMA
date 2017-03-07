@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['mamma_20_2d_20magma_20ascent_20finite_20volume_20solver',['MAMMA - Magma Ascent finite volume solver',['../index.html',1,'']]],
+  ['mamma_20_2d_20magma_20ascent_20mathematical_20modeling_20and_20analysis',['MAMMA - Magma Ascent Mathematical Modeling and Analysis',['../index.html',1,'']]],
   ['mamma_5fmain',['mamma_main',['../c__main_8f90.html#a74023b0aa852629566537e2c5644cc62',1,'c_main.f90']]],
   ['mass',['mass',['../namespaceparameters.html#af5695e02fcc6265d7372262b698ec37e',1,'parameters']]],
   ['max',['max',['../interfacecomplexify_1_1max.html',1,'complexify']]],

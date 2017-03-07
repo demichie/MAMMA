@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>MAMMA: MAMMA - Magma Ascent finite volume solver</title>
+<title>MAMMA: MAMMA - Magma Ascent Mathematical Modeling and Analysis</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -78,13 +78,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div class="header">
   <div class="headertitle">
-<div class="title">MAMMA - Magma Ascent finite volume solver </div>  </div>
+<div class="title">MAMMA - Magma Ascent Mathematical Modeling and Analysis </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>MAMMA is a FORTRAN90 code designed to solved a conservative model for magma ascent in a volcanic conduit, described as a compressible two-phase flow by finite volume methods.<br />
- The governing multiphase equations for two-phase compressible flow are derived using the theory of thermodynamically compatible systems (Romenski et al., 2010).<br />
- The model is one-dimensional with different phase velocities and pressures but a single temperature for the two phases.<br />
- The finite volume solver is based on a semidiscrete central scheme and it is not tied on the specific eigenstructure of the model.<br />
+<div class="textblock"><p>MAMMA is a FORTRAN90 code designed to solved a conservative model for steady magma ascent in a volcanic conduit, described as a compressible multicomponent two-phase flow.<br />
+ The governing multiphase equations for two-phase compressible flow are derived from the theory of thermodynamically compatible systems (Romenski et al., 2010).<br />
+ The model is one-dimensional (with variable radius) , with different phase velocities and pressures but a single temperature for the two phases.<br />
+ The solver uses a shooting technique: for a given magma-chamber pressure, the model adjusts the inlet flow rate until the prescribed boundary conditions at exit are reached.<br />
  Version 1.0:<br />
 </p><ul>
 <li>1D steady flow for axysimmetric geometry with variable radius</li>
@@ -104,7 +104,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 7 2017 09:43:58 for MAMMA by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 7 2017 09:55:58 for MAMMA by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
