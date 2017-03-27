@@ -202,7 +202,7 @@ MODULE constitutive
 
   ! parameters of the Forchheimer model
 
-  !> bubble number density
+  !> bubble number density (is referred to the liquid volume fraction)
   REAL*8 :: bubble_number_density
   REAL*8 :: log10_bubble_number_density
 
@@ -1174,6 +1174,8 @@ CONTAINS
 
        CALL f_permkc
 
+       ! Please note the bnd is multiplied by alfa_1, because the value is
+       ! referred to liquid only
        diam = ( alfa_2 / ( 4.0 / 3.0 * pi *  bubble_number_density              &
             * ( alfa_1 ) ) ) ** ( 1.D0 / 3.D0 )
 
