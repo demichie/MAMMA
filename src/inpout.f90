@@ -174,206 +174,160 @@ CONTAINS
 
   SUBROUTINE init_param
 
+    ! external subroutines
+    USE constitutive, ONLY : allocate_phases_parameters
+    
     IMPLICIT none
 
     LOGICAL :: lexist
 
-    INTEGER :: n_gas_init
-
-    INTEGER :: n_cry_init
-
-    ! -- Variables for the namelist DISSOLVED_GAS_PARAMETERS
-    REAL*8 :: rho0_d_init, C0_d_init , cv_d_init , gamma_d_init , p0_d_init , &
-         T0_d_init , bar_e_d_init , bar_p_d_init , s0_d_init , solub_init ,   &
-         solub_exp_init
-
-    ! -- Variables for the namelist CRYSTALS_PARAMETERS
-    REAL*8 :: rho0_c_init , C0_c_init , cv_c_init , gamma_c_init , p0_c_init ,&
-         T0_c_init , bar_e_c_init , bar_p_c_init , s0_c_init , beta0_init ,   &
-         beta_max_init
-
-    REAL*8 :: log10_tau_c_init , log10_tau_d_init
-
-    REAL*8 :: x_ex_dis_in_init, xa, xb, xc
-
-    REAL*8 :: Pc_g_init , Tc_g_init , cv_g_init , gamma_g_init , rho0_g_init ,&
-         T0_g_init , bar_e_g_init, s0_g_init
-
-    CHARACTER*20 :: gas_law_init 
-
-    NAMELIST / phases_parameters_init / n_gas_init , n_cry_init
-
-    NAMELIST / steady_boundary_conditions_init / T_in , p1_in , delta_p_in ,  &
-         x_ex_dis_in_init , p_out , u1_in , eps_conv, shooting
-
-    NAMELIST / exsolved_gas_parameters_init / gas_law_init, Pc_g_init ,       &
-         Tc_g_init , cv_g_init , gamma_g_init , rho0_g_init , T0_g_init ,     &
-         bar_e_g_init , s0_g_init, visc_2 , lateral_degassing_flag ,          &
-         alfa2_lat_thr , perm0
-
-    NAMELIST / dissolved_gas_parameters_init / rho0_d_init ,                  &
-         C0_d_init , cv_d_init , gamma_d_init , p0_d_init , T0_d_init ,       &
-         bar_e_d_init , bar_p_d_init , s0_d_init , exsol_model ,              &
-         solub_init , solub_exp_init
-
-    NAMELIST / crystals_parameters_init / rho0_c_init ,                       &
-         C0_c_init , cv_c_init , gamma_c_init , p0_c_init , T0_c_init ,       &
-         bar_e_c_init , bar_p_c_init , s0_c_init , beta0_init , beta_max_init
-
-
-    NAMELIST / relaxation_parameters_init / drag_funct_model ,                &
-         log10_drag_funct_coeff , p_relax_model , log10_tau_p_coeff ,         &
-         log10_tau_c_init , log10_tau_d_init
-
-
-    !-- Inizialization of the Variables for the namelist RUN_PARAMETERS
-    run_name = 'test'
-    verbose_level = 4 
-
-    !-- Inizialization of the Variables for the namelist geometry_parameters
-    z0 = 0.D0
-    zN = 5200.D0
-    radius_fixed = 0.D0
-    radius_min = 0.D0
-    radius_max = 0.D0
-    radius_z = 0.D0
-    radius_z_sig = 0.D0
-    radius_model = 'fixed'
-    comp_cells = 500
-
-    !-- Inizialization of the Variables for the namelist 
-    !-- steady_boundary_condition_parameters
-    T_in = 1323.D0
-    p1_in = 135000000.D0
-    delta_p_in = 0.D0
-    x_ex_dis_in_init = 5.0D-2
-    p_out = 101300
-    u1_in = 0.D0
-    shooting = .TRUE.
-    eps_conv = 1.D-5
-
-    ! exsolved gas parameters
-    gas_law_init = 'VDW'
-    Pc_g_init = 22064000.D0
-    Tc_g_init = 647.D0
-    cv_g_init = 1571.D0
-    gamma_g_init = 1.324D0
-    rho0_g_init = 0.52924425D0
-    T0_g_init = 373.0
-    s0_g_init = 2373.0
-    visc_2 = 1.5D-2
-    lateral_degassing_flag = .FALSE.
-    alfa2_lat_thr = 1.1D0
-    perm0 = 5.0D-3
-
-    n_gas_init = 1
-    n_cry_init = 1
-
-    n_mom = 1
-    
-    n_vars = 5 + 2 * n_gas_init + n_cry_init * n_mom
-    n_eqns = n_vars
-
-    ! dissolved gas parameters
-    rho0_d_init = 1000.D0
-    C0_d_init = 2000.D0
-    cv_d_init = 1200.D0
-    gamma_d_init = 2.3D0
-    p0_d_init = 1.0d8
-    s0_d_init = 0.d0
-    exsol_model = 'Henry'
-    solub_init = 4.11D-06 
-    solub_exp_init = 0.5D0
-
-    ! crystals parameters
-    rho0_c_init = 2600.D0
-    C0_c_init = 2000.D0
-    cv_c_init = 1200.D0
-    gamma_c_init = 2.3D0
-    p0_c_init = 1.0d8
-    s0_c_init = 0.d0
-    beta0_init = 0.0D0
-    beta_max_init = 0.6D0
-    crystallization_model = 'Vitturi2010'
-
-    ! MELT_PARAMETERS
-    rho0_M = 2300.0000000000000  
-    c0_m = 2000.0000000000000    
-    cv_m = 1200.0000000000000    
-    gamma_m = 2.3    
-    p0_m = 100000000.00000000  
-    s0_m = 0.0000000000000000  
-
-    !-- Inizialization of the Variables for the namelist viscosity_parameters
-    visc_melt_model = 'Hess_and_Dingwell1996'
-    bubbles_model = 'none'
-    theta_model = 'Fixed_value'
-    theta_fixed = 50.d0
-
-    !-- Inizialization of the Variables for the namelist temperature_parameters
-    isothermal = .FALSE.
-    fixed_temp = 1323.D0
-
-    !-- Inizialization of the Variables for the namelist 
-    !-- fragmentation_parameters
-    explosive = .TRUE.
-    fragmentation_model = 1
-    frag_thr = 0.60D+0
-    !tau_frag_coeff = 1.D0
-    !tau_frag_exp = 5.0D0
-
-    !-- Inizialization of the Variables for the namelist 
-    !-- external_water_parameters 
-    ext_water = .FALSE. 
-    total_water_influx = 0.D0
-    min_z_influx = 0.D0
-    delta_z_influx = 0.D0
-    T_w = 0.D0
-    inst_vaporization = .FALSE.
-    aquifer_type = "unconfined"
-    
-    !-- Inizialization of the Variables for the namelist source_parameters
-    grav = 9.81D0
-
-
-    !-- Inizialization of the Variables for the namelist country_rock_parameters
-    rho_cr = 2600
-    log10_k_cr = -12
-
-
-    !-- Initialization of the variables for the namelist relaxation_parameters
-    drag_funct_model = 'forchheimer'
-    log10_drag_funct_coeff = 1.0D0
-    p_relax_model = 'constant'
-    log10_tau_p_coeff = -8.D0
-    log10_tau_d_init = -4.0D0
-    log10_tau_c_init = -4.0D0
-
-    drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
-    tau_p_coeff = 10.D0 ** log10_tau_p_coeff
-    tau_d(1:n_gas) = 10.D0 ** log10_tau_d
-    tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
-
-    ! Forchheimer (Eq. 16 Degruyter et al. 2012)
-
-    log10_bubble_number_density = 15.0D0   
-    bubble_number_density = 10.0D0 ** log10_bubble_number_density
-    tortuosity_factor = 3.5 
-    throat_bubble_ratio = 0.1 
-    friction_coefficient = 10.D0
-
-    C_D = 0.8D0
-    r_a = 1.D-3
-
-    xa = 1.0
-    xb = 1.0
-    xc = 1.0
-
     input_file = 'conduit_solver.inp'
 
     INQUIRE (FILE=input_file,exist=lexist)
-
+    
     IF ( .NOT. lexist ) THEN
+       
+       !-- Inizialization of the Variables for the namelist RUN_PARAMETERS
+       RUN_NAME = "MSH_Degruyter_2012"
+       VERBOSE_LEVEL = 0
+
+       !-- Inizialization of the Variables for the namelist GEOMETRY_PARAMETERS
+       Z0 = 0.D0
+       ZN = 5291.D0
+       RADIUS_MODEL = "fixed"
+       RADIUS_FIXED = 30.D0
+       COMP_CELLS = 1000
+
+       !-- Initialization of the variables for the namelist PHASES_PARAMETERS
+       N_GAS = 1
+       N_CRY = 1
+       N_MOM = 1
+
+       n_vars = 5 + 2 * n_gas + n_cry * n_mom
+       n_eqns = n_vars
+
+       CALL allocate_phases_parameters
+
+       !-- Inizialization of the Variables for the namelist 
+       !-- STEADY_BOUNDARY_CONDITIONS
+       T_in = 1159.0D0
+       p1_in = 140000000.0D0
+       delta_p_in = 0.D0
+       x_ex_dis_in = 4.6D-2
+       p_out = 101300
+       u1_in = 1.9D0
+       shooting = .TRUE.
+       eps_conv = 1.D-5
+
+       !-- Inizialization of the Variables for the namelist 
+       !-- EXSOLVED_GAS_CONDITIONS
+       gas_law = 'IDEAL'
+       Pc_g = 22064000.D0
+       Tc_g = 647.D0
+       cv_g = 1571.D0
+       gamma_g = 1.29D0
+       rho0_g = 0.588460051D0
+       T0_g = 373.D0
+       s0_g = 0.D0
+       visc_2 = 1.5D-2
+       lateral_degassing_flag = .FALSE.
+       alfa2_lat_thr = 1.1D0
+       perm0 = 5.0D-3
+
+
+       !-- Inizialization of the Variables for the namelist 
+       !-- DISSOLVED_GAS_PARAMETERS
+       rho0_d = 1000.D0
+       C0_d = 407.02249D0
+       cv_d = 3637.5787820D0
+       gamma_d = 1.11D0
+       p0_d = 1.0d8
+       T0_D = 372.99994092673325
+       BAR_E_D = 0.0000000000000000
+       BAR_P_D = 49249833.789414391 
+       s0_d = 0.d0
+       exsol_model = 'Henry'
+       solub = 4.11D-06 
+       solub_exp = 0.5D0
+
+       ! crystals parameters
+       RHO0_C = 2800.0000000000000     
+       C0_C = 2000.0000000000000     
+       CV_C = 360.00000000000000     
+       GAMMA_C = 3.3999999999999999     
+       P0_C = 250000000.00000000     
+       T0_C = 1361.6557734204794     
+       BAR_E_C = 0.0000000000000000     
+       BAR_P_C = 3044117647.0588236     
+       S0_C = 0.0000000000000000     
+       BETA0 = 0.40000000000000002     
+       BETA_MAX = 0.40000000000000002     
+       CRYSTALLIZATION_MODEL="Vitturi2010"
+
+       ! MELT_PARAMETERS
+       RHO0_M = 2500.0000000000000     
+       C0_M = 1366.2740410693600     
+       CV_M = 707.00000000000000     
+       GAMMA_M = 2.0899999999999999     
+       P0_M = 140000000.00000000     
+       T0_M = 1158.9999999999998     
+       BAR_E_M = 0.0000000000000000     
+       BAR_P_M = 2092900424.9999993     
+       S0_M = 0.0000000000000000
+
+       !-- Inizialization of the Variables for the namelist viscosity_parameters
+       visc_melt_model = 'Hess_and_Dingwell1996'
+       bubbles_model = 'none'
+       theta_model = 'Costa2005'
+       theta_fixed = 1.d0
+
+       !-- Inizialization of the Variables for the namelist temperature_parameters
+       isothermal = .TRUE.
+       fixed_temp = 1159.D0
+
+       !-- Inizialization of the Variables for the namelist 
+       !-- fragmentation_parameters
+       explosive = .TRUE.
+       fragmentation_model = 1
+       frag_thr = 0.80D+0
+
+       !-- Inizialization of the Variables for the namelist 
+       !-- external_water_parameters 
+       ext_water = .FALSE. 
+       total_water_influx = 0.D0
+       min_z_influx = 0.D0
+       delta_z_influx = 0.D0
+       T_w = 0.D0
+       inst_vaporization = .FALSE.
+       aquifer_type = "unconfined"
+
+
+       !-- Inizialization of the Variables for the namelist source_parameters
+       grav = 9.81D0
+
+       !-- Initialization of the variables for the namelist relaxation_parameters
+
+       ! ------- READ relaxation_parameters NAMELIST -------------------------------
+       ALLOCATE( log10_tau_d(n_gas) )
+       ALLOCATE( log10_tau_c(n_cry) )
+
+
+       drag_funct_model = 'forchheimer'
+       log10_drag_funct_coeff = 0.0D0
+       p_relax_model = 'constant'
+       log10_tau_p_coeff = -8.D0
+       log10_tau_d = -8.0D0
+       log10_tau_c = -8.0D0
+
+
+       !-- Forchheimer (Eq. 16 Degruyter et al. 2012)
+       log10_bubble_number_density = 15.0D0   
+       tortuosity_factor = 3.5 
+       throat_bubble_ratio = 0.1 
+       friction_coefficient = 10.D0
+       C_D = 0.8D0
+       r_a = 1.D-3
+
 
        OPEN(input_unit,FILE=input_file,STATUS='NEW')
 
@@ -381,15 +335,15 @@ CONTAINS
 
        WRITE(input_unit, geometry_parameters )
 
-       WRITE(input_unit, phases_parameters_init )
+       WRITE(input_unit, phases_parameters )
 
-       WRITE(input_unit, steady_boundary_conditions_init )
+       WRITE(input_unit, steady_boundary_conditions )
 
-       WRITE(input_unit, exsolved_gas_parameters_init )
+       WRITE(input_unit, exsolved_gas_parameters )
 
-       WRITE(input_unit, dissolved_gas_parameters_init )
+       WRITE(input_unit, dissolved_gas_parameters )
 
-       WRITE(input_unit, crystals_parameters_init )
+       WRITE(input_unit, crystals_parameters )
 
        WRITE(input_unit, melt_parameters )
 
@@ -403,30 +357,16 @@ CONTAINS
 
        WRITE(input_unit, source_parameters )
 
-       IF ( lateral_degassing_flag ) THEN
+       WRITE(input_unit, relaxation_parameters )
 
-          WRITE(input_unit, country_rock_parameters )
-
-       END IF
-
-       WRITE(input_unit, relaxation_parameters_init )
-
-       IF ( drag_funct_model .EQ. 'eval' ) THEN
-
-          WRITE(input_unit, bubbles_parameters )
-
-       ELSEIF ( ( drag_funct_model .EQ. 'darcy' ) .OR.                          &
-            drag_funct_model .EQ. 'forchheimer' .OR.                            &
-            drag_funct_model .EQ. 'forchheimer_wt') THEN
-
-          WRITE(input_unit, forchheimer_parameters )
-
-       END IF
+       WRITE(input_unit, forchheimer_parameters )
 
        CLOSE(input_unit)
 
        WRITE(*,*) 'Input file not found'
        WRITE(*,*) 'A new one with default values has been created'
+       WRITE(*,*) 'with condition to reproduce the solution for'
+       WRITE(*,*) 'MSH1980 (see Degruyter et al. 2012)'
        STOP
 
     ELSE
