@@ -866,15 +866,6 @@ CONTAINS
 
 
     COMPLEX*16 :: aa , bb , cc , pp
-    COMPLEX*16 :: P_bar, log10Ds, Ds, Dcl
-    REAL*8 :: beta_S(4)
-    REAL*8 :: melt_volume
-
-    COMPLEX*16 :: melt_mass
-    COMPLEX*16 :: co2_exs_mass,h2o_exs_mass,S_exs_mass,Cl_exs_mass
-    COMPLEX*16 :: S_dis_mass,Cl_dis_mass
-    COMPLEX*16 :: gas_mass, Ratio_exs_dis
-    COMPLEX*16 :: S_mass,Cl_mass
 
 
     IF ( REAL(p_2) .LE. 0.D0 ) THEN
@@ -941,7 +932,7 @@ CONTAINS
 
     COMPLEX*16 :: x_d_md_tot ,x_d_md_wt_tot 
     COMPLEX*16 :: p_1_bar, T_celsius
-    COMPLEX*16 :: crystal_mass_fraction(1:n_cry)
+    ! COMPLEX*16 :: crystal_mass_fraction(1:n_cry)
 
     INTEGER :: j
 
