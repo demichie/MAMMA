@@ -314,8 +314,8 @@ CONTAINS
 
        drag_funct_model = 'forchheimer'
        log10_drag_funct_coeff = 0.0D0
-       p_relax_model = 'constant'
-       log10_tau_p_coeff = -8.D0
+       p_relax_model = 'single'
+       log10_tau_p_coeff = 1.D0
        log10_tau_d = -8.0D0
        log10_tau_c = -8.0D0
 
@@ -956,7 +956,16 @@ CONTAINS
 
     
     drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
+
+    IF ( p_relax_model .EQ. 'single' ) THEN
+       
+       log10_tau_p_coeff = 0.D0
+
+    END IF
+
     tau_p_coeff = 10.D0 ** log10_tau_p_coeff
+
+
     tau_d(1:n_gas) = 10.D0 ** log10_tau_d(1:n_gas)
     tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
