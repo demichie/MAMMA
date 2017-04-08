@@ -68,6 +68,7 @@ MODULE constitutive
   REAL*8, ALLOCATABLE :: bar_p_g(:)  !< exsolved gas cohesion pressure
 
   !~   REAL*8 :: s0_2      !< exsolved gas reference entropy
+  ! The reference entropies are used only for non-isothermal runs
   REAL*8 :: s0_m           !< melt reference entropy
   REAL*8, ALLOCATABLE :: s0_c(:)    !< crystals reference entropy
   REAL*8, ALLOCATABLE :: s0_d(:)    !< dissolved gas reference entropy
@@ -101,6 +102,7 @@ MODULE constitutive
   COMPLEX*16 :: p_1        !< local pressure of the melt-crystals phase
   COMPLEX*16 :: p_2        !< local pressure of the exsolved gas
 
+  ! Entropy is used only for non-isothermal runs
   COMPLEX*16 :: s_1        !< local specific entropy of the melt-crystals phase
   COMPLEX*16 :: s_2        !< local specific entropy of the exsolved gas
   COMPLEX*16 :: s_m        !< local specific entropy of the melt
@@ -620,9 +622,6 @@ CONTAINS
     mu_g(1:n_gas) = e_g(1:n_gas) + p_2/rho_g(1:n_gas) - T * s_g(1:n_gas)
 
     mu_2 = SUM( x_g_2(1:n_gas) * mu_g(1:n_gas) )
-
-    !mu_1 = e_1 + p_1/rho_1 - T * s_1
-    !mu_2 = e_2 + p_2/rho_2 - T * s_2
 
     S = x_1 * s_1 + x_2 * s_2
 
