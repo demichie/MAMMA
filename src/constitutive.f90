@@ -394,7 +394,8 @@ MODULE constitutive
   
   !> Parameter to select the melt viscosity (bubbles and crystal-free) model:\n
   !> - 'Hess_and_Dingwell1996'
-  !> - 'Romano_et_al2003'
+  !> - 'Romano_et_al2003t'
+  !> - 'Romano_et_al2003p'
   !> - 'Giordano_et_al2008'
   !> - 'Giordano_et_al2009'
   !> - 'Di_Genova_et_al2013_eqn_3,5'
@@ -456,14 +457,15 @@ CONTAINS
     available_bubble_models(11) = 'Rahaman'
 
 
-    n_visc_melt_models = 6
+    n_visc_melt_models = 7
 
     available_visc_melt_models(1) = 'Hess_and_Dingwell1996'
-    available_visc_melt_models(2) = 'Romano_et_al2003'
-    available_visc_melt_models(3) = 'Giordano_et_al2008'
-    available_visc_melt_models(4) = 'Giordano_et_al2009'
-    available_visc_melt_models(5) = 'Di_Genova_et_al2013_eqn_3,5'
-    available_visc_melt_models(6) = 'Di_Genova_et_al2013_eqn_4,5'
+    available_visc_melt_models(2) = 'Romano_et_al2003t'
+    available_visc_melt_models(3) = 'Romano_et_al2003p'
+    available_visc_melt_models(4) = 'Giordano_et_al2008'
+    available_visc_melt_models(5) = 'Giordano_et_al2009'
+    available_visc_melt_models(6) = 'Di_Genova_et_al2013_eqn_3,5'
+    available_visc_melt_models(7) = 'Di_Genova_et_al2013_eqn_4,5'
     
   END SUBROUTINE initialize_models
   
@@ -1505,9 +1507,30 @@ CONTAINS
 
        END IF
 
-    CASE ( 'Romano_et_al2003')
+    CASE ( 'Romano_et_al2003t')
 
-       !  Campi-Flegrei - Romano et al. (2003)
+       !  Campi-Flegrei - Romano et al. (2003) (AMS)
+
+       IF ( REAL(w) .LT. 0.03 ) THEN
+
+          visc_melt = DCMPLX( 1.0D12 , 0.D0 )
+
+       ELSE
+
+          visc1exp = ( -3.5405D0 +0.14467D0 * CDLOG(w))
+
+          visc2exp = ( 9618.9D0 - 498.79D0 * CDLOG(w))
+
+          visc3exp = visc2exp / ( T - ( 191.78D0 -35.518D0 * CDLOG(w) ) )
+
+          visc_melt = 10.0**(visc1exp+visc3exp)
+
+       END IF
+
+
+    CASE ( 'Romano_et_al2003p')
+
+       !  Campi-Flegrei - Romano et al. (2003) (TDPH)
 
        IF ( REAL(w) .LT. 0.03 ) THEN
 
