@@ -1509,7 +1509,7 @@ CONTAINS
 
     CASE ( 'Romano_et_al2003t')
 
-       !  Campi-Flegrei - Romano et al. (2003) (AMS)
+       !  Campi-Flegrei - Romano et al. (2003) (AMS, trachytes)
 
        IF ( REAL(w) .LT. 0.03 ) THEN
 
@@ -1530,7 +1530,7 @@ CONTAINS
 
     CASE ( 'Romano_et_al2003p')
 
-       !  Campi-Flegrei - Romano et al. (2003) (TDPH)
+       !  Campi-Flegrei - Romano et al. (2003) (TDPH, phonolites)
 
        IF ( REAL(w) .LT. 0.03 ) THEN
 
