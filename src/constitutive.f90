@@ -1675,7 +1675,7 @@ CONTAINS
 
        c1 = 567.0D0
        c2 = -160.3D0
-       C = c1 + c2 * CDLOG( 1.D0 + 3.5D0 * w  )
+       C = c1 + c2 * CDLOG10( 1.D0 + w  )
        !C = c1 + c2 * CDLOG( 1.D0 + w  )
 
        visc_melt = A + B / ( T - C )
