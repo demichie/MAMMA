@@ -1527,7 +1527,6 @@ CONTAINS
 
        END IF
 
-
     CASE ( 'Romano_et_al2003p')
 
        !  Campi-Flegrei - Romano et al. (2003) (TDPH, phonolites)
@@ -1560,7 +1559,6 @@ CONTAINS
 
        END DO
 
-
        wt(11) = w
 
        ! Create the normalized wt. % distribution
@@ -1573,7 +1571,6 @@ CONTAINS
             56.0774 , 61.97894 , 94.1960 , 141.9446 , 18.01528 , 18.9984 ]
        gfw = 100.D0 / SUM( norm_wt / mw )
        xmf = ( norm_wt / mw ) * gfw
-
 
        ! Model coefficients
 
@@ -1626,6 +1623,29 @@ CONTAINS
 
        ! Viscosity for peralkaline rhyolites from Pantelleria Island 
        ! Di Genova et al. 2013 (Eqs. 3,5)
+       
+       ! Call for dissolved water in te melt from the model and add it to the   
+       ! composition of glass in wt
+
+       DO i = 1,12
+
+          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+       END DO
+
+
+       wt(11) = w
+
+       ! Create the normalized wt. % distribution
+
+       norm_wt = 100.D0 * ( wt / SUM(wt) )
+
+       ! Change to molar fractions
+
+       mw = [ 60.0843 , 79.8658 , 101.961276 , 71.8444 , 70.937449 , 40.3044 ,  &
+            56.0774 , 61.97894 , 94.1960 , 141.9446 , 18.01528 , 18.9984 ]
+       gfw = 100.D0 / SUM( norm_wt / mw )
+       xmf = ( norm_wt / mw ) * gfw       
 
        A = -4.55D0
 
@@ -1633,11 +1653,11 @@ CONTAINS
        et al. 2009 ------------------------------------------
        b1 = 4278.17D0
        b2 = 8.6D0
-       B = b1 + b2 * w
+       B = b1 + b2 * xmf(11)
 
        c1 = 513.D0
        c2 = -245.3D0
-       C = c1 + c2 * CDLOG( 1.D0 + w )
+       C = c1 + c2 * CDLOG10( 1.D0 + xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
@@ -1647,17 +1667,38 @@ CONTAINS
        ! Viscosity for peralkaline rhyolites from Pantelleria Island 
        ! Di Genova et al. 2013 (Eqs. 4,5)
 
+       ! Call for dissolved water in te melt from the model and add it to the   
+       ! composition of glass in wt
+
+       DO i = 1,12
+
+          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+       END DO
+
+       wt(11) = w
+
+       ! Create the normalized wt. % distribution
+
+       norm_wt = 100.D0 * ( wt / SUM(wt) )
+
+       ! Change to molar fractions
+
+       mw = [ 60.0843 , 79.8658 , 101.961276 , 71.8444 , 70.937449 , 40.3044 ,  &
+            56.0774 , 61.97894 , 94.1960 , 141.9446 , 18.01528 , 18.9984 ]
+       gfw = 100.D0 / SUM( norm_wt / mw )
+       xmf = ( norm_wt / mw ) * gfw
+
        A = -4.55D0
 
        ! -------- New parametrization -------------------------------------------
        b3 = 10528.64D0
        b4 = -4672.21D0
-       B = b3 + b4 * CDLOG( 1.D0 + w )
+       B = b3 + b4 * CDLOG10( 1.D0 + xmf(11) )
 
        c3 = 172.27D0
        c4 = 89.75D0
-       C = c3 + c4 * CDLOG( 1.D0 + w )
-
+       C = c3 + c4 * CDLOG10( 1.D0 + xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
@@ -1665,25 +1706,44 @@ CONTAINS
 
     CASE ( 'Giordano_et_al2009' )
 
+       ! Call for dissolved water in te melt from the model and add it to the   
+       ! composition of glass in wt
+
+       DO i = 1,12
+
+          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+       END DO
+
+
+       wt(11) = w
+
+       ! Create the normalized wt. % distribution
+
+       norm_wt = 100.D0 * ( wt / SUM(wt) )
+
+       ! Change to molar fractions
+
+       mw = [ 60.0843 , 79.8658 , 101.961276 , 71.8444 , 70.937449 , 40.3044 ,  &
+            56.0774 , 61.97894 , 94.1960 , 141.9446 , 18.01528 , 18.9984 ]
+       gfw = 100.D0 / SUM( norm_wt / mw )
+       xmf = ( norm_wt / mw ) * gfw
+
        A = -4.55D0
 
        b1 = 6101.0D0
        b2 = -63.66D0
 
-       B = b1 + b2 * 3.5D0 * w
-       !B = b1 + b2 * w
-
+       B = b1 + b2 * xmf(11)
 
        c1 = 567.0D0
        c2 = -160.3D0
-       C = c1 + c2 * CDLOG10( 1.D0 + 3.5D0 * w  )
-       !C = c1 + c2 * CDLOG( 1.D0 + w  )
+       C = c1 + c2 * CDLOG10( 1.D0 +xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
 
     END SELECT
-
 
   END SUBROUTINE f_viscmelt
 
