@@ -364,7 +364,6 @@ MODULE constitutive
   CHARACTER (LEN=30), DIMENSION(20) :: available_bubble_models
   
   !> Parameter to choose the model for the influence of the bubbles on the mixture:\n 
-  !> - 'Einstein' 
   !> - 'Quane-Russel         -> For Campi-Flegrei we use 0.63 as reported in the 2004 Report (Task 2.2)
   !> - 'Eilers'              -> Mader et al. 2013
   !> - 'Sibree'              -> Mader et al. 2013
@@ -427,7 +426,6 @@ CONTAINS
     available_drag_models(5) = 'drag'
     available_drag_models(6) = 'single_velocity'
 
-
     n_theta_models = 11
 
     available_theta_models(1) = 'Lejeune_and_Richet1995'
@@ -442,20 +440,18 @@ CONTAINS
     available_theta_models(10) = 'Vona_et_al2013_eq21'
     available_theta_models(11) = 'Fixed_value'
 
-    n_bubble_models = 11
+    n_bubble_models = 10
 
     available_bubble_models(1) = 'none'
     available_bubble_models(2) = 'Costa2007'
-    available_bubble_models(3) = 'Einstein'
-    available_bubble_models(4) = 'Quane-Russel'
-    available_bubble_models(5) = 'Eilers'
-    available_bubble_models(6) = 'Sibree'
-    available_bubble_models(7) = 'Taylor'
-    available_bubble_models(8) = 'Mackenzie'
-    available_bubble_models(9) = 'DucampRaj'
-    available_bubble_models(10) = 'BagdassarovDingwell'
-    available_bubble_models(11) = 'Rahaman'
-
+    available_bubble_models(3) = 'Quane-Russel'
+    available_bubble_models(4) = 'Eilers'
+    available_bubble_models(5) = 'Sibree'
+    available_bubble_models(6) = 'Taylor'
+    available_bubble_models(7) = 'Mackenzie'
+    available_bubble_models(8) = 'DucampRaj'
+    available_bubble_models(9) = 'BagdassarovDingwell'
+    available_bubble_models(10) = 'Rahaman'
 
     n_visc_melt_models = 7
 
@@ -1979,11 +1975,6 @@ CONTAINS
           visc_rel_bubbles = (1.0D0/(1.0D0 + 25.0D0*Ca*Ca))                     & 
                * ( 1.0D0 / (1.0D0-alfa_2)                                       &
                + 25.0D0*Ca*Ca*((1.0D0-alfa_2)**(5.0D0/3.0D0)))
-
-
-       CASE ( 'Einstein' )
-
-          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) / ( 1.d0 - alfa_2 )
 
        CASE ( 'Quane-Russel' )
 
