@@ -1834,7 +1834,7 @@ CONTAINS
 
        omega = 20.6d0
        betas = 0.62d0
-       theta0 = 3.5d0
+       theta0 = 1.6d0
 
        theta = theta0 * 10.D0 ** ( 0.5D0 * pi + ATAN( omega * ( SUM(            &
             beta(1:n_cry) ) - betas )))
