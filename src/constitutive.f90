@@ -1794,7 +1794,7 @@ CONTAINS
     CASE ('Fixed_value')
 
        !-----------Constant theta
-       theta = theta_fixed    ! Melnik & Sparks '99
+       theta = theta_fixed    
 
     CASE ('Costa2005')
 
@@ -1828,7 +1828,7 @@ CONTAINS
        c2 = 8.6D0
        c3 = 0.69D0
 
-       theta = c1 * 10.D0 ** ( ATAN( c2 * ( SUM( beta(1:n_cry) ) - c3 ) ) + pi ) 
+       theta = c1 * 10.D0 ** ( ATAN( c2 * ( SUM( beta(1:n_cry) ) - c3 ) ) + pi/2.D0 ) 
 
     CASE ('Melnik_and_Sparks1999')
 
