@@ -393,6 +393,7 @@ MODULE constitutive
   
   !> Parameter to select the melt viscosity (bubbles and crystal-free) model:\n
   !> - 'Hess_and_Dingwell1996'
+  !> - 'Whittington_et_al2008'
   !> - 'Romano_et_al2003t'
   !> - 'Romano_et_al2003p'
   !> - 'Giordano_et_al2008'
@@ -401,7 +402,6 @@ MODULE constitutive
   !> - 'Di_Genova_et_al2013_eqn_4,5'
   !> .
   CHARACTER*30 :: visc_melt_model
-
   
   REAL*8, DIMENSION(12) :: wt_init
 
@@ -409,7 +409,6 @@ MODULE constitutive
   REAL*8 :: rho_w
 
   REAL*8 :: xa,xb,xc
-
 
 CONTAINS
 
@@ -453,15 +452,16 @@ CONTAINS
     available_bubble_models(9) = 'BagdassarovDingwell'
     available_bubble_models(10) = 'Rahaman'
 
-    n_visc_melt_models = 7
+    n_visc_melt_models = 8
 
     available_visc_melt_models(1) = 'Hess_and_Dingwell1996'
-    available_visc_melt_models(2) = 'Romano_et_al2003t'
-    available_visc_melt_models(3) = 'Romano_et_al2003p'
-    available_visc_melt_models(4) = 'Giordano_et_al2008'
-    available_visc_melt_models(5) = 'Giordano_et_al2009'
-    available_visc_melt_models(6) = 'Di_Genova_et_al2013_eqn_3,5'
-    available_visc_melt_models(7) = 'Di_Genova_et_al2013_eqn_4,5'
+    available_visc_melt_models(2) = 'Whittington_et_al2008'
+    available_visc_melt_models(3) = 'Romano_et_al2003t'
+    available_visc_melt_models(4) = 'Romano_et_al2003p'
+    available_visc_melt_models(5) = 'Giordano_et_al2008'
+    available_visc_melt_models(6) = 'Giordano_et_al2009'
+    available_visc_melt_models(7) = 'Di_Genova_et_al2013_eqn_3,5'
+    available_visc_melt_models(8) = 'Di_Genova_et_al2013_eqn_4,5'
     
   END SUBROUTINE initialize_models
   
@@ -1498,6 +1498,26 @@ CONTAINS
           visc2exp = (9601.0D0 - 2368.0D0 * CDLOG(w))
 
           visc3exp = visc2exp / ( T - ( 195.70D0 + 32.250D0 * CDLOG(w) ) )
+
+          visc_melt = 10.0**(visc1exp+visc3exp)
+
+       END IF
+
+    CASE ( 'Whittington_et_al2008')
+
+       !  melt viscosity of dacites
+
+       IF ( REAL(w) .LT. 0.03 ) THEN
+
+          visc_melt = DCMPLX( 1.0D12 , 0.D0 )
+
+       ELSE
+
+          visc1exp = ( -4.43D0 )
+
+          visc2exp = (7618.13D0 - 17.25D0 * CDLOG10(w + 0.26))
+
+          visc3exp = visc2exp / ( T - ( 406.1D0 - 292.6D0 * CDLOG10(w + 0.26) ) )
 
           visc_melt = 10.0**(visc1exp+visc3exp)
 
