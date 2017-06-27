@@ -1523,9 +1523,9 @@ CONTAINS
 
           visc1exp = ( -4.43D0 )
 
-          visc2exp = (7618.13D0 - 17.25D0 * CDLOG10(w + 0.26))
+          visc2exp = (7618.13D0 - 17.25D0 * LOG10(w + 0.26))
 
-          visc3exp = visc2exp / ( T - ( 406.1D0 - 292.6D0 * CDLOG10(w + 0.26) ) )
+          visc3exp = visc2exp / ( T - ( 406.1D0 - 292.6D0 * LOG10(w + 0.26) ) )
 
           visc_melt = 10.0**(visc1exp+visc3exp)
 
@@ -1681,7 +1681,7 @@ CONTAINS
 
        c1 = 513.D0
        c2 = -245.3D0
-       C = c1 + c2 * CDLOG10( 1.D0 + xmf(11) )
+       C = c1 + c2 * LOG10( 1.D0 + xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
@@ -1718,11 +1718,11 @@ CONTAINS
        ! -------- New parametrization -------------------------------------------
        b3 = 10528.64D0
        b4 = -4672.21D0
-       B = b3 + b4 * CDLOG10( 1.D0 + xmf(11) )
+       B = b3 + b4 * LOG10( 1.D0 + xmf(11) )
 
        c3 = 172.27D0
        c4 = 89.75D0
-       C = c3 + c4 * CDLOG10( 1.D0 + xmf(11) )
+       C = c3 + c4 * LOG10( 1.D0 + xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
@@ -1762,7 +1762,7 @@ CONTAINS
 
        c1 = 567.0D0
        c2 = -160.3D0
-       C = c1 + c2 * CDLOG10( 1.D0 +xmf(11) )
+       C = c1 + c2 * LOG10( 1.D0 +xmf(11) )
 
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
