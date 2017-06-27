@@ -290,11 +290,12 @@ MODULE constitutive
 
   !> String for exsolution model:\n
   !> - 'Henry' => Henry's law;
+  !> - 'Polynomial' => Polinomial law;
   !> - 'Zhang' => Zhang model (Zhang, JVGR '99).
   !> .
   CHARACTER*20 :: exsol_model
 
-  !> Solubility parameter for the Henry's law
+  !> Solubility parameter for the Henry's and polynomial law
   REAL*8, ALLOCATABLE :: solub(:)
 
   REAL*8, ALLOCATABLE :: solub_exp(:)
@@ -882,6 +883,13 @@ CONTAINS
 
           x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * p_2 )      &
                ** solub_exp(1:n_gas)
+
+       CASE ( 'Polynomial' )
+
+          ! Polynomial law
+
+          x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * p_2 )      &
+            * (alfa_g_2(1:n_gas)*p_2) + solub_exp(1:n_gas)*(alfa_g_2(1:n_gas)*p_2)
 
        CASE ( 'Zhang' )
 
