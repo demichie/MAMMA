@@ -30,7 +30,8 @@ MODULE geometry
   !> - 'fixed'           => constant radius
   !> - 'linear'          => linear change in radius
   !> - 'trans1'          => two radiuses and an transition zone
-  !> - 'trans2'          => a zone with high radius with a transition zone
+  !> - 'trans2'          => a zone with high radius
+  !> - 'trans3'          => cylindrical lower portion and linearly variable upper portion
   !> - 'external'        => radius profile read from external file
   !> .
   CHARACTER*30 :: radius_model
@@ -38,7 +39,7 @@ MODULE geometry
   REAL*8 :: radius_fixed !< Fixed value of the radius
   REAL*8 :: radius_min   !< Fixed value of the minimum radius (used in non cylindrical conduits)
   REAL*8 :: radius_max   !< Fixed value of the maximum radius (used in non cylindrical conduits)
-  REAL*8 :: radius_z     !< Characteristic depth for radius models trans1 and trans2
+  REAL*8 :: radius_z     !< Characteristic depth for radius models trans1, trans2 and trans3
   REAL*8 :: radius_z_sig !< Characteristic sigma for radius model trans1 and trans2
 
   INTEGER :: comp_cells  !< Number of control volumes in the computational domain
@@ -141,6 +142,23 @@ CONTAINS
           ELSE
              
              radius_stag(j) = radius_min
+             
+          END IF
+          
+       END DO
+
+    CASE ( 'trans3' )
+
+       DO j=1,comp_interfaces
+          
+          IF( z_stag(j) < (radius_z) ) THEN
+             
+             radius_stag(j) = radius_min
+             
+          ELSE
+
+             radius_stag(j) = radius_min + (radius_max - radius_min) * &
+                  ( z_stag(j) - radius_z ) / (zN - radius_z)
              
           END IF
           
