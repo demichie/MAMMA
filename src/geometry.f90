@@ -219,9 +219,9 @@ CONTAINS
           
           IF( z_stag(j) > (eccen_z + eccen_z_sig) ) THEN
              
-             eccen_stag(j) = radius_top
+             eccen_stag(j) = eccen_top
              
-          ELSEIF( z_stag(j) < (eccen_z - reccen_z_sig) ) THEN
+          ELSEIF( z_stag(j) < (eccen_z - eccen_z_sig) ) THEN
              
              eccen_stag(j) = eccen_base
              
