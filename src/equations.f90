@@ -47,7 +47,6 @@ MODULE equations
   !> .
   LOGICAL :: lateral_degassing
 
-
   !> Exsolved gas volume fraction threshold for lateral degassing 
   REAL*8 :: alfa2_lat_thr
 
@@ -306,7 +305,6 @@ CONTAINS
 
     INTEGER :: i , j
 
-
     IF ( present(c_qp) .AND. present(c_flux) ) THEN
 
        qp = c_qp
@@ -467,7 +465,6 @@ CONTAINS
 
     END IF
 
-
   END SUBROUTINE eval_fluxes_qp
 
   !******************************************************************************
@@ -507,7 +504,6 @@ CONTAINS
     COMPLEX*16 :: source_term(n_eqns)
 
     INTEGER :: i
-
 
     IF ( present(c_qp) .AND. present(c_nh_term_impl) ) THEN
 
@@ -600,15 +596,12 @@ CONTAINS
     ! relaxation term for the mixture density -----------------------------------
     relaxation_term(idx_mix_mass_eqn) = DCMPLX(0.D0,0.D0)
 
-
     ! relaxation term for the volume fraction equation --------------------------
     CALL press_relax_term( pressure_relaxation )
     relaxation_term(idx_vol1_eqn) = pressure_relaxation * radius**2
 
-
     ! relaxation term for the mixture momentum ----------------------------------
     relaxation_term(idx_mix_mom_eqn) = DCMPLX(0.D0,0.D0)
-
 
     ! relaxation term for relative velocity -------------------------------------
     CALL vel_relax_term( velocity_relaxation )
@@ -678,8 +671,6 @@ CONTAINS
 
        END DO
 
-       
-       
     END IF
        
   END SUBROUTINE eval_relaxation_terms
@@ -696,7 +687,7 @@ CONTAINS
 
   SUBROUTINE eval_forces_terms( force_term )
 
-    USE geometry, ONLY : radius
+    USE geometry, ONLY : radius, f_eccen_a
     USE complexify 
     IMPLICIT none
 
@@ -726,20 +717,19 @@ CONTAINS
 
     CALL mixture_viscosity
 
-    visc_force_1 = - 8.D0 * visc_mix * u_1
+    visc_force_1 = - 8.D0 * visc_mix * u_1 * f_eccen_a
 
     ! Turbulent gas-wall friction (Degruyter et al. 2012)
 
     gas_wall_drag = 0.03D0
 
-    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * CDABS( u_2 ) * u_2 
+    visc_force_2 = - gas_wall_drag / 4.D0 * radius * f_eccen_a * rho_2 * CDABS(u_2) * u_2 
 
     visc_force_1 = visc_force_1 * ( 1.D0 - frag_eff )
     visc_force_2 = visc_force_2 * frag_eff
 
     !visc_force_1 =  visc_force_1 * t
     !visc_force_2 =  visc_force_2 * ( 1.0 - t )
-
 
     force_term(idx_mix_mom_eqn) = force_term(idx_mix_mom_eqn) + visc_force_2    &
          + visc_force_1 
@@ -772,7 +762,7 @@ CONTAINS
        force_term(idx_mix_engy_eqn) = - rho_mix * u_mix * grav * radius**2
 
        force_term(idx_mix_engy_eqn) = force_term(idx_mix_engy_eqn)              &
-            + 2.D0 * visc_force_2 * u_2 + 2.D0 * visc_force_1 * u_1
+            + visc_force_2 * u_2 + visc_force_1 * u_1
 
     END IF
 
@@ -797,9 +787,7 @@ CONTAINS
 
     END DO
 
-
   END SUBROUTINE eval_forces_terms
-
 
   !******************************************************************************
   !> @author 
@@ -816,7 +804,7 @@ CONTAINS
 
   SUBROUTINE eval_source_terms( source_term )
 
-    USE geometry, ONLY : radius
+    USE geometry, ONLY : radius, f_eccen_a, f_eccen_b
     USE complexify 
     IMPLICIT none
 
@@ -843,7 +831,7 @@ CONTAINS
        IF ( p_2 .GE. p_lith ) THEN
           
           q_lat = ( rho_2 * alfa_2 * k_cr * ( p_2 - p_lith ) ) /                &
-               ( visc_2 * radius )
+               ( visc_2 * radius * f_eccen_b )
           
        ELSE
           
@@ -853,7 +841,6 @@ CONTAINS
        
     END IF
 
-
     water_mass_flux = DCMPLX(0.D0,0.D0)
 
     source_term(1:n_eqns) = DCMPLX(0.D0,0.D0)
@@ -861,7 +848,7 @@ CONTAINS
     ! --- TOTAL MASS SOURCE TERM ------------------------------------------------
     IF ( lateral_degassing ) THEN
 
-       source_term(idx_mix_mass_eqn) = - 2.D0 * q_lat * radius
+       source_term(idx_mix_mass_eqn) = - 2.D0 * q_lat * radius * f_eccen_a
 
     ELSE
 
@@ -891,8 +878,7 @@ CONTAINS
                    
                    visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
                    
-                   water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr / &
-                        visc_w * ( p_hydro - p_1 ) / radius
+                   water_mass_flux = rho_w * k_cr / visc_w * ( p_hydro - p_1 ) / radius / f_eccen_b
                    
                 ELSE
                    
@@ -908,8 +894,7 @@ CONTAINS
                    
                    visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
                    
-                   water_mass_flux = ( 2.D0 * radius * 3.14D0) * rho_w * k_cr / &
-                        visc_w * ( p_lith - p_1 ) / radius
+                   water_mass_flux = rho_w * k_cr / visc_w * ( p_lith - p_1 ) / radius / f_eccen_b
                    
                 ELSE
                    
@@ -928,7 +913,7 @@ CONTAINS
        END IF
        
        source_term(idx_mix_mass_eqn) = source_term(idx_mix_mass_eqn)            &
-            + water_mass_flux
+            + 2.D0 * radius * water_mass_flux * f_eccen_a
        
     END IF
     
@@ -938,7 +923,7 @@ CONTAINS
     ! --- Mixture Momentum ------------------------------------------------------
     IF ( lateral_degassing ) THEN
 
-       source_term(idx_mix_mom_eqn) = - 2.D0 * q_lat * radius * u_2
+       source_term(idx_mix_mom_eqn) = - 2.D0 * q_lat * radius * u_2 * f_eccen_a
 
     ELSE
 
@@ -958,7 +943,7 @@ CONTAINS
 
        IF ( lateral_degassing ) THEN
 
-          source_term(idx_mix_engy_eqn) = - 2.D0 * q_lat * radius * alfa_2 *    &
+          source_term(idx_mix_engy_eqn) = - 2.D0 * q_lat * radius * f_eccen_a *    &
                ( T * cv_2 + 0.5D0 * u_2*u_2 )
 
        ELSE
@@ -974,12 +959,12 @@ CONTAINS
 
              IF ( inst_vaporization ) THEN
 
-                heat_flux = - water_mass_flux * ( cv_d(1) * ( T_boiling-T_w )   &
-                     + cv_2 * ( - T_boiling ) + lambda_w )
+                heat_flux = - 2.D0 * radius * f_eccen_a * water_mass_flux * &
+                            ( cv_d(1) * ( T_boiling-T_w ) + cv_2 * ( - T_boiling ) + lambda_w )
 
              ELSE
 
-                heat_flux = water_mass_flux * cv_d(1) * T_w
+                heat_flux = 2.D0 * radius * f_eccen_a * water_mass_flux * cv_d(1) * T_w
 
              END IF
 
@@ -997,7 +982,7 @@ CONTAINS
     ! H2O source due to inlet
     IF ( ext_water .AND. .NOT.inst_vaporization ) THEN
 
-       source_term(idx_dis_gas_eqn_first) = water_mass_flux
+       source_term(idx_dis_gas_eqn_first) = 2.D0 * radius * f_eccen_a * water_mass_flux
 
     ELSE
 
@@ -1018,7 +1003,7 @@ CONTAINS
 
        IF ( lateral_degassing ) THEN
 
-          source_term(i) = - 2.D0 * q_lat * radius
+          source_term(i) = - 2.D0 * q_lat * radius * f_eccen_a
 
        ELSE
 
@@ -1037,7 +1022,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE eval_source_terms
-
 
   !******************************************************************************
   !> @author 
@@ -1064,7 +1048,6 @@ CONTAINS
     idx = 0
 
     expl_forces_term(1:n_eqns) = 0.D0
-
 
     ! --- TOTAL MASS TERM -------------------------------------------------------
     expl_forces_term(idx_mix_mass_eqn) = 0.D0
