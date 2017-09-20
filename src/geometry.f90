@@ -281,7 +281,7 @@ CONTAINS
     f_eccen_a =  ( 3.D0 * (1.D0 + eccen_aux2 ) - ((3.D0 + eccen_aux2) *  &
 		              (1.D0 + 3.D0*eccen_aux2 ))**(0.5D0) ) / (2.D0 * eccen_aux2**(0.5D0) )
 
-    f_eccen_b =  SQRT( (2.D0 * eccen_aux2**2.D0 ) / (1 + eccen_aux2**2.D0) )
+    f_eccen_b =  SQRT( (2.D0 * eccen_aux2 ) / (1 + eccen_aux2**2.D0) )
 
   END SUBROUTINE update_radius
 
