@@ -29,36 +29,32 @@ MODULE geometry
 
   REAL*8 :: radius       !< Effective radius
   REAL*8 :: f_eccen_a    !< Eccentricity factor a (rate between ellipse perimeter and 2*pi*sqrt(Ra*Rb))
-  REAL*8 :: f_eccen_b    !< Eccentricity factor b (sqrt(2*Ra*Ra*Rb*Rb/(Ra*Ra+Rb*Rb)))
+  REAL*8 :: f_eccen_b    !< Eccentricity factor b (sqrt(2*Ra*Ra*Rb*Rb/(Ra*Ra+Rb*Rb))/sqrt(Ra*Rb))
 
   !> geometry model\n
-  !> - 'fixed'           => constant radius
-  !> - 'linear'          => linear change in radius
-  !> - 'trans1'          => two radii and an transition zone
-  !> - 'trans2'          => a zone with high radius
-  !> - 'trans3'          => cylindrical lower portion and linearly variable upper portion
-  !> - 'external'        => radius profile read from external file
+  !> - 'fixed'           => constant equivalent radius, constant eccentricity
+  !> - 'linear'          => linear change in equivalent radius, constant eccentricity
+  !> - 'trans1'          => two equivalent radii and a transition zone, constant eccentricity
+  !> - 'trans2'          => a zone with high equivalent radius, constant eccentricity 
+  !> - 'trans3'          => constant equivalent radius in lower portion and linearly variable upper portion, constant eccentricity
+  !> - 'external'        => equivalent radius profile read from external file, constant eccentricity
+  !> - 'linear_eccen'	 => constant equivalent radius, linear change in eccentricity
+  !> - 'trans1_eccen'    => constant equivalent radius, two eccentricities and a transitional zone
+  !> - 'trans4_eccen'    => constant minimum semi-axis, two eccentricities and a transitional zone
   !> .
   CHARACTER*30 :: radius_model
-  
-  !> eccentricity model\n
-  !> - 'fixed'           => constant eccentricity (using the equivalent radius)
-  !> - 'linear'          => linear change in eccentricity
-  !> - 'trans1'          => two eccentricities and an transition zone
-  !> - 'external'        => eccentricity profile read from external file
-  !> .
-  CHARACTER*30 :: eccen_model  
 
-  REAL*8 :: radius_fixed !< Fixed value of the radius
-  REAL*8 :: radius_min   !< Fixed value of the minimum radius (used in non cylindrical conduits)
-  REAL*8 :: radius_max   !< Fixed value of the maximum radius (used in non cylindrical conduits)
-  REAL*8 :: radius_z     !< Characteristic depth for radius models trans1, trans2 and trans3
-  REAL*8 :: radius_z_sig !< Characteristic sigma for radius model trans1 and trans2
+  REAL*8 :: radius_fixed !< Fixed value of equivalent radius (used in fixed, linear_eccen and trans1_eccen)
+  REAL*8 :: radius_min   !< Fixed value of the minimum equivalent radius
+  REAL*8 :: radius_max   !< Fixed value of the maximum equivalent radius
+  REAL*8 :: radius_z     !< Characteristic depth for models trans1, trans2 and trans3
+  REAL*8 :: radius_z_sig !< Characteristic sigma for models trans1 and trans2
   REAL*8 :: eccen_fixed  !< Fixed eccentricity of the conduit
-  REAL*8 :: eccen_base   !< Value of the base eccentricity
-  REAL*8 :: eccen_top    !< Value of the top eccentricity
-  REAL*8 :: eccen_z      !< Characteristic depth for eccentricity model trans1
-  REAL*8 :: eccen_z_sig  !< Characteristic sigma for eccentricity model trans1
+  REAL*8 :: eccen_base   !< Value of the base eccentricity for models trans1_eccen and trans4_eccen
+  REAL*8 :: eccen_top    !< Value of the top eccentricity for models trans1_eccen and trans4_eccen
+  REAL*8 :: eccen_z_base !< Characteristic depth for models trans1_eccen and trans4_eccen
+  REAL*8 :: eccen_z_top  !< Characteristic depth for models trans1_eccen and trans4_eccen
+  REAL*8 :: eccen_axis_b !< Characteristic depth for model trans4_eccen
   INTEGER :: comp_cells  !< Number of control volumes in the computational domain
   INTEGER :: comp_interfaces !< Number of interfaces (comp_cells+1)
 
@@ -105,9 +101,13 @@ CONTAINS
 
        radius_stag(1:comp_interfaces) = radius_fixed
 
+       eccen_stag(1:comp_interfaces) = eccen_fixed
+
     CASE ('fixed' )
 
        radius_stag(1:comp_interfaces) = radius_fixed
+       
+       eccen_stag(1:comp_interfaces) = eccen_fixed
 
     CASE ( 'linear' )
 
@@ -116,7 +116,9 @@ CONTAINS
           radius_stag(j) = radius_min + (radius_max - radius_min) * z_stag(j) / (zN - z0)
           
        END DO
-       
+
+       eccen_stag(1:comp_interfaces) = eccen_fixed
+
     CASE ( 'trans1' )
 
        DO j=1,comp_interfaces
@@ -137,6 +139,8 @@ CONTAINS
           END IF
           
        END DO
+ 
+       eccen_stag(1:comp_interfaces) = eccen_fixed
  
     CASE ( 'trans2' )
       
@@ -164,6 +168,8 @@ CONTAINS
           
        END DO
 
+       eccen_stag(1:comp_interfaces) = eccen_fixed
+
     CASE ( 'trans3' )
 
        DO j=1,comp_interfaces
@@ -180,6 +186,8 @@ CONTAINS
           END IF
           
        END DO
+       
+       eccen_stag(1:comp_interfaces) = eccen_fixed       
 
     CASE ( 'external' )
        
@@ -192,60 +200,65 @@ CONTAINS
        END DO
        
        CLOSE(10)
-       
-    END SELECT
-
-    SELECT CASE ( eccen_model )
- 
-    CASE DEFAULT
-
-       eccen_stag(1:comp_interfaces) = eccen_fixed
-       
-    CASE ('fixed' )
 
        eccen_stag(1:comp_interfaces) = eccen_fixed
 
-    CASE ( 'linear' )
+    CASE ( 'linear_eccen' )
+
+       radius_stag(1:comp_interfaces) = radius_fixed
 
        DO j=1,comp_interfaces
           
           eccen_stag(j) = eccen_base + (eccen_top - eccen_base) * z_stag(j) / (zN - z0)
           
        END DO
-       
-    CASE ( 'trans1' )
+
+    CASE ( 'trans1_eccen' )
+
+       radius_stag(1:comp_interfaces) = radius_fixed
 
        DO j=1,comp_interfaces
           
-          IF( z_stag(j) > (eccen_z + eccen_z_sig) ) THEN
+          IF( z_stag(j) > (eccen_z_top) ) THEN
              
              eccen_stag(j) = eccen_top
              
-          ELSEIF( z_stag(j) < (eccen_z - eccen_z_sig) ) THEN
+          ELSEIF( z_stag(j) < (eccen_z_base) ) THEN
+             
+             eccen_stag(j) = eccen_base
+             
+          ELSE
+
+             eccen_stag(j) = eccen_base + (eccen_top - eccen_base) * 		&
+                  ( z_stag(j) - eccen_z_base ) / (eccen_z_top - eccen_z_base)
+             
+          END IF
+          
+       END DO
+
+    CASE ( 'trans4_eccen' )
+
+       DO j=1,comp_interfaces
+          
+          IF( z_stag(j) > (eccen_z_top) ) THEN
+             
+             eccen_stag(j) = eccen_top
+             
+          ELSEIF( z_stag(j) < (eccen_z_base) ) THEN
              
              eccen_stag(j) = eccen_base
              
           ELSE
 
              eccen_stag(j) = eccen_base + (eccen_top - eccen_base) * &
-                  ( z_stag(j) - eccen_z + eccen_z_sig) / (2.D0 * eccen_z_sig)
+                  ( z_stag(j) - eccen_z_base ) / (eccen_z_top - eccen_z_base)
              
           END IF
+
+       	  radius_stag(j) = eccen_axis_b / ( ( 1 - eccen_stag(j)**2.D0 ) ** 0.25D0)
           
        END DO
 
-    CASE ( 'external' )
-       
-       OPEN( UNIT=10, FILE='DataEccentricity.txt' )
-       
-       DO j=1,comp_interfaces
-          
-          READ(10,*) eccen_stag(j)
-          
-       END DO
-       
-       CLOSE(10)
-       
     END SELECT
 
   END SUBROUTINE init_grid
