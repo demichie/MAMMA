@@ -16,9 +16,9 @@ MODULE inpout
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
-                       radius_z, radius_z_sig, radius_model , eccen_model,	&
-		       eccen_fixed, eccen_base, eccen_top, eccen_z,		&
-		       eccen_z_sig, comp_cells, update_radius
+                       radius_z, radius_z_sig, radius_model , eccen_fixed,	&
+		       eccen_base, eccen_top, eccen_z_base, eccen_z_top,	&
+		       eccen_axis_b, comp_cells, update_radius
 
   ! -- Variables for the namelist STEADY_BOUNDARY_CONDITIONS
   USE init, ONLY : T_in , p1_in , delta_p_in , p_out , u1_in
@@ -114,8 +114,8 @@ MODULE inpout
   NAMELIST / run_parameters / run_name , verbose_level
 
   NAMELIST / geometry_parameters / z0 , zN , radius_model , radius_fixed ,      &
-       radius_min, radius_max, radius_z, radius_z_sig, eccen_model,		&
-       eccen_fixed, eccen_base, eccen_top, eccen_z, eccen_z_sig, comp_cells		
+       radius_min, radius_max, radius_z, radius_z_sig, eccen_fixed,		&
+       eccen_base, eccen_top, eccen_z_base, eccen_z_top, eccen_axis_b, comp_cells		
 
   NAMELIST / phases_parameters / n_gas , n_cry , n_mom
 
@@ -244,12 +244,12 @@ CONTAINS
     radius_z = 0.D0
     radius_z_sig = 0.D0
     radius_model = 'fixed'
-    eccen_model = 'fixed'
     eccen_fixed = 0.D0
     eccen_base = 0.D0
     eccen_top = 0.D0
-    eccen_z = 0.D0
-    eccen_z_sig = 0.D0    
+    eccen_z_base = 0.D0
+    eccen_z_top = 0.D0
+    eccen_axis_b = 0.D0
     comp_cells = 500
 
     ! Inizialization of the Variables for the namelist 
