@@ -687,7 +687,7 @@ CONTAINS
 
   SUBROUTINE eval_forces_terms( force_term )
 
-    USE geometry, ONLY : radius, f_eccen_a
+    USE geometry, ONLY : radius, f_eccen_b
     USE complexify 
     IMPLICIT none
 
@@ -717,13 +717,13 @@ CONTAINS
 
     CALL mixture_viscosity
 
-    visc_force_1 = - 8.D0 * visc_mix * u_1 * f_eccen_a
+    visc_force_1 = - 8.D0 * visc_mix * u_1 / f_eccen_b / f_eccen_b
 
     ! Turbulent gas-wall friction (Degruyter et al. 2012)
 
     gas_wall_drag = 0.03D0
 
-    visc_force_2 = - gas_wall_drag / 4.D0 * radius * f_eccen_a * rho_2 * CDABS(u_2) * u_2 
+    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * CDABS(u_2) * u_2 / f_eccen_b / f_eccen_b
 
     visc_force_1 = visc_force_1 * ( 1.D0 - frag_eff )
     visc_force_2 = visc_force_2 * frag_eff
