@@ -306,9 +306,10 @@ MODULE constitutive
   REAL*8 :: grav
 
   !> country rock permeability
+  REAL*8 :: log10_k_cr
   REAL*8 :: k_cr
 
-  !> contry rock density
+  !> country rock density
   REAL*8 :: rho_cr
 
   !> gas viscosity
