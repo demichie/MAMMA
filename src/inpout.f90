@@ -63,7 +63,7 @@ MODULE inpout
   USE constitutive, ONLY : grav
 
   ! -- Variables for the namelist COUNTRY_ROCK_PARAMETERS
-  USE constitutive, ONLY : rho_cr, k_cr
+  USE constitutive, ONLY : rho_cr, k_cr, log10_k_cr
 
   ! -- Variables for the namelist RELAXATION_PARAMETERS
   USE constitutive, ONLY : drag_funct_model , drag_funct_coeff , p_relax_model ,&
@@ -100,10 +100,7 @@ MODULE inpout
   INTEGER, PARAMETER :: dakota_unit2 = 17          !< Dakota Output unit
   INTEGER, PARAMETER :: exit_unit = 16            !< Exit Output unit
 
-
   LOGICAL :: close_units
-
-  REAL*8 :: log10_k_cr
 
   ! -- Variables for the namelist RELAXATION_PARAMETERS
   REAL*8 :: log10_drag_funct_coeff , log10_tau_p_coeff
@@ -125,6 +122,7 @@ MODULE inpout
   NAMELIST / exsolved_gas_parameters / gas_law, Pc_g , Tc_g , cv_g , gamma_g ,  &
        rho0_g , T0_g , bar_e_g , s0_g, visc_2 , lateral_degassing_flag ,        &
        alfa2_lat_thr , perm0
+       
   NAMELIST / dissolved_gas_parameters / rho0_d , C0_d , cv_d , gamma_d , p0_d , &
        T0_d , bar_e_d , bar_p_d , s0_d , exsol_model , solub , solub_exp
 
@@ -225,11 +223,9 @@ CONTAINS
          C0_c_init , cv_c_init , gamma_c_init , p0_c_init , T0_c_init ,       &
          bar_e_c_init , bar_p_c_init , s0_c_init , beta0_init , beta_max_init
 
-
     NAMELIST / relaxation_parameters_init / drag_funct_model ,                &
          log10_drag_funct_coeff , p_relax_model , log10_tau_p_coeff ,         &
          log10_tau_c_init , log10_tau_d_init
-
 
     ! Inizialization of the Variables for the namelist RUN_PARAMETERS
     run_name = 'test'
@@ -346,11 +342,10 @@ CONTAINS
     ! Inizialization of the Variables for the namelist source_parameters
     grav = 9.81D0
 
-
     ! Inizialization of the Variables for the namelist country_rock_parameters
-    rho_cr = 2600
-    log10_k_cr = 12
-
+    rho_cr = 2600.D0
+    log10_k_cr = -12.D0
+    k_cr = 10.D0 ** log10_k_cr
 
     ! Initialization of the variables for the namelist relaxation_parameters
     drag_funct_model = 'forchheimer'
@@ -433,7 +428,6 @@ CONTAINS
        alfa2_lat_thr = 1.1D0
        perm0 = 5.0D-3
 
-
        !-- Inizialization of the Variables for the namelist 
        !-- DISSOLVED_GAS_PARAMETERS
        rho0_d = 1000.D0
@@ -500,10 +494,13 @@ CONTAINS
        inst_vaporization = .FALSE.
        aquifer_type = "unconfined"
 
-
        !-- Inizialization of the Variables for the namelist source_parameters
        grav = 9.81D0
 
+       !-- Inizialization of the Variables for the namelist country_rock_parameters
+       rho_cr =  2600.000000000000                                                                  
+       log10_k_cr = -12.000000000000  
+       
        !-- Initialization of the variables for the namelist relaxation_parameters
 
        ! ------- READ relaxation_parameters NAMELIST -------------------------------
@@ -556,6 +553,8 @@ CONTAINS
 
        WRITE(input_unit, source_parameters )
 
+       WRITE(input_unit, country_rock_parameters )
+
        WRITE(input_unit, relaxation_parameters )
 
        WRITE(input_unit, forchheimer_parameters )
@@ -567,10 +566,7 @@ CONTAINS
        WRITE(*,*) 'with condition to reproduce the solution for'
        WRITE(*,*) 'MSH1980 (see Degruyter et al. 2012)'
        STOP
-
-    ELSE
-
-
+       
     END IF
 
   END SUBROUTINE init_param
@@ -613,7 +609,6 @@ CONTAINS
     INTEGER :: ios
 
     OPEN(input_unit,FILE=input_file,STATUS='old')
-
 
     ! ------- READ run_parameters NAMELIST --------------------------------------
 
@@ -1288,13 +1283,9 @@ CONTAINS
     WRITE(backup_unit, external_water_parameters )
 
     WRITE(backup_unit, source_parameters )
-
-    IF ( lateral_degassing_flag ) THEN
        
-       WRITE(backup_unit, country_rock_parameters )
+    WRITE(backup_unit, country_rock_parameters )
        
-    END IF
-
     WRITE(backup_unit, relaxation_parameters )
 
 
