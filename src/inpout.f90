@@ -1108,25 +1108,21 @@ CONTAINS
 
     
     ! ------- READ country_rock_parameters NAMELIST -----------------------------
-    IF ( lateral_degassing_flag ) THEN
-       
-       READ(input_unit, country_rock_parameters , IOSTAT = ios )
+    READ(input_unit, country_rock_parameters , IOSTAT = ios )
 
-       IF ( ios .NE. 0 ) THEN
+    IF ( ios .NE. 0 ) THEN
           
-          WRITE(*,*) 'IOSTAT=',ios
-          WRITE(*,*) 'ERROR: problem with namelist COUNTRY_ROCK_PARAMETERS'
-          WRITE(*,*) 'Please check the input file'
-          STOP
+       WRITE(*,*) 'IOSTAT=',ios
+       WRITE(*,*) 'ERROR: problem with namelist COUNTRY_ROCK_PARAMETERS'
+       WRITE(*,*) 'Please check the input file'
+       STOP
           
-       ELSE
+    ELSE
           
-          REWIND(input_unit)
+       REWIND(input_unit)
           
-       END IF
-              
     END IF
-
+              
     k_cr = 10 ** log10_k_cr
 
     ! ------- READ relaxation_parameters NAMELIST -------------------------------
