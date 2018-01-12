@@ -29,7 +29,7 @@ MODULE steady_solver
   USE equations, ONLY : lateral_degassing
   USE equations, ONLY : alfa2_lat_thr
 
-  USE constitutive, ONLY : explosive
+  USE constitutive, ONLY : explosive_flag
 
   USE init, ONLY : p_out
 
@@ -113,7 +113,7 @@ CONTAINS
 
     IF ( shooting ) THEN
 
-       IF ( explosive ) THEN
+       IF ( explosive_flag ) THEN
 
           V_temp = u1_in
 
@@ -1013,7 +1013,7 @@ CONTAINS
 
           ! ---- Check if the fragmentation threshold is reached ---------------
 
-          IF ( EXPLOSIVE ) THEN
+          IF ( EXPLOSIVE_FLAG ) THEN
 
              alfa_2_half2 = SUM(qp_half2(idx_alfa_first:idx_alfa_last)) 
              alfa_2_full = SUM(qp_full(idx_alfa_first:idx_alfa_last)) 
@@ -1191,7 +1191,7 @@ CONTAINS
 
        ! ---- Check if the fragmentation threshold is reached -------------------
 
-       IF ( EXPLOSIVE ) THEN
+       IF ( EXPLOSIVE_FLAG ) THEN
 
           alfa_2_qp = SUM(qp(idx_alfa_first:idx_alfa_last))
 

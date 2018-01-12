@@ -51,10 +51,15 @@ MODULE equations
   REAL*8 :: alfa2_lat_thr
 
   !> Flag to activate the injection of external water:\n
-  !> - ext_water = .TRUE.   => interaction with external water
-  !> - ext_water = .FALSE.  => no interaction
-  LOGICAL :: ext_water
+  !> - ext_water_flag = .TRUE.   => interaction with external water
+  !> - ext_water_flag = .FALSE.  => no interaction
+  LOGICAL :: ext_water_flag
 
+  !> Flag to use the method of moments (MoM):\n
+  !> - method_of_moments_flag = .TRUE.   => MoM on
+  !> - method_of_moments_flag = .FALSE.  => MoM off
+  LOGICAL :: method_of_moments_flag
+  
   !> Flag for instantaneous vaporization:\n
   !> - inst_vaporization = .TRUE.   => instantaneous vaporization
   !> - inst_vaporization = .FALSE.  => injection as liquid
@@ -152,12 +157,8 @@ CONTAINS
     alfa_1 = 1.D0 - alfa_2
 
     ! crystal variables
-    IF ( n_mom .LE. 1 ) THEN
+    IF ( method_of_moments_flag ) THEN
        
-       beta(1:n_cry) = qp(idx_beta_first:idx_beta_last)
-
-    ELSE
-
        DO i = 1,n_cry
           
           DO j = 0,n_mom-1
@@ -166,9 +167,13 @@ CONTAINS
 
           END DO
 
-          beta(i) = pi / 6.D0 * mom_cry(i,3)
+          ! beta(i) = cry_shape_factor * mom_cry(i,3) * 
           
        END DO
+
+    ELSE
+
+       beta(1:n_cry) = qp(idx_beta_first:idx_beta_last)
 
     END IF
        
@@ -428,20 +433,8 @@ CONTAINS
 
     !----- Crystal Phases -------------------------------------------------------
 
-    IF ( n_mom .LE. 1 ) THEN
+    IF ( method_of_moments_flag ) THEN
        
-       flux(idx_cry_eqn_first:idx_cry_eqn_last) = alfa_1 * rho_c(1:n_cry) *     &
-            beta(1:n_cry) * u_1 * radius**2
-
-       IF ( verbose_level .GE. 3 ) THEN
-       
-          WRITE(*,*) 'Crystal volume fraction'
-          WRITE(*,*) flux(idx_cry_eqn_first:idx_cry_eqn_last)
-          
-       END IF
-
-    ELSE
-
        DO i=1,n_cry
 
           DO j=0,n_mom-1
@@ -452,6 +445,18 @@ CONTAINS
           END DO
 
        END DO
+
+    ELSE
+
+       flux(idx_cry_eqn_first:idx_cry_eqn_last) = alfa_1 * rho_c(1:n_cry) *     &
+            beta(1:n_cry) * u_1 * radius**2
+
+       IF ( verbose_level .GE. 3 ) THEN
+       
+          WRITE(*,*) 'Crystal volume fraction'
+          WRITE(*,*) flux(idx_cry_eqn_first:idx_cry_eqn_last)
+          
+       END IF
        
     END IF
        
@@ -542,10 +547,10 @@ CONTAINS
        WRITE(*,*) relaxation_term / ( radius**2 )
     
        WRITE(*,*) 'forces_term'
-       WRITE(*,*) forces_term / ( radius **2 )
+       WRITE(*,*) forces_term / ( radius**2 )
     
        WRITE(*,*) 'source_term'
-       WRITE(*,*) source_term / ( radius **2 )
+       WRITE(*,*) source_term / ( radius**2 )
     
     END IF
 
@@ -647,18 +652,10 @@ CONTAINS
 
     ! relaxation term for crystallization ---------------------------------------
 
-    IF ( n_mom .LE. 1 ) THEN
+    IF ( method_of_moments_flag ) THEN
 
-       CALL f_beta_eq
-
-       relaxation_term(idx_cry_eqn_first:idx_cry_eqn_last) =                    &
-            - ( 1.d0 - alfa_2 ) * rho_c(1:n_cry)                                &
-            * ( beta(1:n_cry) - beta_eq(1:n_cry) ) / tau_c(1:n_cry) * radius ** 2
-
-    ELSE
-
-       CALL f_growth_rate
-       CALL f_nucleation_rate
+       ! CALL f_growth_rate
+       ! CALL f_nucleation_rate
        
        DO i = 1,n_cry
 
@@ -670,6 +667,14 @@ CONTAINS
           END DO
 
        END DO
+
+    ELSE
+
+       CALL f_beta_eq
+
+       relaxation_term(idx_cry_eqn_first:idx_cry_eqn_last) =                    &
+            - ( 1.d0 - alfa_2 ) * rho_c(1:n_cry)                                &
+            * ( beta(1:n_cry) - beta_eq(1:n_cry) ) / tau_c(1:n_cry) * radius ** 2
 
     END IF
        
@@ -857,7 +862,7 @@ CONTAINS
 
     END IF
 
-    IF ( ext_water ) THEN
+    IF ( ext_water_flag ) THEN
 
        rho_w = 971.80  ! 80C. For shallow aquifers, the effect of P is expected
                        ! to be less important
@@ -955,7 +960,7 @@ CONTAINS
 
        END IF
 
-       IF ( ext_water ) THEN
+       IF ( ext_water_flag ) THEN
 
           IF ( ( zeta_lith .GT. min_z_influx ) .AND.                            &
                ( zeta_lith .LT. min_z_influx + delta_z_influx ) ) THEN
@@ -985,7 +990,7 @@ CONTAINS
     ! --- DISSOLVED GAS BULK DENSITY --------------------------------------------
 
     ! H2O source due to inlet
-    IF ( ext_water .AND. .NOT.inst_vaporization ) THEN
+    IF ( ext_water_flag .AND. .NOT.inst_vaporization ) THEN
 
        source_term(idx_dis_gas_eqn_first) = 2.D0 * radius * f_eccen_a           &
             * water_mass_flux

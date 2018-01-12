@@ -144,8 +144,16 @@ MODULE constitutive
 
   COMPLEX*16, ALLOCATABLE :: mom_cry(:,:)  !< moments of the crystal referred to the melt-crystals phase
 
-  COMPLEX*16, ALLOCATABLE :: growth_rate(:)     !< growth rate for the crystals 
-  COMPLEX*16, ALLOCATABLE :: nucleation_rate(:) !< nulceation rate for the crystals 
+  REAL*8, ALLOCATABLE :: growth_mom(:,:)   !< moments of growth rate of crystals
+
+  REAL*8 :: cry_shape_factor
+  
+  REAL*8, ALLOCATABLE :: T_m(:) !< liquidus temperature of crystals
+
+  REAL*8, ALLOCATABLE :: T_u(:) !< temp of max growth rate of crystals
+  
+  REAL*8, ALLOCATABLE :: U_m(:) !< max growth rate of crystals
+
   
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -160,6 +168,7 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: x_d_md(:)     !< dissolved gas mass fraction in the melt+dis.gas phase
   COMPLEX*16, ALLOCATABLE :: x_d_md_eq(:)  !< equil. dis. gas mass fraction in the melt+dis.gas phase
 
+  COMPLEX*16, ALLOCATABLE :: x_c_mc(:)  !< cry. mass fraction in the melt+cry phase
 
   COMPLEX*16, ALLOCATABLE :: x_c_1(:)      !< cristal mass fractions in phase 1
   COMPLEX*16 :: x_m_1             !< melt mass fraction in phase 1
@@ -378,9 +387,9 @@ MODULE constitutive
   CHARACTER*20 :: bubbles_model
 
   !> Flag to choose the eruptive style:\n
-  !> - explosive = .TRUE.   => explosive eruption
-  !> - explosive = .FALSE.  => effusive eruption
-  LOGICAL :: explosive
+  !> - explosive_flag = .TRUE.   => explosive eruption
+  !> - explosive_flag = .FALSE.  => effusive eruption
+  LOGICAL :: explosive_flag
 
   !> Magma permeability
   COMPLEX*16 :: permkc 
@@ -495,20 +504,12 @@ CONTAINS
     ALLOCATE( rhoB_c(n_cry) )
     ALLOCATE( beta(n_cry) )
     ALLOCATE( beta_eq(n_cry) )
+    ALLOCATE( x_c_mc(n_cry) )
     ALLOCATE( x_c(n_cry) )
     ALLOCATE( x_c_1(n_cry) )
     ALLOCATE( tau_c(n_cry) )
     ALLOCATE( beta0(n_cry) )
     ALLOCATE( beta_max(n_cry) )
-
-    IF ( n_mom .GT. 1 ) THEN
-
-       ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
-       ALLOCATE( growth_rate(n_cry) )
-       ALLOCATE( nucleation_rate(n_cry) )
-
-    END IF
-
     ALLOCATE( cv_d(n_gas) )
     ALLOCATE( C0_d(n_gas) )
     ALLOCATE( gamma_d(n_gas) )
@@ -713,6 +714,34 @@ CONTAINS
 
   END SUBROUTINE sound_speeds
 
+  !******************************************************************************
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !> \brief Phases densities with MoM
+  !
+  !> This subroutine evaluates some densities needed of when the MoM is used.
+  !> \f$ \rho_i = \frac{p_i + \bar{p}_i}{c_{v,i}(\gamma_i-1)T} \f$
+  !> \date 15/08/2011
+  !******************************************************************************
+
+  SUBROUTINE eval_densities_mom
+
+    IMPLICIT none
+
+    rho_c(1:n_cry) = ( p_1 + bar_p_c(1:n_cry) ) / ( T * cv_c(1:n_cry) *         &
+         ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) )
+    
+    rho_m = ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - DCMPLX(1.D0,0.D0) ) )
+    rho_d(1:n_gas) = ( p_1 + bar_p_d(1:n_gas) ) / ( T * cv_d(1:n_gas) *         &
+         ( gamma_d(1:n_gas) - DCMPLX(1.D0,0.D0) ) )
+
+    rho_md = DCMPLX(1.D0,0.D0) / ( SUM( x_d_md(1:n_gas) / rho_d(1:n_gas) )      &
+         + ( DCMPLX(1.D0,0.D0) - SUM( x_d_md(1:n_gas) ) ) / rho_m )
+
+    x_c_mc(1:n_cry) = cry_shape_factor * mom_cry(1:n_cry,3) * rho_c(1:n_cry)
+    
+  END SUBROUTINE eval_densities_mom
+  
   !******************************************************************************
   !> @author 
   !> Mattia de' Michieli Vitturi
@@ -970,54 +999,31 @@ CONTAINS
   END SUBROUTINE f_beta_eq
 
   !******************************************************************************
+  !> \brief Heat capacity
+  !
+  !> This function evaluates the growth rate of crystals given the size. 
+  !> \param[in]   i_cry crystal component index 
+  !> \param[in]   L_in  crystal size
+  !> \date 22/10/2013
   !> @author 
   !> Mattia de' Michieli Vitturi
-  !> \brief
-  !
-  !> This subroutine compute the growth rates for the different crystal phases
-  !> \date 01/03/2017       
   !******************************************************************************
 
-  SUBROUTINE f_growth_rate
-
-    USE complexify 
+  FUNCTION growth_rate(i_cry,L_in)
+    !
     IMPLICIT NONE
 
-    integer :: i
+    REAL*8 :: growth_rate
     
-    DO i = 1,n_cry
-
-       growth_rate(i) = 0.D0
-       
-    END DO
+    INTEGER, INTENT(IN) :: i_cry
+    REAL*8, INTENT(IN) :: L_in
+  
+    growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
+         ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( - ( T_u(i_cry) - DREAL(T) )&
+         * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  
     
-  END SUBROUTINE f_growth_rate
-
-
-  !******************************************************************************
-  !> @author 
-  !> Mattia de' Michieli Vitturi
-  !> \brief Lithostatic pressure
-  !
-  !> This subroutine compute the growth rates for the different crystal phases
-  !> \date 01/03/2017       
-  !******************************************************************************
-
-  SUBROUTINE f_nucleation_rate
-
-    USE complexify 
-    IMPLICIT NONE
-
-    integer :: i
-    
-    DO i = 1,n_cry
-
-       nucleation_rate(i) = 0.D0
-       
-    END DO
-
-    
-  END SUBROUTINE f_nucleation_rate
+  END FUNCTION growth_rate
+  
     
   !******************************************************************************
   !> @author 
@@ -1088,7 +1094,7 @@ CONTAINS
 
     CASE ( 'eval' ) 
 
-       IF ( ( EXPLOSIVE ) .AND. ( frag_eff .GT. 0.D0 ) ) THEN
+       IF ( ( EXPLOSIVE_FLAG ) .AND. ( frag_eff .GT. 0.D0 ) ) THEN
 
           tau_p = ( visc_mix ** ( 1.D0 - frag_eff ) * visc_2 ** frag_eff )      &
                / ( alfa_1 * alfa_2 * rho_mix )
@@ -2249,5 +2255,71 @@ CONTAINS
 
   END SUBROUTINE f_alfa3
 
+  !******************************************************************************
+  !> \brief Additional moments computation
+  !
+  !> This subroutine compute the additional moments of crystal components using
+  !> the quadrature formulas.
+  !> \param[in]   xi     abscissas for the quadrature
+  !> \param[out]  w      weights for the quadrature
+  !> \date 22/10/2013
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !******************************************************************************
+
+  SUBROUTINE eval_additional_moments( Li , w )
+
+    ! external variables
+    USE parameters, ONLY : verbose_level
+    USE moments_module, ONLY : n_nodes
+    
+    IMPLICIT NONE
+
+    REAL*8, DIMENSION(n_cry,n_nodes), INTENT(IN) :: Li
+    REAL*8, DIMENSION(n_cry,n_nodes), INTENT(IN) :: w
+
+    REAL*8, DIMENSION(n_cry,n_nodes) :: growth_rate_array
+
+    INTEGER :: i , j
+    INTEGER :: i_cry
+
+    DO i_cry = 1,n_cry
+
+       DO j=1,n_nodes
+
+          growth_rate_array(i_cry,j) = growth_rate( i_cry , Li(i_cry,j) )
+
+       END DO
+
+       IF ( verbose_level .GE. 2 ) THEN
+
+          WRITE(*,*) 'i_cry',i_cry
+          WRITE(*,*) 'abscissas', Li(i_cry,1:n_nodes)
+          WRITE(*,*) 'weights', w(i_cry,1:n_nodes)
+          WRITE(*,*) 'growth_rate_array',growth_rate_array(i_cry,:)
+
+
+       END IF
+
+    END DO
+
+
+    DO i_cry=1,n_cry
+
+       DO i=0,n_mom-1
+
+          growth_mom(i_cry,i) = SUM( growth_rate_array(i_cry,:) * w(i_cry,:)        &
+               * Li(i_cry,:)**i ) / mom_cry(i_cry,i)
+
+       END DO
+
+    END DO
+
+    RETURN
+
+  END SUBROUTINE eval_additional_moments
+
+  
+  
 END MODULE constitutive
 

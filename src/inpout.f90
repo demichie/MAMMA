@@ -10,9 +10,19 @@
 
 MODULE inpout
 
+  ! -- Variables for the namelist RUN_PARAMETERS
+  USE constitutive, ONLY : explosive_flag
+  USE equations, ONLY : ext_water_flag , method_of_moments_flag
+  USE equations, ONLY : lateral_degassing_flag
+
+  ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
+  USE parameters, ONLY : n_mom
+  USE constitutive, ONLY : T_u, U_m
+  USE constitutive, ONLY : cry_shape_factor
+  
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
-  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars , n_mom
+  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars 
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
@@ -31,7 +41,7 @@ MODULE inpout
        bar_e_g , visc_2 , perm0, Pc_g, &
        Tc_g, a_g, b_g, s0_g, gas_law
 
-  USE equations, ONLY : lateral_degassing_flag , alfa2_lat_thr
+  USE equations, ONLY : alfa2_lat_thr
 
   ! -- Variables for the namelist DISSOLVED_GAS_PARAMETERS
   USE constitutive, ONLY : rho0_d , C0_d , cv_d , gamma_d , p0_d , T0_d ,       &
@@ -53,11 +63,11 @@ MODULE inpout
   USE equations, ONLY : isothermal , fixed_temp
 
   ! -- Variables for the namelist FRAGMENTATION_PARAMETERS
-  USE constitutive, ONLY : explosive , fragmentation_model , frag_thr
+  USE constitutive, ONLY : fragmentation_model , frag_thr
 
   ! -- Variables for the namelist EXTERNAL_WATER_PARAMETERS
-  USE equations, ONLY : ext_water , total_water_influx , min_z_influx ,      &
-       delta_z_influx , T_w , inst_vaporization , aquifer_type
+  USE equations, ONLY : total_water_influx , min_z_influx , delta_z_influx ,    &
+       T_w , inst_vaporization , aquifer_type
 
   ! -- Variables for the namelist SOURCE_PARAMETERS
   USE constitutive, ONLY : grav
@@ -108,20 +118,20 @@ MODULE inpout
   REAL*8, ALLOCATABLE :: log10_tau_c(:)
   REAL*8, ALLOCATABLE :: log10_tau_d(:)
 
-  NAMELIST / run_parameters / run_name , verbose_level
+  NAMELIST / run_parameters / run_name , verbose_level , ext_water_flag ,       &
+       lateral_degassing_flag , explosive_flag , method_of_moments_flag
 
   NAMELIST / geometry_parameters / z0 , zN , radius_model , radius_fixed ,      &
        radius_min, radius_max, radius_z, radius_z_sig, eccen_fixed,		&
        eccen_base, eccen_top, eccen_z_base, eccen_z_top, eccen_axis_b, comp_cells		
 
-  NAMELIST / phases_parameters / n_gas , n_cry , n_mom
+  NAMELIST / phases_parameters / n_gas , n_cry
 
   NAMELIST / steady_boundary_conditions / T_in , p1_in , delta_p_in ,           &
        x_ex_dis_in , p_out , u1_in , eps_conv, shooting
 
   NAMELIST / exsolved_gas_parameters / gas_law, Pc_g , Tc_g , cv_g , gamma_g ,  &
-       rho0_g , T0_g , bar_e_g , s0_g, visc_2 , lateral_degassing_flag ,        &
-       alfa2_lat_thr , perm0
+       rho0_g , T0_g , bar_e_g , s0_g, visc_2 , alfa2_lat_thr , perm0
        
   NAMELIST / dissolved_gas_parameters / rho0_d , C0_d , cv_d , gamma_d , p0_d , &
        T0_d , bar_e_d , bar_p_d , s0_d , exsol_model , solub , solub_exp
@@ -137,10 +147,9 @@ MODULE inpout
 
   NAMELIST / temperature_parameters / isothermal , fixed_temp
 
-  NAMELIST / fragmentation_parameters / explosive , fragmentation_model ,       &
-       frag_thr
+  NAMELIST / fragmentation_parameters / fragmentation_model , frag_thr
 
-  NAMELIST / external_water_parameters / ext_water , total_water_influx ,       &
+  NAMELIST / external_water_parameters / total_water_influx ,                   &
        min_z_influx , delta_z_influx , T_w , inst_vaporization , aquifer_type
 
   NAMELIST / source_parameters /  grav
@@ -158,7 +167,7 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
 
-
+  NAMELIST / method_of_moments_parameters / n_mom , T_u , U_m , cry_shape_factor
 CONTAINS
 
   !******************************************************************************
@@ -229,6 +238,10 @@ CONTAINS
 
     ! Inizialization of the Variables for the namelist RUN_PARAMETERS
     run_name = 'test'
+    ext_water_flag = .FALSE.
+    lateral_degassing_flag = .FALSE.
+    explosive_flag = .TRUE.
+    method_of_moments_flag = .FALSE.
     verbose_level = 4 
 
     ! Inizialization of the Variables for the namelist geometry_parameters
@@ -259,6 +272,7 @@ CONTAINS
     shooting = .TRUE.
     eps_conv = 1.D5
 
+    
     ! exsolved gas parameters
     gas_law_init = 'VDW'
     Pc_g_init = 22064000.D0
@@ -269,17 +283,11 @@ CONTAINS
     T0_g_init = 373.0
     s0_g_init = 2373.0
     visc_2 = 1.5D2
-    lateral_degassing_flag = .FALSE.
     alfa2_lat_thr = 1.1D0
     perm0 = 5.0D3
 
     n_gas_init = 1
     n_cry_init = 1
-
-    n_mom = 1
-    
-    n_vars = 5 + 2 * n_gas_init + n_cry_init * n_mom
-    n_eqns = n_vars
 
     ! dissolved gas parameters
     rho0_d_init = 1000.D0
@@ -323,7 +331,6 @@ CONTAINS
 
     ! Inizialization of the Variables for the namelist 
     ! fragmentation_parameters
-    explosive = .TRUE.
     fragmentation_model = 1
     frag_thr = 0.60D+0
     !tau_frag_coeff = 1.D0
@@ -331,7 +338,6 @@ CONTAINS
 
     ! Inizialization of the Variables for the namelist 
     ! external_water_parameters 
-    ext_water = .FALSE. 
     total_water_influx = 0.D0
     min_z_influx = 0.D0
     delta_z_influx = 0.D0
@@ -383,6 +389,10 @@ CONTAINS
        
        !-- Inizialization of the Variables for the namelist RUN_PARAMETERS
        RUN_NAME = "MSH_Degruyter_2012"
+       ext_water_flag = .FALSE.
+       lateral_degassing_flag = .FALSE.
+       explosive_flag = .TRUE. 
+       method_of_moments_flag = .FALSE.
        VERBOSE_LEVEL = 0
 
        !-- Inizialization of the Variables for the namelist GEOMETRY_PARAMETERS
@@ -395,10 +405,6 @@ CONTAINS
        !-- Initialization of the variables for the namelist PHASES_PARAMETERS
        N_GAS = 1
        N_CRY = 1
-       N_MOM = 1
-
-       n_vars = 5 + 2 * n_gas + n_cry * n_mom
-       n_eqns = n_vars
 
        CALL allocate_phases_parameters
 
@@ -424,7 +430,6 @@ CONTAINS
        T0_g = 373.D0
        s0_g = 0.D0
        visc_2 = 1.5D-2
-       lateral_degassing_flag = .FALSE.
        alfa2_lat_thr = 1.1D0
        perm0 = 5.0D-3
 
@@ -480,19 +485,8 @@ CONTAINS
 
        !-- Inizialization of the Variables for the namelist 
        !-- fragmentation_parameters
-       explosive = .TRUE.
        fragmentation_model = 1
        frag_thr = 0.80D+0
-
-       !-- Inizialization of the Variables for the namelist 
-       !-- external_water_parameters 
-       ext_water = .FALSE. 
-       total_water_influx = 0.D0
-       min_z_influx = 0.D0
-       delta_z_influx = 0.D0
-       T_w = 0.D0
-       inst_vaporization = .FALSE.
-       aquifer_type = "unconfined"
 
        !-- Inizialization of the Variables for the namelist source_parameters
        grav = 9.81D0
@@ -547,14 +541,20 @@ CONTAINS
 
        WRITE(input_unit, temperature_parameters )
 
-       WRITE(input_unit, fragmentation_parameters )
+       IF ( explosive_flag ) THEN
+       
+          WRITE(input_unit, fragmentation_parameters )
 
-       WRITE(input_unit, external_water_parameters )
-
+       END IF
+          
        WRITE(input_unit, source_parameters )
 
-       WRITE(input_unit, country_rock_parameters )
+       IF ( ext_water_flag .OR. lateral_degassing_flag ) THEN
+       
+          WRITE(input_unit, country_rock_parameters )
 
+       END IF
+          
        WRITE(input_unit, relaxation_parameters )
 
        WRITE(input_unit, forchheimer_parameters )
@@ -596,6 +596,8 @@ CONTAINS
     USE constitutive, ONLY : T0_c , bar_p_c !, bar_e_c
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
 
+    USE constitutive, ONLY : T_m , mom_cry, growth_mom 
+    
     USE init, ONLY : beta_in , xd_md_in
     
     IMPLICIT none
@@ -656,7 +658,6 @@ CONTAINS
        IF ( radius_z_sig .NE. 0.D0 ) WRITE(*,*) 'WARNING: radius_z_sig not used'
 
     END IF
-              
 
     ! ------- READ phases_parameters NAMELIST -----------------------------------
     READ(input_unit, phases_parameters , IOSTAT = ios )
@@ -674,24 +675,54 @@ CONTAINS
        
     END IF
 
-    
-    IF ( n_mom .LE. 1 ) THEN
-
-       WRITE(*,*) 'Solving for crystal volume fraction only'
-
-    ELSE
-
-       WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'
-
-    END IF
-    
-    n_vars = 5 + 2 * n_gas + n_cry * n_mom
-    n_eqns = n_vars
-
     ALLOCATE( beta_in(n_cry) )
     ALLOCATE( xd_md_in(n_gas) )
 
     CALL allocate_phases_parameters
+   
+    ! ------- READ method_of_moments_parameters NAMELIST ------------------------
+    IF ( method_of_moments_flag ) THEN
+
+       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry) )
+       
+       READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
+       
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist METHOD_OF_MOMENTS_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+
+          ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
+          ALLOCATE( growth_mom(1:n_cry,0:n_mom-1) )
+          WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'          
+          REWIND(input_unit)
+          
+       END IF
+
+
+    ELSE
+
+       WRITE(*,*) 'Solving for crystal volume fraction only'
+       
+    END IF
+    
+
+    IF ( method_of_moments_flag ) THEN
+    
+       n_vars = 5 + 2 * n_gas + n_cry * n_mom
+
+    ELSE
+
+       n_vars = 5 + 2 * n_gas + n_cry
+
+    END IF
+       
+    n_eqns = n_vars
+
 
     READ(input_unit,steady_boundary_conditions , IOSTAT = ios )
 
@@ -1024,72 +1055,79 @@ CONTAINS
 
     END IF
 
-    ! ------- READ fragmentation_parameters NAMELIST ----------------------------
-    READ(input_unit, fragmentation_parameters , IOSTAT = ios )
-
-    IF ( ios .NE. 0 ) THEN
-       
-       WRITE(*,*) 'IOSTAT=',ios
-       WRITE(*,*) 'ERROR: problem with namelist FRAGMENTATION_PARAMETERS'
-       WRITE(*,*) 'Please check the input file'
-       STOP
-       
-    ELSE
-       
-       REWIND(input_unit)
-       
-    END IF
-
+    IF ( explosive_flag ) THEN
     
-    IF (fragmentation_model .NE. 1 ) THEN
-
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong fragmentation model chosen.'
-       WRITE(*,*) 'Please choose between:'
-       WRITE(*,*) ''
-       WRITE(*,*) '1 (Volume_Fraction)'
-       WRITE(*,*) ''
-
-       CALL ABORT
-
-    END IF
-
-    ! ------- READ external_water_parameters NAMELIST ---------------------------
-    READ(input_unit, external_water_parameters , IOSTAT = ios )
-
-    IF ( ios .NE. 0 ) THEN
+       ! ------- READ fragmentation_parameters NAMELIST ----------------------------
+       READ(input_unit, fragmentation_parameters , IOSTAT = ios )
        
-       WRITE(*,*) 'IOSTAT=',ios
-       WRITE(*,*) 'ERROR: problem with namelist EXTERNAL_WATER_PARAMETERS'
-       WRITE(*,*) 'Please check the input file'
-       STOP
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist FRAGMENTATION_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+          
+          REWIND(input_unit)
+          
+       END IF
        
-    ELSE
        
-       REWIND(input_unit)
-       
-    END IF
-
-    
-    IF (ext_water) THEN
-
-	     IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.                & 
-            (.NOT. (aquifer_type .EQ. 'unconfined' ) ) ) THEN
-
+       IF (fragmentation_model .NE. 1 ) THEN
+          
           WRITE(*,*) ''
-          WRITE(*,*) 'Wrong aquifer type chosen.'
+          WRITE(*,*) 'Wrong fragmentation model chosen.'
           WRITE(*,*) 'Please choose between:'
           WRITE(*,*) ''
-          WRITE(*,*) 'confined'
-          WRITE(*,*) 'unconfined'
+          WRITE(*,*) '1 (Volume_Fraction)'
           WRITE(*,*) ''
-
+          
           CALL ABORT
-
+          
        END IF
-    
-    END IF
 
+    END IF
+       
+    ! ------- READ external_water_parameters NAMELIST ---------------------------
+    IF ( ext_water_flag ) THEN
+       
+       READ(input_unit, external_water_parameters , IOSTAT = ios )
+       
+       IF ( ios .NE. 0 ) THEN
+          
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist EXTERNAL_WATER_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
+          
+       ELSE
+          
+          REWIND(input_unit)
+          
+       END IF
+       
+       IF (ext_water_flag) THEN
+          
+          IF ( (.NOT. (aquifer_type .EQ. 'confined' ) ) .AND.                & 
+               (.NOT. (aquifer_type .EQ. 'unconfined' ) ) ) THEN
+             
+             WRITE(*,*) ''
+             WRITE(*,*) 'Wrong aquifer type chosen.'
+             WRITE(*,*) 'Please choose between:'
+             WRITE(*,*) ''
+             WRITE(*,*) 'confined'
+             WRITE(*,*) 'unconfined'
+             WRITE(*,*) ''
+             
+             CALL ABORT
+             
+          END IF
+          
+       END IF
+
+    END IF
+       
     ! ------- READ source_parameters NAMELIST -----------------------------------
     READ(input_unit, source_parameters , IOSTAT = ios )
 
@@ -1106,25 +1144,28 @@ CONTAINS
        
     END IF
 
-    
-    ! ------- READ country_rock_parameters NAMELIST -----------------------------
-    READ(input_unit, country_rock_parameters , IOSTAT = ios )
+    IF ( ext_water_flag .OR. lateral_degassing_flag ) THEN
 
-    IF ( ios .NE. 0 ) THEN
+       ! ------- READ country_rock_parameters NAMELIST -----------------------------
+       READ(input_unit, country_rock_parameters , IOSTAT = ios )
+       
+       IF ( ios .NE. 0 ) THEN
           
-       WRITE(*,*) 'IOSTAT=',ios
-       WRITE(*,*) 'ERROR: problem with namelist COUNTRY_ROCK_PARAMETERS'
-       WRITE(*,*) 'Please check the input file'
-       STOP
+          WRITE(*,*) 'IOSTAT=',ios
+          WRITE(*,*) 'ERROR: problem with namelist COUNTRY_ROCK_PARAMETERS'
+          WRITE(*,*) 'Please check the input file'
+          STOP
           
-    ELSE
+       ELSE
           
-       REWIND(input_unit)
+          REWIND(input_unit)
           
+       END IF
+       
+       k_cr = 10 ** log10_k_cr
+
     END IF
-              
-    k_cr = 10 ** log10_k_cr
-
+       
     ! ------- READ relaxation_parameters NAMELIST -------------------------------
     ALLOCATE( log10_tau_d(n_gas) )
     ALLOCATE( log10_tau_c(n_cry) )
@@ -1260,6 +1301,12 @@ CONTAINS
 
     WRITE(backup_unit, phases_parameters )
 
+    IF ( method_of_moments_flag ) THEN
+
+       WRITE(backup_unit, method_of_moments_parameters)
+
+    END IF
+    
     WRITE(backup_unit, steady_boundary_conditions )
 
     WRITE(backup_unit, exsolved_gas_parameters )
@@ -1274,9 +1321,17 @@ CONTAINS
 
     WRITE(backup_unit, temperature_parameters )
 
-    WRITE(backup_unit, fragmentation_parameters )
+    IF ( explosive_flag ) THEN
+    
+       WRITE(backup_unit, fragmentation_parameters )
 
-    WRITE(backup_unit, external_water_parameters )
+    END IF
+       
+    IF ( ext_water_flag ) THEN
+    
+       WRITE(backup_unit, external_water_parameters )
+
+    END IF
 
     WRITE(backup_unit, source_parameters )
        
