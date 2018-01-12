@@ -14,6 +14,7 @@ MAMMA_SOURCES = \
                 geometry.f90 \
                 parameters.f90 \
 		complexify.f90 \
+                moments.f90 \
                 constitutive.f90 \
 		equations.f90 \
                 init.f90 \

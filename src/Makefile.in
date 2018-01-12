@@ -99,7 +99,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_MAMMA_OBJECTS = geometry.$(OBJEXT) parameters.$(OBJEXT) \
-	complexify.$(OBJEXT) constitutive.$(OBJEXT) \
+	complexify.$(OBJEXT) moments.$(OBJEXT) constitutive.$(OBJEXT) \
 	equations.$(OBJEXT) init.$(OBJEXT) inpout.$(OBJEXT) \
 	steady_solver.$(OBJEXT) c_main.$(OBJEXT)
 MAMMA_OBJECTS = $(am_MAMMA_OBJECTS)
@@ -243,6 +243,7 @@ MAMMA_SOURCES = \
                 geometry.f90 \
                 parameters.f90 \
 		complexify.f90 \
+                moments.f90 \
                 constitutive.f90 \
 		equations.f90 \
                 init.f90 \
