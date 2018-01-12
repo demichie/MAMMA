@@ -17,8 +17,8 @@ MODULE inpout
 
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom
-  USE constitutive, ONLY : T_u, U_m
-  USE constitutive, ONLY : cry_shape_factor
+  USE constitutive, ONLY : T_u, U_m 
+  USE constitutive, ONLY : cry_shape_factor , L0_cry
   
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
@@ -81,7 +81,7 @@ MODULE inpout
 
   ! -- Variables for the namelist FORCHHEIMER_PARAMETERS
   USE constitutive, ONLY : bubble_number_density , tortuosity_factor ,          &
-       throat_bubble_ratio , friction_coefficient , C_D , r_a, xa, xb, xc,       &
+       throat_bubble_ratio , friction_coefficient , C_D , r_a, xa, xb, xc,      &
        log10_bubble_number_density 
 
   !  USE parameters, ONLY : atmospheric_pressure, chocked_flow
@@ -167,7 +167,9 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
 
-  NAMELIST / method_of_moments_parameters / n_mom , T_u , U_m , cry_shape_factor
+  NAMELIST / method_of_moments_parameters / n_mom , T_u , U_m , L0_cry ,        &
+       cry_shape_factor
+
 CONTAINS
 
   !******************************************************************************

@@ -154,6 +154,7 @@ MODULE constitutive
   
   REAL*8, ALLOCATABLE :: U_m(:) !< max growth rate of crystals
 
+  REAL*8, ALLOCATABLE :: L0_cry(:) !< initial size of phenocryst
   
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
