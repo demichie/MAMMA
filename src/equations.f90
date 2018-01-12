@@ -723,7 +723,8 @@ CONTAINS
 
     gas_wall_drag = 0.03D0
 
-    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * CDABS(u_2) * u_2 / f_eccen_b / f_eccen_b
+    visc_force_2 = - gas_wall_drag / 4.D0 * radius * rho_2 * CDABS(u_2) * u_2   &
+         / f_eccen_b / f_eccen_b
 
     visc_force_1 = visc_force_1 * ( 1.D0 - frag_eff )
     visc_force_2 = visc_force_2 * frag_eff
@@ -878,7 +879,8 @@ CONTAINS
                    
                    visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
                    
-                   water_mass_flux = rho_w * k_cr / visc_w * ( p_hydro - p_1 ) / radius / f_eccen_b
+                   water_mass_flux = rho_w * k_cr / visc_w * ( p_hydro - p_1 )  &
+                        / radius / f_eccen_b
                    
                 ELSE
                    
@@ -894,7 +896,8 @@ CONTAINS
                    
                    visc_w = 2.414D-5 * 10.D0 ** ( 247.8D0 / ( T_w - 140.D0 ) )
                    
-                   water_mass_flux = rho_w * k_cr / visc_w * ( p_lith - p_1 ) / radius / f_eccen_b
+                   water_mass_flux = rho_w * k_cr / visc_w * ( p_lith - p_1 )   &
+                        / radius / f_eccen_b
                    
                 ELSE
                    
@@ -943,7 +946,7 @@ CONTAINS
 
        IF ( lateral_degassing ) THEN
 
-          source_term(idx_mix_engy_eqn) = - 2.D0 * q_lat * radius * f_eccen_a *    &
+          source_term(idx_mix_engy_eqn) = - 2.D0 * q_lat * radius * f_eccen_a * &
                ( T * cv_2 + 0.5D0 * u_2*u_2 )
 
        ELSE
@@ -960,15 +963,17 @@ CONTAINS
              IF ( inst_vaporization ) THEN
 
                 heat_flux = - 2.D0 * radius * f_eccen_a * water_mass_flux * &
-                            ( cv_d(1) * ( T_boiling-T_w ) + cv_2 * ( - T_boiling ) + lambda_w )
+                     ( cv_d(1) * ( T_boiling-T_w ) + cv_2*( -T_boiling ) &
+                     + lambda_w )
 
              ELSE
 
-                heat_flux = 2.D0 * radius * f_eccen_a * water_mass_flux * cv_d(1) * T_w
+                heat_flux = 2.D0 * radius * f_eccen_a * water_mass_flux *       &
+                     cv_d(1) * T_w
 
              END IF
 
-             source_term(idx_mix_engy_eqn) = source_term(idx_mix_engy_eqn)       &
+             source_term(idx_mix_engy_eqn) = source_term(idx_mix_engy_eqn)      &
                   + heat_flux
 
           END IF
@@ -982,7 +987,8 @@ CONTAINS
     ! H2O source due to inlet
     IF ( ext_water .AND. .NOT.inst_vaporization ) THEN
 
-       source_term(idx_dis_gas_eqn_first) = 2.D0 * radius * f_eccen_a * water_mass_flux
+       source_term(idx_dis_gas_eqn_first) = 2.D0 * radius * f_eccen_a           &
+            * water_mass_flux
 
     ELSE
 
