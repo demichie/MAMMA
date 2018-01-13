@@ -507,8 +507,8 @@ CONTAINS
 
        drag_funct_model = 'forchheimer'
        log10_drag_funct_coeff = 0.0D0
-       p_relax_model = 'single'
-       log10_tau_p_coeff = 1.D0
+       p_relax_model = 'constant'
+       log10_tau_p_coeff = -8.0D0
        log10_tau_d = -8.0D0
        log10_tau_c = -8.0D0
 
@@ -520,7 +520,6 @@ CONTAINS
        friction_coefficient = 10.D0
        C_D = 0.8D0
        r_a = 1.D-3
-
 
        OPEN(input_unit,FILE=input_file,STATUS='NEW')
 
