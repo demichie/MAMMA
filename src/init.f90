@@ -10,6 +10,8 @@
 
 MODULE init
 
+  USE parameters, ONLY : method_of_moments_flag
+  
   USE parameters, ONLY : n_vars , n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
@@ -88,7 +90,8 @@ CONTAINS
 
     REAL*8 :: xtot_in
 
-    INTEGER :: i,j,idx,iter,max_iter
+    INTEGER :: i,j,k
+    INTEGER :: idx,iter,max_iter
     REAL*8 :: error_iter
 
     p2_in = p1_in + delta_p_in
@@ -224,8 +227,17 @@ CONTAINS
     idx_ex_gas_eqn_first = 5+n_gas+1
     idx_ex_gas_eqn_last = 5+2*n_gas 
     idx_cry_eqn_first = 5+2*n_gas+1
-    idx_cry_eqn_last = 5+2*n_gas+n_cry*n_mom
 
+    IF ( method_of_moments_flag ) THEN
+
+       idx_cry_eqn_last = 5+2*n_gas+2*n_cry*n_mom
+
+    ELSE
+       
+       idx_cry_eqn_last = 5+2*n_gas+n_cry
+
+    END IF
+    
     ! --------- define the vector of primitive variables ------------------------
     
     ! Frist phase pressure
@@ -266,7 +278,26 @@ CONTAINS
     ! Crystal volume fractions
     idx = idx_beta_first
 
-    IF ( n_mom .LE. 1 ) THEN
+    IF ( method_of_moments_flag ) THEN
+
+       DO i = 1,n_cry
+
+          ! k is the index for microlith and phenocryst
+          DO k = 1,2
+
+             DO j = 0,n_mom-1
+
+                ! qp(idx) = mom_cry_in(i,k,j)
+                
+                idx = idx + 1
+       
+             END DO
+
+          END DO
+
+       END DO
+
+    ELSE
 
        DO i = 1,n_cry
 
@@ -274,20 +305,6 @@ CONTAINS
           
           idx = idx + 1
           
-       END DO
-
-    ELSE
-
-       DO i = 1,n_cry
-
-          DO j = 0,n_mom-1
-             
-             ! qp(idx) = mom_cry_in(i,j)
-             
-             idx = idx + 1
-       
-          END DO
-
        END DO
 
     END IF

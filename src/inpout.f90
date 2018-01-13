@@ -12,9 +12,10 @@ MODULE inpout
 
   ! -- Variables for the namelist RUN_PARAMETERS
   USE constitutive, ONLY : explosive_flag
-  USE equations, ONLY : ext_water_flag , method_of_moments_flag
+  USE equations, ONLY : ext_water_flag
   USE equations, ONLY : lateral_degassing_flag
-
+  USE parameters, ONLY :  method_of_moments_flag
+  
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom
   USE constitutive, ONLY : T_u, U_m 
@@ -698,8 +699,8 @@ CONTAINS
           
        ELSE
 
-          ALLOCATE( mom_cry(1:n_cry,0:n_mom-1) )
-          ALLOCATE( growth_mom(1:n_cry,0:n_mom-1) )
+          ALLOCATE( mom_cry(1:n_cry,1:2,0:n_mom-1) )
+          ALLOCATE( growth_mom(1:n_cry,1:2,0:n_mom-1) )
           WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'          
           REWIND(input_unit)
           
@@ -715,7 +716,7 @@ CONTAINS
 
     IF ( method_of_moments_flag ) THEN
     
-       n_vars = 5 + 2 * n_gas + n_cry * n_mom
+       n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom
 
     ELSE
 

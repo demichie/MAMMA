@@ -12,6 +12,7 @@ MODULE equations
   
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
+  USE parameters, ONLY : method_of_moments_flag
   USE parameters, ONLY : n_eqns , n_vars
   USE parameters, ONLY : n_cry , n_gas , n_mom
 
@@ -54,11 +55,6 @@ MODULE equations
   !> - ext_water_flag = .TRUE.   => interaction with external water
   !> - ext_water_flag = .FALSE.  => no interaction
   LOGICAL :: ext_water_flag
-
-  !> Flag to use the method of moments (MoM):\n
-  !> - method_of_moments_flag = .TRUE.   => MoM on
-  !> - method_of_moments_flag = .FALSE.  => MoM off
-  LOGICAL :: method_of_moments_flag
   
   !> Flag for instantaneous vaporization:\n
   !> - inst_vaporization = .TRUE.   => instantaneous vaporization
@@ -127,7 +123,7 @@ CONTAINS
 
     COMPLEX*16 :: qp(n_eqns)
 
-    INTEGER :: i , j
+    INTEGER :: i , j , k
 
     IF ( present(c_qp) ) THEN
 
@@ -160,13 +156,16 @@ CONTAINS
     IF ( method_of_moments_flag ) THEN
        
        DO i = 1,n_cry
+
+          DO k = 1,2
           
-          DO j = 0,n_mom-1
+             DO j = 0,n_mom-1
              
-             mom_cry(i,j) = qp(idx_cry_eqn_first+n_mom*(i-1)+j) 
+                mom_cry(i,k,j) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+2*(k-1)+j) 
+
+             END DO
 
           END DO
-
           ! beta(i) = cry_shape_factor * mom_cry(i,3) * 
           
        END DO
@@ -308,7 +307,7 @@ CONTAINS
     COMPLEX*16 :: qp(n_eqns)
     COMPLEX*16 :: flux(n_eqns)
 
-    INTEGER :: i , j
+    INTEGER :: i , j , k
 
     IF ( present(c_qp) .AND. present(c_flux) ) THEN
 
@@ -436,11 +435,15 @@ CONTAINS
     IF ( method_of_moments_flag ) THEN
        
        DO i=1,n_cry
+          
+          DO k=1,2
+          
+             DO j=0,n_mom-1
+                
+                flux(idx_cry_eqn_first+n_mom*(i-1)+j) = alfa_1 * mom_cry(i,k,j) &
+                     * u_1 * radius**2
 
-          DO j=0,n_mom-1
-
-             flux(idx_cry_eqn_first+n_mom*(i-1)+j) = alfa_1 * mom_cry(i,j) *    &
-                  u_1 * radius**2
+             END DO
 
           END DO
 
@@ -591,7 +594,7 @@ CONTAINS
     COMPLEX*16 :: velocity_relaxation
     !COMPLEX*16 :: frag_relaxation
 
-    INTEGER :: i , j
+    INTEGER :: i , j , k
     INTEGER :: idx
 
     idx = 0
@@ -659,11 +662,15 @@ CONTAINS
        
        DO i = 1,n_cry
 
-          DO j = 0,n_mom-1
+          DO k = 1,2
+          
+             DO j = 0,n_mom-1
 
              !relaxation_term(idx_cry_eqn_first+n_mom*(i-1)+j) =                 &
              !     function of growth_rate(i) and nucleation_rate(i)
-                  
+
+             END DO
+                
           END DO
 
        END DO

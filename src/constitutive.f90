@@ -142,9 +142,9 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
-  COMPLEX*16, ALLOCATABLE :: mom_cry(:,:)  !< moments of the crystal referred to the melt-crystals phase
+  COMPLEX*16, ALLOCATABLE :: mom_cry(:,:,:)  !< moments of the crystal referred to the melt-crystals phase
 
-  REAL*8, ALLOCATABLE :: growth_mom(:,:)   !< moments of growth rate of crystals
+  REAL*8, ALLOCATABLE :: growth_mom(:,:,:)   !< moments of growth rate of crystals
 
   REAL*8 :: cry_shape_factor
   
@@ -739,7 +739,7 @@ CONTAINS
     rho_md = DCMPLX(1.D0,0.D0) / ( SUM( x_d_md(1:n_gas) / rho_d(1:n_gas) )      &
          + ( DCMPLX(1.D0,0.D0) - SUM( x_d_md(1:n_gas) ) ) / rho_m )
 
-    x_c_mc(1:n_cry) = cry_shape_factor * mom_cry(1:n_cry,3) * rho_c(1:n_cry)
+    ! x_c_mc(1:n_cry) = cry_shape_factor * mom_cry(1:n_cry,3) * rho_c(1:n_cry)
     
   END SUBROUTINE eval_densities_mom
   
@@ -2281,7 +2281,7 @@ CONTAINS
 
     REAL*8, DIMENSION(n_cry,n_nodes) :: growth_rate_array
 
-    INTEGER :: i , j
+    INTEGER :: i , j , k
     INTEGER :: i_cry
 
     DO i_cry = 1,n_cry
@@ -2307,11 +2307,15 @@ CONTAINS
 
     DO i_cry=1,n_cry
 
-       DO i=0,n_mom-1
+       DO k = 1,2
+       
+          DO i=0,n_mom-1
 
-          growth_mom(i_cry,i) = SUM( growth_rate_array(i_cry,:) * w(i_cry,:)        &
-               * Li(i_cry,:)**i ) / mom_cry(i_cry,i)
+             growth_mom(i_cry,k,i) = SUM( growth_rate_array(i_cry,:)*w(i_cry,:) &
+                  * Li(i_cry,:)**i ) / mom_cry(i_cry,k,i)
 
+          END DO
+             
        END DO
 
     END DO

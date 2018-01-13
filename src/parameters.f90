@@ -32,6 +32,11 @@ MODULE parameters
   INTEGER :: n_vars        !< Number of conservative variables
   INTEGER :: n_eqns        !< Number of equations
 
+  !> Flag to use the method of moments (MoM):\n
+  !> - method_of_moments_flag = .TRUE.   => MoM on
+  !> - method_of_moments_flag = .FALSE.  => MoM off
+  LOGICAL :: method_of_moments_flag
+ 
   INTEGER :: n_mom         !< Number of moments for each crystal phase
 
   INTEGER :: idx_p1        !< Index of p1 in the qp array
