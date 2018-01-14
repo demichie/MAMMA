@@ -18,7 +18,7 @@ MODULE inpout
   
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom
-  USE constitutive, ONLY : T_u, U_m 
+  USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
   USE constitutive, ONLY : cry_shape_factor , L0_cry
   
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
@@ -169,7 +169,7 @@ MODULE inpout
   NAMELIST / permeability_parameters / xa, xb, xc
 
   NAMELIST / method_of_moments_parameters / n_mom , T_u , U_m , L0_cry ,        &
-       cry_shape_factor
+       cry_shape_factor, T_i, I_m, T_m
 
 CONTAINS
 
@@ -684,8 +684,9 @@ CONTAINS
    
     ! ------- READ method_of_moments_parameters NAMELIST ------------------------
     IF ( method_of_moments_flag ) THEN
-
-       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry) )
+    
+       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry(n_cry) )
+       ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
        
