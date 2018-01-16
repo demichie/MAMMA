@@ -20,7 +20,8 @@ MODULE inpout
   USE parameters, ONLY : n_mom
   USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
   USE constitutive, ONLY : cry_shape_factor , L0_cry
-  
+  USE moments_module, ONLY: n_nodes
+
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars 
@@ -168,7 +169,7 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
 
-  NAMELIST / method_of_moments_parameters / n_mom , T_u , U_m , L0_cry ,        &
+  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , L0_cry ,        &
        cry_shape_factor, T_i, I_m, T_m
 
 CONTAINS
