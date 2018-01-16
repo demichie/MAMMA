@@ -288,8 +288,8 @@ CONTAINS
 
              DO j = 0,n_mom-1
 
-                mom_cry(i,j,k) = beta_in(i) * alfa1_in * cry_shape_factor(i)    &
-                     * L0_cry(i,k)
+                mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
+                     * L0_cry(i,k)**3 / L0_cry(i,k)**j 
                 
                 qp(idx) = mom_cry(i,k,j)
                 
