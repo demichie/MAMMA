@@ -440,8 +440,8 @@ CONTAINS
           
              DO j=0,n_mom-1
                 
-                flux(idx_cry_eqn_first+n_mom*(i-1)+j) = alfa_1 * mom_cry(i,k,j) &
-                     * u_1 * radius**2
+                flux(idx_cry_eqn_first+n_mom*(i-1)+j) = mom_cry(i,k,j) * u_1    &
+                     * radius**2
 
              END DO
 
