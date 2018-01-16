@@ -166,7 +166,8 @@ CONTAINS
              END DO
 
           END DO
-          ! beta(i) = cry_shape_factor * mom_cry(i,3) * 
+          
+          beta(i) = cry_shape_factor(i) * SUM( mom_cry( i , 1:2 , 3 ) )  / alfa_1          
           
        END DO
 
