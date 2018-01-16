@@ -64,7 +64,8 @@ CONTAINS
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
     USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
-
+    USE constitutive, ONLY : beta0
+    
     IMPLICIT none
 
     REAL*8, INTENT(IN) :: u_0
@@ -140,9 +141,17 @@ CONTAINS
        ! required by eval_densities
        x_d_md(1:n_gas) = DCMPLX( xd_md_in(1:n_gas) , 0.D0 )
        
-       CALL f_beta_eq
+       IF( method_of_moments_flag ) THEN
+       
+          beta_in(1:n_cry) = beta0(1:n_cry)
 
-       beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
+       ELSE
+
+          CALL f_beta_eq
+
+          beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
+      
+       END IF       
        
        r_u_1 = u_0
        r_u_2 = u_0 + 1.D-10
@@ -288,8 +297,17 @@ CONTAINS
 
              DO j = 0,n_mom-1
 
-                mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
-                     * L0_cry(i,k)**3 / L0_cry(i,k)**j 
+	        IF(k .EQ. 2) THEN
+
+                    mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
+                         * L0_cry(i,k)**3 / L0_cry(i,k)**j 
+                
+	        ELSE
+
+                    mom_cry(i,j,k) = 1.000E-15 * alfa1_in / cry_shape_factor(i)    &
+                         * L0_cry(i,k)**3 / L0_cry(i,k)**j 
+
+		END IF 
                 
                 qp(idx) = mom_cry(i,k,j)
                 
