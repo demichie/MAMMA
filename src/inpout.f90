@@ -19,7 +19,7 @@ MODULE inpout
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom
   USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
-  USE constitutive, ONLY : cry_shape_factor , L0_cry
+  USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry
   USE moments_module, ONLY: n_nodes
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
@@ -169,7 +169,7 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
 
-  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , L0_cry ,        &
+  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , L0_cry_in ,        &
        cry_shape_factor, T_i, I_m, T_m
 
 CONTAINS
@@ -686,7 +686,7 @@ CONTAINS
     ! ------- READ method_of_moments_parameters NAMELIST ------------------------
     IF ( method_of_moments_flag ) THEN
     
-       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry(n_cry,2) )
+       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
@@ -707,17 +707,23 @@ CONTAINS
           
        END IF
 
-
     ELSE
 
        WRITE(*,*) 'Solving for crystal volume fraction only'
        
     END IF
     
-
     IF ( method_of_moments_flag ) THEN
     
        n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom
+
+       DO i = 1, n_cry
+
+          L0_cry(i, 1) = 1.0000E-015
+
+          L0_cry(i, 2) = L0_cry_in(i)
+
+       END DO
 
     ELSE
 
@@ -842,7 +848,6 @@ CONTAINS
        REWIND(input_unit)
        
     END IF
-
     
     T0_c(1:n_cry) = C0_c(1:n_cry) **2.D0 / ( cv_c(1:n_cry) * gamma_c(1:n_cry)   &
          * ( gamma_c(1:n_cry) - 1.D0 ) )
@@ -850,8 +855,8 @@ CONTAINS
     bar_p_c(1:n_cry) = ( rho0_c(1:n_cry) * C0_c(1:n_cry) ** 2.d0 -              &
          gamma_c(1:n_cry) * p0_c(1:n_cry) ) / gamma_c(1:n_cry)
 
-
-    IF (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) ) THEN
+    IF (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) .AND. .NOT. &
+       method_of_moments_flag ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
@@ -865,7 +870,7 @@ CONTAINS
     END IF
 
     IF ( (crystallization_model .EQ. 'Vitturi2010' ) .AND.                      & 
-         (.NOT.(n_cry .EQ. 1 ))  ) THEN
+         (.NOT.(n_cry .EQ. 1 )) .AND. .NOT. method_of_moments_flag ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong number of crystal components inserted'
