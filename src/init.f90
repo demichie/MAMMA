@@ -63,6 +63,7 @@ CONTAINS
     USE constitutive, ONLY : rho_2 , rho_md, rho_g, rho_1, rho_c
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
+    USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
 
     IMPLICIT none
 
@@ -287,7 +288,10 @@ CONTAINS
 
              DO j = 0,n_mom-1
 
-                ! qp(idx) = mom_cry_in(i,k,j)
+                mom_cry(i,j,k) = beta_in(i) * alfa1_in * cry_shape_factor(i)    &
+                     * L0_cry(i,k)
+                
+                qp(idx) = mom_cry(i,k,j)
                 
                 idx = idx + 1
        

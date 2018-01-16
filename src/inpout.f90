@@ -686,7 +686,7 @@ CONTAINS
     ! ------- READ method_of_moments_parameters NAMELIST ------------------------
     IF ( method_of_moments_flag ) THEN
     
-       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry(n_cry) )
+       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
