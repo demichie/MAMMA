@@ -98,10 +98,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_MAMMA_OBJECTS = geometry.$(OBJEXT) parameters.$(OBJEXT) \
+am_MAMMA_OBJECTS = geometry.$(OBJEXT) parameters.$(OBJEXT) melts_fit.$(OBJEXT)  \
 	complexify.$(OBJEXT) moments.$(OBJEXT) constitutive.$(OBJEXT) \
 	equations.$(OBJEXT) init.$(OBJEXT) inpout.$(OBJEXT) \
-	steady_solver.$(OBJEXT) c_main.$(OBJEXT) melts_fit.$(OBJEXT) 
+	steady_solver.$(OBJEXT) c_main.$(OBJEXT)
 MAMMA_OBJECTS = $(am_MAMMA_OBJECTS)
 MAMMA_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -242,6 +242,7 @@ AUTOMAKE_OPTIONS = foreign
 MAMMA_SOURCES = \
                 geometry.f90 \
                 parameters.f90 \
+                melts_fit.f90 \
 		complexify.f90 \
                 moments.f90 \
                 constitutive.f90 \
@@ -249,8 +250,7 @@ MAMMA_SOURCES = \
                 init.f90 \
                 inpout.f90 \
                 steady_solver.f90 \
-                c_main.f90 \
-                melts_fit.f90
+                c_main.f90 
 
 FCDEBUGFLAGS = -Wall -g
 MPFC = gfortran
