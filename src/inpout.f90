@@ -17,9 +17,10 @@ MODULE inpout
   USE parameters, ONLY :  method_of_moments_flag
   
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
-  USE parameters, ONLY : n_mom
+  USE parameters, ONLY : n_mom, n_components
   USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
   USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry
+  USE constitutive, ONLY : cry_init_solid_solution
   USE moments_module, ONLY: n_nodes
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
@@ -127,7 +128,7 @@ MODULE inpout
        radius_min, radius_max, radius_z, radius_z_sig, eccen_fixed,		&
        eccen_base, eccen_top, eccen_z_base, eccen_z_top, eccen_axis_b, comp_cells		
 
-  NAMELIST / phases_parameters / n_gas , n_cry
+  NAMELIST / phases_parameters / n_gas , n_cry, n_components
 
   NAMELIST / steady_boundary_conditions / T_in , p1_in , delta_p_in ,           &
        x_ex_dis_in , p_out , u1_in , eps_conv, shooting
@@ -169,8 +170,8 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
 
-  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , L0_cry_in ,        &
-       cry_shape_factor, T_i, I_m, T_m
+  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , &
+       L0_cry_in, cry_shape_factor, cry_init_solid_solution, T_i, I_m, T_m
 
 CONTAINS
 
@@ -198,6 +199,8 @@ CONTAINS
 
     INTEGER :: n_cry_init
 
+    INTEGER :: n_components_init
+
     !  Variables for the namelist DISSOLVED_GAS_PARAMETERS
     REAL*8 :: rho0_d_init, C0_d_init , cv_d_init , gamma_d_init , p0_d_init , &
          T0_d_init , bar_e_d_init , bar_p_d_init , s0_d_init , solub_init ,   &
@@ -217,7 +220,7 @@ CONTAINS
 
     CHARACTER*20 :: gas_law_init 
 
-    NAMELIST / phases_parameters_init / n_gas_init , n_cry_init
+    NAMELIST / phases_parameters_init / n_gas_init , n_cry_init, n_components_init
 
     NAMELIST / steady_boundary_conditions_init / T_in , p1_in , delta_p_in ,  &
          x_ex_dis_in_init , p_out , u1_in , eps_conv, shooting
@@ -292,6 +295,7 @@ CONTAINS
 
     n_gas_init = 1
     n_cry_init = 1
+    n_components_init = 1
 
     ! dissolved gas parameters
     rho0_d_init = 1000.D0
@@ -600,6 +604,7 @@ CONTAINS
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
 
     USE constitutive, ONLY : T_m , mom_cry, growth_mom 
+    USE melts_fit_module, ONLY : wt_components_init, wt_components_fit
     
     USE init, ONLY : beta_in , xd_md_in
     
@@ -688,6 +693,9 @@ CONTAINS
     
        ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry) )
+       ALLOCATE( cry_init_solid_solution(n_components, n_cry) )
+       ALLOCATE( wt_components_fit(n_components) )
+       ALLOCATE( wt_components_init(n_components) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
        
