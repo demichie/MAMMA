@@ -56,6 +56,7 @@ CONTAINS
     ! external procedures
     USE constitutive, ONLY : f_beta_eq , f_xdis_eq , eval_densities
     USE constitutive, ONLY : f_alfa3, f_alfa
+    USE melts_fit_module, ONLY : read_fit
 
     ! external variables
     USE constitutive, ONLY : p_1 , p_2 , T , x_d_md, x_g, alfa_g_2
@@ -65,6 +66,9 @@ CONTAINS
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
     USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
     USE constitutive, ONLY : beta0
+    USE parameters, ONLY : n_components
+    USE constitutive, ONLY : cry_init_solid_solution
+    USE melts_fit_module, ONLY : wt_tot_0, wt_components_init, wt_components_fit
     
     IMPLICIT none
 
@@ -319,6 +323,29 @@ CONTAINS
 
        END DO
 
+       CALL read_fit
+
+       DO i = 1, n_components
+
+          wt_components_init(i) = wt_tot_0  * ( 1.0 - xtot_in ) * wt_components_fit(i)  
+
+          DO j = 1, n_cry
+
+	     wt_components_init(i) = wt_components_init(i) - cry_init_solid_solution(i,j) *   &
+                ( beta_in(j) * alfa1_in * REAL(rho_c(j)) / (alfa1_in * REAL(rho_1)  +         &
+                (1.D0 - alfa1_in) * REAL(rho_2) ) )
+
+	  END DO
+
+          IF( (wt_components_init(i)) .LT. 0.0) THEN
+
+             WRITE(*,*) 'Initial volume of crystals is not compatible with composition'
+             STOP
+
+          ENDIF
+
+       END DO
+       
     ELSE
 
        DO i = 1,n_cry
