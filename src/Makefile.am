@@ -20,7 +20,8 @@ MAMMA_SOURCES = \
                 init.f90 \
                 inpout.f90 \
                 steady_solver.f90 \
-                c_main.f90
+                c_main.f90 \
+                melts_fit.f90
 
 FCFLAGS         = -Wunused -O3 -funroll-all-loops
 FCDEBUGFLAGS    = -Wall -g
