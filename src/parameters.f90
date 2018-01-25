@@ -27,7 +27,8 @@ MODULE parameters
   LOGICAL :: interfaces_relaxation
 
   INTEGER :: n_cry         !< Numbeer of crystal phases
-  INTEGER :: n_gas         !< Numbeer of crystal phases
+  INTEGER :: n_gas         !< Number of crystal phases
+  INTEGER :: n_components  !< Number of phases in diagram (for MOM)
 
   INTEGER :: n_vars        !< Number of conservative variables
   INTEGER :: n_eqns        !< Number of equations
