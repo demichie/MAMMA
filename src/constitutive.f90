@@ -162,6 +162,8 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst  
   
+  REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
+  
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
 
