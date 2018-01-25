@@ -13,6 +13,7 @@ bindir=@bindir@
 MAMMA_SOURCES = \
                 geometry.f90 \
                 parameters.f90 \
+                melts_fit.f90 \
 		complexify.f90 \
                 moments.f90 \
                 constitutive.f90 \
@@ -20,8 +21,7 @@ MAMMA_SOURCES = \
                 init.f90 \
                 inpout.f90 \
                 steady_solver.f90 \
-                c_main.f90 \
-                melts_fit.f90
+                c_main.f90 
 
 FCFLAGS         = -Wunused -O3 -funroll-all-loops
 FCDEBUGFLAGS    = -Wall -g
