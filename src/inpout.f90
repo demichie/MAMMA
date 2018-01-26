@@ -602,9 +602,9 @@ CONTAINS
     USE constitutive, ONLY : n_visc_melt_models , available_visc_melt_models
     USE constitutive, ONLY : T0_c , bar_p_c !, bar_e_c
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
-
-    USE constitutive, ONLY : T_m , mom_cry, growth_mom 
-    USE melts_fit_module, ONLY : wt_components_init, wt_components_fit
+    
+    USE constitutive, ONLY : T_m , mom_cry, growth_mom, rhoB_components
+    USE melts_fit_module, ONLY : wt_components_init, wt_components_fit    
     
     USE init, ONLY : beta_in , xd_md_in
     
@@ -694,7 +694,7 @@ CONTAINS
        ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry) )
        ALLOCATE( cry_init_solid_solution(n_components, n_cry) )
-       ALLOCATE( wt_components_fit(n_components) )
+       ALLOCATE( wt_components_fit(n_components) , rhoB_components(n_components) )
        ALLOCATE( wt_components_init(n_components) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
@@ -707,9 +707,9 @@ CONTAINS
           STOP
           
        ELSE
-
-          ALLOCATE( mom_cry(1:n_cry,1:2,0:n_mom-1) )
-          ALLOCATE( growth_mom(1:n_cry,1:2,0:n_mom-1) )
+       
+          ALLOCATE( mom_cry(1:n_cry,0:n_mom-1,1:2) )
+          ALLOCATE( growth_mom(1:n_cry,0:n_mom-1,1:2) )
           WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'          
           REWIND(input_unit)
           
@@ -723,8 +723,8 @@ CONTAINS
     
     IF ( method_of_moments_flag ) THEN
     
-       n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom
-
+       n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom + n_components
+       
        DO i = 1, n_cry
 
           L0_cry(i, 1) = 1.0000E-015
