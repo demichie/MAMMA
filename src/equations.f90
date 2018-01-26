@@ -161,7 +161,7 @@ CONTAINS
           
              DO j = 0,n_mom-1
              
-                mom_cry(i,k,j) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) 
+                mom_cry(i,j,k) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) 
                 
              END DO
 
@@ -447,7 +447,7 @@ CONTAINS
           
              DO j=0,n_mom-1
                 
-                flux(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) = mom_cry(i,k,j) * u_1    &
+                flux(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) = mom_cry(i,j,k) * u_1    &
                      * radius**2
 
              END DO
