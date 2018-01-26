@@ -164,6 +164,8 @@ MODULE constitutive
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
+  REAL*8, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
+  
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
 
