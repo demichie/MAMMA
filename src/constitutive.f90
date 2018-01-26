@@ -2348,8 +2348,8 @@ CONTAINS
        
           DO i=0,n_mom-1
 
-             growth_mom(i_cry,k,i) = SUM( growth_rate_array(i_cry,:)*w(i_cry,:) &
-                  * Li(i_cry,:)**i ) / mom_cry(i_cry,k,i)
+             growth_mom(i_cry,i,k) = SUM( growth_rate_array(i_cry,:)*w(i_cry,:) &
+                  * Li(i_cry,:)**i ) / mom_cry(i_cry,i,k)
 
           END DO
              
