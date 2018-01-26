@@ -13,7 +13,7 @@ MODULE equations
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : method_of_moments_flag
-  USE parameters, ONLY : n_eqns , n_vars
+  USE parameters, ONLY : n_eqns , n_vars, n_components
   USE parameters, ONLY : n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
@@ -161,15 +161,21 @@ CONTAINS
           
              DO j = 0,n_mom-1
              
-                mom_cry(i,k,j) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+2*(k-1)+j) 
-
+                mom_cry(i,k,j) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) 
+                
              END DO
 
           END DO
           
-          beta(i) = cry_shape_factor(i) * SUM( mom_cry( i , 1:2 , 3 ) )  / alfa_1          
+          beta(i) = cry_shape_factor(i) * SUM( mom_cry( i , 3 , 1:2 ) )  / alfa_1          
           
        END DO
+
+       DO i = 1,n_components
+
+          rhoB_components(i) = qp(idx_cry_eqn_first+2*n_mom*(n_cry)-1 + i) 
+
+       ENDDO
 
     ELSE
 
@@ -441,7 +447,7 @@ CONTAINS
           
              DO j=0,n_mom-1
                 
-                flux(idx_cry_eqn_first+n_mom*(i-1)+j) = mom_cry(i,k,j) * u_1    &
+                flux(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) = mom_cry(i,k,j) * u_1    &
                      * radius**2
 
              END DO
@@ -449,6 +455,12 @@ CONTAINS
           END DO
 
        END DO
+
+       DO i = 1,n_components
+
+	        flux(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) = rhoB_components(i) * u_1 * radius ** 2
+
+       ENDDO
 
     ELSE
 
