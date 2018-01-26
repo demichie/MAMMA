@@ -67,9 +67,9 @@ CONTAINS
     USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
     USE constitutive, ONLY : beta0
     USE parameters, ONLY : n_components
-    USE constitutive, ONLY : cry_init_solid_solution
+    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components
     USE melts_fit_module, ONLY : wt_tot_0, wt_components_init, wt_components_fit
-    
+ 
     IMPLICIT none
 
     REAL*8, INTENT(IN) :: u_0
@@ -229,8 +229,7 @@ CONTAINS
     idx_alfa_first = 5+n_gas+1
     idx_alfa_last = 5+2*n_gas
     idx_beta_first = 5+2*n_gas+1
-    idx_beta_last = 5+2*n_gas+n_cry*n_mom
-
+    
     idx_mix_mass_eqn = 1
     idx_vol1_eqn = 2
     idx_mix_mom_eqn = 3
@@ -244,12 +243,13 @@ CONTAINS
 
     IF ( method_of_moments_flag ) THEN
 
-       idx_cry_eqn_last = 5+2*n_gas+2*n_cry*n_mom
-
+       idx_cry_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
+       idx_beta_last =5 + 2*n_gas + 2*n_cry*n_mom + n_components
     ELSE
        
-       idx_cry_eqn_last = 5+2*n_gas+n_cry
-
+       idx_cry_eqn_last = 5 + 2*n_gas + n_cry
+       idx_beta_last = 5 + 2*n_gas + n_cry
+       
     END IF
     
     ! --------- define the vector of primitive variables ------------------------
@@ -313,7 +313,7 @@ CONTAINS
 
 		END IF 
                 
-                qp(idx) = mom_cry(i,k,j)
+                qp(idx) = mom_cry(i,j,k)
                 
                 idx = idx + 1
        
@@ -343,6 +343,12 @@ CONTAINS
              STOP
 
           ENDIF
+
+	  rhoB_components(i) =  wt_components_init(i) * (REAL(rho_1)*alfa1_in + REAL(rho_2)*(1.D0 - alfa1_in) )
+
+	  qp(idx) =  rhoB_components(i)
+
+          idx = idx + 1
 
        END DO
        
