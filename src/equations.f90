@@ -25,6 +25,8 @@ MODULE equations
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
        idx_cry_eqn_first , idx_cry_eqn_last
   
+  USE melts_fit_module, ONLY: rel_cry_components 
+  
   IMPLICIT none
 
   !> Flag for isothermal runs:\n
@@ -176,6 +178,18 @@ CONTAINS
           rhoB_components(i) = qp(idx_cry_eqn_first+2*n_mom*(n_cry)-1 + i) 
 
        ENDDO
+
+       DO i = 1,n_cry 
+
+          sum_rhoB_components(i) = 0.0
+
+          DO j = 1,n_components
+
+             sum_rhoB_components(i) = sum_rhoB_components(i) + rhoB_components(j) * rel_cry_components(j,i) 
+
+          END DO
+
+       END DO !CAMBIO
 
     ELSE
 
@@ -670,23 +684,63 @@ CONTAINS
 
     IF ( method_of_moments_flag ) THEN
 
-       ! CALL f_growth_rate
-       ! CALL f_nucleation_rate
-       
+       CALL update_kinetics
+      
        DO i = 1,n_cry
 
           DO k = 1,2
           
-             DO j = 0,n_mom-1
+             IF(k == 1) THEN 
 
-             !relaxation_term(idx_cry_eqn_first+n_mom*(i-1)+j) =                 &
-             !     function of growth_rate(i) and nucleation_rate(i)
+	        relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)) =                 &
+		   nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
+
+             ELSE
+
+	        relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
+		   0.0
+
+             END IF
+          
+             DO j = 1,n_mom-1
+
+		IF(k == 1) THEN 
+
+	           relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
+		      nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) +   &
+	              radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+
+		ELSE
+
+	           relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
+		      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+
+		END IF
 
              END DO
                 
           END DO
 
        END DO
+       
+       DO i = 1,n_components
+
+          relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) = 0.0
+
+          DO j = 1,n_cry
+
+             DO k = 1,2
+
+                relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) =                         &
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) - cry_shape_factor(j)* &
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(j-1) + n_mom*(k-1) + 3) *              &
+		   cry_current_solid_solution(j,i) * rho_c(j)
+
+             ENDDO   
+
+          ENDDO
+
+       ENDDO
 
     ELSE
 
@@ -807,7 +861,7 @@ CONTAINS
     END DO
 
     ! Terms for the crystal phases ----------------------------------------------
-    DO i= idx_cry_eqn_first,idx_cry_eqn_first
+    DO i= idx_cry_eqn_first,idx_cry_eqn_last
 
        force_term(i) = DCMPLX(0.d0,0.D0)
 
@@ -1127,6 +1181,4 @@ CONTAINS
 
   END SUBROUTINE eval_explicit_forces
 
-
 END MODULE equations
-
