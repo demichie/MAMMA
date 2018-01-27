@@ -695,7 +695,7 @@ CONTAINS
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus(n_cry) )
        ALLOCATE( cry_init_solid_solution(n_components, n_cry), cry_current_solid_solution(n_components, n_cry) )
        ALLOCATE( wt_components_fit(n_components) , rhoB_components(n_components) , sum_rhoB_components(n_cry) )
-       ALLOCATE( wt_components_init(n_components) )
+       ALLOCATE( wt_components_init(n_components) , rel_cry_components(n_components, n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
        
