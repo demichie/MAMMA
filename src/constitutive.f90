@@ -146,7 +146,7 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE :: growth_mom(:,:,:)   !< moments of growth rate of crystals
 
-  REAL*8, ALLOCATABLE :: cry_shape_factor(:)
+  REAL*8, ALLOCATABLE :: cry_shape_factor(:) !< shape factor of crystals
   
   REAL*8, ALLOCATABLE :: T_m(:) !< liquidus temperature of crystals
 
@@ -158,13 +158,19 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE :: T_i(:) !< temp of max nucleation rate of crystals
 
-  REAL*8, ALLOCATABLE :: L0_cry(:,:) !< initial size of crystals
+  REAL*8, ALLOCATABLE :: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
 
-  REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst  
+  REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst (conduit bottom)
+  
+  REAL*8, ALLOCATABLE :: L_nucleus(:) !< size of new nucleus
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
+  REAL*8, ALLOCATABLE :: cry_current_solid_solution(:,:) !< composition of crystallizing minerals
+  
   REAL*8, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
+  
+  REAL*8, ALLOCATABLE :: sum_rhoB_components(:)   !< sum of components bulk density in the different crystals
   
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -1020,15 +1026,14 @@ CONTAINS
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION growth_rate(i_cry,L_in)
+  FUNCTION growth_rate(i_cry)
     !
     IMPLICIT NONE
 
     REAL*8 :: growth_rate
     
     INTEGER, INTENT(IN) :: i_cry
-    REAL*8, INTENT(IN) :: L_in
-  
+    
     growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
          ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( - ( T_u(i_cry) - DREAL(T) )&
          * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  
@@ -1046,14 +1051,13 @@ CONTAINS
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION nucleation_rate(i_cry,L_in)
+  FUNCTION nucleation_rate(i_cry)
     !
     IMPLICIT NONE
 
     REAL*8 :: nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
-    REAL*8, INTENT(IN) :: L_in
   
     nucleation_rate = I_m(i_cry) * DEXP( ( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
 	* ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) - 	    &
@@ -1062,6 +1066,26 @@ CONTAINS
 	( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) )
 
   END FUNCTION nucleation_rate
+ 
+  !******************************************************************************
+  !> @author 
+  !
+  !> This subrotine updates kinetic parameters
+  !> \date 13/03/12       
+  !******************************************************************************
+
+  SUBROUTINE update_kinetics ! It must be modified
+
+    IMPLICIT NONE
+
+    cry_current_solid_solution(1,1) = 1.0	!CAMBIO
+    cry_current_solid_solution(1,2) = 0.0	!CAMBIO
+    cry_current_solid_solution(2,1) = 0.0	!CAMBIO
+    cry_current_solid_solution(2,2) = 0.5	!CAMBIO
+    cry_current_solid_solution(3,1) = 0.0	!CAMBIO
+    cry_current_solid_solution(3,2) = 0.5	!CAMBIO
+
+  END SUBROUTINE update_kinetics
  
   !******************************************************************************
   !> @author 
@@ -2325,7 +2349,7 @@ CONTAINS
 
        DO j=1,n_nodes
 
-          growth_rate_array(i_cry,j) = growth_rate( i_cry , Li(i_cry,j) )
+          growth_rate_array(i_cry,j) = growth_rate( i_cry  )
 
        END DO
 
@@ -2361,7 +2385,4 @@ CONTAINS
 
   END SUBROUTINE eval_additional_moments
 
-  
-  
 END MODULE constitutive
-
