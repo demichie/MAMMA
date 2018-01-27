@@ -18,6 +18,8 @@ MODULE melts_fit_module
   !> Normalized fraction of phases at conduit bottom (with crystals)
   REAL*8, ALLOCATABLE :: wt_components_init(:)
 
+  !> Information about the relation between crystals and phases 
+  REAL*8, ALLOCATABLE :: rel_cry_components(:,:)	
 
 CONTAINS
 
@@ -37,6 +39,13 @@ CONTAINS
        wt_components_fit(i) = 1.0 / n_components
 
     END DO 
+
+    rel_cry_components(1,1) = 1.0	
+    rel_cry_components(1,2) = 0.0	
+    rel_cry_components(2,1) = 0.0	
+    rel_cry_components(2,2) = 1.0	
+    rel_cry_components(3,1) = 0.0	
+    rel_cry_components(3,2) = 1.0	
 
     RETURN
 
