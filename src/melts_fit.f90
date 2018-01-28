@@ -30,7 +30,7 @@ CONTAINS
 
   SUBROUTINE read_fit
 
-    INTEGER :: i
+    INTEGER :: i, j
   
     wt_tot_0 = 0.9
 
@@ -39,13 +39,20 @@ CONTAINS
        wt_components_fit(i) = 1.0 / n_components
 
     END DO 
+    
+       DO j=1,n_cry
 
-    rel_cry_components(1,1) = 1.0	
-    rel_cry_components(1,2) = 0.0	
-    rel_cry_components(2,1) = 0.0	
-    rel_cry_components(2,2) = 1.0	
-    rel_cry_components(3,1) = 0.0	
-    rel_cry_components(3,2) = 1.0	
+          IF(( i == 1 .AND. j == 1 ) .OR. (i .GT. 1 .AND. j .GT. 1)) THEN
+
+             rel_cry_components(i,j) = 1.0	
+ 
+          ELSE
+              
+             rel_cry_components(i,j) = 0.0	  
+
+          ENDIF
+
+       ENDDO
 
     RETURN
 
