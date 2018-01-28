@@ -10,7 +10,7 @@ MODULE constitutive
 
   USE geometry, ONLY : pi
   USE parameters, ONLY : verbose_level
-  USE parameters, ONLY : n_eqns , n_vars
+  USE parameters, ONLY : n_eqns , n_vars, n_components
   USE parameters, ONLY : n_cry , n_gas , n_mom
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
@@ -1073,17 +1073,34 @@ CONTAINS
   !> This subrotine updates kinetic parameters
   !> \date 13/03/12       
   !******************************************************************************
-
+  
   SUBROUTINE update_kinetics ! It must be modified
 
     IMPLICIT NONE
 
-    cry_current_solid_solution(1,1) = 1.0	!CAMBIO
-    cry_current_solid_solution(1,2) = 0.0	!CAMBIO
-    cry_current_solid_solution(2,1) = 0.0	!CAMBIO
-    cry_current_solid_solution(2,2) = 0.5	!CAMBIO
-    cry_current_solid_solution(3,1) = 0.0	!CAMBIO
-    cry_current_solid_solution(3,2) = 0.5	!CAMBIO
+    INTEGER :: i, j
+  
+    DO i=1,n_components
+
+       DO j=1,n_cry
+
+          IF(( i == 1 .AND. j == 1 ) ) THEN
+
+             cry_current_solid_solution(i,j) = 1.0
+  
+          ELSEIF(( i .GT. 1 ) .AND. ( j .GT. 1 )) THEN
+
+             cry_current_solid_solution(i,j) = 1.0 / (n_components - 1.0)
+
+          ELSE
+              
+             cry_current_solid_solution(i,j) = 0.0	  
+
+          ENDIF
+
+       ENDDO
+
+    END DO 
 
   END SUBROUTINE update_kinetics
  
