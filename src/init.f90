@@ -296,20 +296,20 @@ CONTAINS
 
        DO i = 1,n_cry
 
-          ! k is the index for microlith and phenocryst
-          DO k = 1,2
+          DO j = 0,n_mom-1
 
-             DO j = 0,n_mom-1
-
+             ! k is the index for microlith and phenocryst
+             DO k = 1,2
+	  
 	        IF(k .EQ. 2) THEN
 
                     mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
-                         * L0_cry(i,k)**3 / L0_cry(i,k)**j 
+                         * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
                 
 	        ELSE
 
                     mom_cry(i,j,k) = 1.000E-15 * alfa1_in / cry_shape_factor(i)    &
-                         * L0_cry(i,k)**3 / L0_cry(i,k)**j 
+                         * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
 
 		END IF 
                 
