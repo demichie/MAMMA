@@ -159,11 +159,11 @@ CONTAINS
        
        DO i = 1,n_cry
 
-          DO k = 1,2
-          
-             DO j = 0,n_mom-1
-             
-                mom_cry(i,j,k) = qp(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) 
+          DO j = 0,n_mom-1
+
+             DO k = 1,2         
+	  
+                mom_cry(i,j,k) = qp(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) 
                 
              END DO
 
@@ -175,7 +175,7 @@ CONTAINS
 
        DO i = 1,n_components
 
-          rhoB_components(i) = qp(idx_cry_eqn_first+2*n_mom*(n_cry)-1 + i) 
+          rhoB_components(i) = qp(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) 
 
        ENDDO
 
@@ -189,7 +189,7 @@ CONTAINS
 
           END DO
 
-       END DO !CAMBIO
+       END DO
 
     ELSE
 
@@ -456,12 +456,12 @@ CONTAINS
     IF ( method_of_moments_flag ) THEN
        
        DO i=1,n_cry
-          
-          DO k=1,2
-          
-             DO j=0,n_mom-1
-                
-                flux(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) = mom_cry(i,j,k) * u_1    &
+    
+          DO j=0,n_mom-1
+    
+             DO k=1,2
+                    
+                flux(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) = mom_cry(i,j,k) * u_1    &
                      * radius**2
 
              END DO
@@ -692,12 +692,12 @@ CONTAINS
           
              IF(k == 1) THEN 
 
-	        relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)) =                 &
+	        relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
 		   nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
 
              ELSE
 
-	        relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
+	        relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
 		   0.0
 
              END IF
@@ -706,13 +706,13 @@ CONTAINS
 
 		IF(k == 1) THEN 
 
-	           relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
-		      nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) +   &
+	           relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
+		      nucleation_rate(i) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
 	              radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
 
 		ELSE
 
-	           relaxation_term(idx_cry_eqn_first+2*n_mom*(i-1)+n_mom*(k-1)+j) =                 &
+	           relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
 		      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
 
 		END IF
@@ -732,9 +732,9 @@ CONTAINS
              DO k = 1,2
 
                 relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) =                         &
-                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) - cry_shape_factor(j)* &
-                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(j-1) + n_mom*(k-1) + 3) *              &
-		   cry_current_solid_solution(j,i) * rho_c(j)
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*n_cry - 1 + i) - cry_shape_factor(j)*   &
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(j-1) + 2*3 + k - 1) *              &
+		   cry_current_solid_solution(i,j) * rho_c(j)
 
              ENDDO   
 
