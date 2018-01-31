@@ -1037,7 +1037,9 @@ CONTAINS
     growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
          ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( - ( T_u(i_cry) - DREAL(T) )&
          * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  
-    
+
+    growth_rate = MAX( growth_rate, 0.0)
+
   END FUNCTION growth_rate
   
   !******************************************************************************
@@ -1064,6 +1066,8 @@ CONTAINS
 	( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) + 3.0 * T_i(i_cry) ) * &
 	( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -       &
 	( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) )
+
+    nucleation_rate= MAX( nucleation_rate, 0.0)
 
   END FUNCTION nucleation_rate
  
