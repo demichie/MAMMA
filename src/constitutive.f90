@@ -909,9 +909,8 @@ CONTAINS
 
     IMPLICIT NONE
 
-
     COMPLEX*16 :: aa , bb , cc , pp
-
+    INTEGER :: j
 
     IF ( REAL(p_2) .LE. 0.D0 ) THEN
 
@@ -937,6 +936,16 @@ CONTAINS
 
           x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * p_2 )      &
             * (alfa_g_2(1:n_gas)*p_2) + solub_exp(1:n_gas)*(alfa_g_2(1:n_gas)*p_2)
+
+          DO j=1,n_gas
+	  
+	     IF( (- solub_exp(j) / solub(j) / 2.D0) .LT. (alfa_g_2(j)*p_2) ) THEN
+	     
+	        x_d_md_eq(j) = ( - solub_exp(j) ** 2.D0 / solub(j) / 4.D0)
+	     
+	     ENDIF
+	 	  
+	  ENDDO
 
        CASE ( 'Zhang' )
 
@@ -1888,7 +1897,7 @@ CONTAINS
 
     COMPLEX*16 :: arg_erf , t , errorf, var_phi
 
-    REAL*8 :: omega , betas , theta0
+    REAL*8 :: omega , betas , theta0, beta_aux
 
     REAL*8 :: p , a1 , a2 , a3 , a4 , a5
     REAL*8 :: phi_star, csi, delta, Einstein_coeff
@@ -1905,8 +1914,11 @@ CONTAINS
     CASE ('Dingwell1993')
 
        !---------- Dingwell & al '93
-       theta = ( 1.0D0 + 0.75D0 * ( ( SUM(beta(1:n_cry) ) / 0.84D0 ) / ( 1.D0 - &
-            ( SUM( beta(1:n_cry) ) / .84D0 ) ) ) ) **2.D0
+       
+       beta_aux = MIN( REAL(SUM(beta(1:n_cry))), 0.8399999 )       
+       
+       theta = ( 1.0D0 + 0.75D0 * ( beta_aux / 0.84D0 ) / ( 1.D0 - &
+            ( beta_aux / .84D0 ) ) ) ) **2.D0
 
     CASE ('Fixed_value')
 
@@ -1919,7 +1931,6 @@ CONTAINS
        c1 = 0.9995D0
        c2 = 0.4D0
        c3 = 1.D0
-
 
        p = 0.3275911D0
        a1 = 0.254829592D0 
@@ -1941,9 +1952,9 @@ CONTAINS
     CASE ('Melnik_and_Sparks2005')
 
        !-----------Melnik & Sparks 2005 Eq.16
-       c1 = 1.4D0
        c2 = 8.6D0
        c3 = 0.69D0
+       c1 = 1.D0 / (10.D0 ** ( ATAN( - c2 *  c3  ) + pi/2.D0 ) )
 
        theta = c1 * 10.D0 ** ( ATAN( c2 * ( SUM( beta(1:n_cry) ) - c3 ) )       &
             + pi/2.D0 ) 
@@ -1952,8 +1963,8 @@ CONTAINS
 
        omega = 20.6d0
        betas = 0.62d0
-       theta0 = 1.6d0
-
+       theta0 = 1.D0 / (10.D0 ** ( ATAN( - omega *  betas  ) + pi/2.D0 ) )
+       
        theta = theta0 * 10.D0 ** ( 0.5D0 * pi + ATAN( omega * ( SUM(            &
             beta(1:n_cry) ) - betas )))
 
@@ -2067,7 +2078,7 @@ CONTAINS
     USE geometry, ONLY : radius
     IMPLICIT NONE
 
-    REAL*8 :: Ca, gamma_Ca
+    REAL*8 :: Ca, gamma_Ca, alfa_aux
 
     IF(  (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq19' ) ) .AND.               & 
          (.NOT. (theta_model .EQ. 'Vona_et_al2013_eq20' ) ) .AND.               & 
@@ -2105,15 +2116,19 @@ CONTAINS
 
           ! Eq. (17) Mader et al. 2013
 
-          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_2)   &
-               / (1.0D0 - 1.29 * alfa_2) ) ** 2.0D0
+          alfa_aux = MIN( REAL(alfa_2), 0.772818199 )
+
+          visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 + (1.25D0 * alfa_aux)   &
+               / (1.0D0 - 1.29 * alfa_aux) ) ** 2.0D0
 
        CASE ( 'Sibree' )
 
           ! Eq. (18) Mader et al. 2013
 
+          alfa_aux = MIN( REAL(alfa_2), 0.83330833 )
+
           visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * ( 1.0D0 / ( 1.0D0            &
-               - (1.2 * alfa_2)** 0.33333D0 ) )
+               - (1.2 * alfa_aux)** 0.33333D0 ) )
 
        CASE ( 'Taylor' )
 
@@ -2125,8 +2140,10 @@ CONTAINS
 
           ! Eq. (19) Mader et al. 2013
 
+          alfa_aux = MIN( REAL(alfa_2), 0.599994 )
+
           visc_rel_bubbles = DCMPLX(1.0D0,0.0D0) * (1.0D0 - (5.D0 / 3.D0)       &
-               * alfa_2)
+               * alfa_aux)
 
        CASE ( 'DucampRaj' )
 
