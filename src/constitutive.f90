@@ -1918,7 +1918,7 @@ CONTAINS
        beta_aux = MIN( REAL(SUM(beta(1:n_cry))), 0.8399999 )       
        
        theta = ( 1.0D0 + 0.75D0 * ( beta_aux / 0.84D0 ) / ( 1.D0 - &
-            ( beta_aux / .84D0 ) ) ) ) **2.D0
+            ( beta_aux / 0.84D0 ) ) ) **2.D0
 
     CASE ('Fixed_value')
 
