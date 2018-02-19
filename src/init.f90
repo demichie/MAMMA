@@ -16,13 +16,14 @@ MODULE init
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last
+       idx_beta_first , idx_beta_last, idx_components_first,                    &
+       idx_components_last
 
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
        idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
-       idx_cry_eqn_first , idx_cry_eqn_last
-
+       idx_cry_eqn_first , idx_cry_eqn_last, idx_components_eqn_first,          &
+       idx_components_eqn_last
   
   IMPLICIT none
 
@@ -67,7 +68,7 @@ CONTAINS
     USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
     USE constitutive, ONLY : beta0
     USE parameters, ONLY : n_components
-    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components
+    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components, L_nucleus
     USE melts_fit_module, ONLY : wt_tot_0, wt_components_init, wt_components_fit
  
     IMPLICIT none
@@ -89,7 +90,7 @@ CONTAINS
 
     REAL*8 :: alfa2_in
     REAL*8 :: alfa_g_in(1:n_gas)
-	
+
     COMPLEX*16 :: x_g_old(1:n_gas)
 
     REAL*8 :: xd_md_tot
@@ -109,7 +110,7 @@ CONTAINS
     T = DCMPLX( T_in , 0.D0 )
 
     ! evaluate the initial dissolved gas mass fraction
-	
+
     r_rho_md = REAL( ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - 1.D0) ) )
     rho_md = DCMPLX(r_rho_md,0.0)
     
@@ -243,8 +244,15 @@ CONTAINS
 
     IF ( method_of_moments_flag ) THEN
 
-       idx_cry_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
-       idx_beta_last =5 + 2*n_gas + 2*n_cry*n_mom + n_components
+       idx_cry_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom
+       idx_beta_last = 5 + 2*n_gas + 2*n_cry*n_mom
+
+       idx_components_eqn_first = 5 + 2*n_gas + 2*n_cry*n_mom + 1
+       idx_components_first = 5 + 2*n_gas + 2*n_cry*n_mom + 1
+
+       idx_components_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
+       idx_components_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
+
     ELSE
        
        idx_cry_eqn_last = 5 + 2*n_gas + n_cry
@@ -300,18 +308,18 @@ CONTAINS
 
              ! k is the index for microlith and phenocryst
              DO k = 1,2
-	  
-	        IF(k .EQ. 2) THEN
+  
+                IF(k .EQ. 2) THEN
 
                     mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
                          * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
                 
-	        ELSE
+                ELSE
 
-                    mom_cry(i,j,k) = 1.000E-15 * alfa1_in / cry_shape_factor(i)    &
+                    mom_cry(i,j,k) = L_nucleus(i) * alfa1_in / cry_shape_factor(i)    &
                          * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
 
-		END IF 
+                END IF 
                 
                 qp(idx) = mom_cry(i,j,k)
                 
@@ -325,17 +333,19 @@ CONTAINS
 
        CALL read_fit
 
+       idx = idx_components_first
+
        DO i = 1, n_components
 
           wt_components_init(i) = wt_tot_0  * ( 1.0 - xtot_in ) * wt_components_fit(i)  
 
           DO j = 1, n_cry
 
-	     wt_components_init(i) = wt_components_init(i) - cry_init_solid_solution(i,j) *   &
+             wt_components_init(i) = wt_components_init(i) - cry_init_solid_solution(i,j) *   &
                 ( beta_in(j) * alfa1_in * REAL(rho_c(j)) / (alfa1_in * REAL(rho_1)  +         &
                 (1.D0 - alfa1_in) * REAL(rho_2) ) )
 
-	  END DO
+          END DO
 
           IF( (wt_components_init(i)) .LT. 0.0) THEN
 
@@ -344,9 +354,9 @@ CONTAINS
 
           ENDIF
 
-	  rhoB_components(i) =  wt_components_init(i) * (REAL(rho_1)*alfa1_in + REAL(rho_2)*(1.D0 - alfa1_in) )
+          rhoB_components(i) =  wt_components_init(i) * (REAL(rho_1)*alfa1_in + REAL(rho_2)*(1.D0 - alfa1_in) )
 
-	  qp(idx) =  rhoB_components(i)
+          qp(idx) =  rhoB_components(i)
 
           idx = idx + 1
 
@@ -363,7 +373,7 @@ CONTAINS
        END DO
 
     END IF
-       
+
   END SUBROUTINE init_steady
 
 END MODULE init

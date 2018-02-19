@@ -15,15 +15,18 @@ MODULE steady_solver
   USE parameters, ONLY : n_eqns , n_vars
   USE parameters, ONLY : max_nl_iter
   USE parameters, ONLY : verbose_level
+  USE parameters, ONLY : method_of_moments_flag
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last
+       idx_beta_first , idx_beta_last, idx_components_first,                    &
+       idx_components_last
   
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
        idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
-       idx_cry_eqn_first , idx_cry_eqn_last
+       idx_cry_eqn_first , idx_cry_eqn_last, idx_components_eqn_first,          &
+       idx_components_eqn_last
   
   USE equations, ONLY : lateral_degassing_flag
   USE equations, ONLY : lateral_degassing
@@ -105,11 +108,9 @@ CONTAINS
 
     REAL*8 :: initial_mass_flow_rate, final_mass_flow_rate
 
-
     ALLOCATE( qp(n_vars) ) 
     ALLOCATE( fluxes_old(n_eqns) )
     ALLOCATE( nh_terms_old(n_eqns) )
-
 
     IF ( shooting ) THEN
 
@@ -1195,7 +1196,7 @@ CONTAINS
 
           alfa_2_qp = SUM(qp(idx_alfa_first:idx_alfa_last))
 
-          IF ( ( alfa_2_qp .GT. frag_thr) .AND.                                 &	 
+          IF ( ( alfa_2_qp .GT. frag_thr) .AND.                                 &
                ( .NOT. fragmentation ) )THEN
 
              frag_eff = 1.0D0
@@ -1444,6 +1445,16 @@ CONTAINS
 
              END DO
 
+             IF( method_of_moments_flag ) THEN
+
+                DO i=idx_components_first,idx_components_last
+
+                   qp_rel(i) = MAX(qp_rel(i),0.D0)
+
+                END DO
+
+             END IF
+
           ELSE
 
              qp_rel = qp_rel_NR_old + desc_dir
@@ -1459,6 +1470,16 @@ CONTAINS
                 qp_rel(i) = MAX(qp_rel(i),0.D0)
 
              END DO
+
+             IF( method_of_moments_flag ) THEN
+
+                DO i=idx_components_first,idx_components_last
+
+                   qp_rel(i) = MAX(qp_rel(i),0.D0)
+
+                END DO
+
+             END IF
 
              CALL eval_f( qp_rel , qp_org , dz , coeff_f , right_term , scal_f )
 
@@ -1480,6 +1501,17 @@ CONTAINS
              qp_rel(i) = MAX(qp_rel(i),0.D0)
              
           END DO
+
+          IF( method_of_moments_flag ) THEN
+
+             DO i=idx_components_first,idx_components_last
+
+                qp_rel(i) = MAX(qp_rel(i),0.D0)
+
+             END DO
+
+          END IF
+
           
           qp = qp_rel * qp_org
 

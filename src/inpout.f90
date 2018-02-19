@@ -21,7 +21,6 @@ MODULE inpout
   USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
   USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry, L_nucleus
   USE constitutive, ONLY : cry_init_solid_solution, cry_current_solid_solution
-  USE moments_module, ONLY: n_nodes
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
@@ -29,9 +28,9 @@ MODULE inpout
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
-                       radius_z, radius_z_sig, radius_model , eccen_fixed,	&
-		       eccen_base, eccen_top, eccen_z_base, eccen_z_top,	&
-		       eccen_axis_b, comp_cells, update_radius
+                       radius_z, radius_z_sig, radius_model , eccen_fixed,      &
+                       eccen_base, eccen_top, eccen_z_base, eccen_z_top,        &
+                       eccen_axis_b, comp_cells, update_radius
 
   ! -- Variables for the namelist STEADY_BOUNDARY_CONDITIONS
   USE init, ONLY : T_in , p1_in , delta_p_in , p_out , u1_in
@@ -125,10 +124,10 @@ MODULE inpout
        lateral_degassing_flag , explosive_flag , method_of_moments_flag
 
   NAMELIST / geometry_parameters / z0 , zN , radius_model , radius_fixed ,      &
-       radius_min, radius_max, radius_z, radius_z_sig, eccen_fixed,		&
-       eccen_base, eccen_top, eccen_z_base, eccen_z_top, eccen_axis_b, comp_cells		
+       radius_min, radius_max, radius_z, radius_z_sig, eccen_fixed,             &
+       eccen_base, eccen_top, eccen_z_base, eccen_z_top, eccen_axis_b, comp_cells
 
-  NAMELIST / phases_parameters / n_gas , n_cry, n_components
+  NAMELIST / phases_parameters / n_gas , n_cry
 
   NAMELIST / steady_boundary_conditions / T_in , p1_in , delta_p_in ,           &
        x_ex_dis_in , p_out , u1_in , eps_conv, shooting
@@ -170,8 +169,9 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
   
-  NAMELIST / method_of_moments_parameters / n_mom, n_nodes , T_u , U_m , &
-       L0_cry_in, cry_shape_factor, cry_init_solid_solution, T_i, I_m, T_m, L_nucleus
+  NAMELIST / method_of_moments_parameters / n_mom, n_components, T_u , U_m ,      &
+       L0_cry_in, cry_shape_factor, cry_init_solid_solution, T_i, I_m, T_m,       &
+       L_nucleus
 
 CONTAINS
 
@@ -607,16 +607,19 @@ CONTAINS
     USE melts_fit_module, ONLY : wt_components_init, wt_components_fit, rel_cry_components  
     
     USE init, ONLY : beta_in , xd_md_in
-    
+
     IMPLICIT none
 
-    INTEGER :: i
+    INTEGER :: i, j
     LOGICAL :: tend1
     CHARACTER(LEN=80) :: card
 
     LOGICAL :: check_model
     
     INTEGER :: ios
+    
+    REAL*8, ALLOCATABLE :: cry_init_ss_all(:,:), cry_current_ss_all(:,:), wt_comp_fit_all(:),     &
+       rhoB_comp_all(:), wt_comp_init_all(:), rel_cry_comp_all(:,:)
 
     OPEN(input_unit,FILE=input_file,STATUS='old')
 
@@ -693,12 +696,37 @@ CONTAINS
     
        ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus(n_cry) )
-       ALLOCATE( cry_init_solid_solution(n_components, n_cry), cry_current_solid_solution(n_components, n_cry) )
-       ALLOCATE( wt_components_fit(n_components) , rhoB_components(n_components) , sum_rhoB_components(n_cry) )
-       ALLOCATE( wt_components_init(n_components) , rel_cry_components(n_components, n_cry) )
+       ALLOCATE( cry_init_solid_solution(100, n_cry), cry_current_solid_solution(100, n_cry) )
+       ALLOCATE( wt_components_fit(100) , rhoB_components(100) , sum_rhoB_components(n_cry) )
+       ALLOCATE( wt_components_init(100) , rel_cry_components(100, n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
+
+       ALLOCATE( cry_init_ss_all(n_components, n_cry), cry_current_ss_all(n_components, n_cry) )
+       ALLOCATE( wt_comp_fit_all(n_components) , rhoB_comp_all(n_components) )
+       ALLOCATE( wt_comp_init_all(n_components) , rel_cry_comp_all(n_components, n_cry) )
        
+       DO i=1,n_cry
+
+          DO j=1,n_components
+          
+             cry_init_ss_all(j,i) = cry_init_solid_solution((i-1)*n_components + j,1)
+
+          END DO
+
+          cry_init_ss_all(:,i) = cry_init_ss_all(:,i) / SUM(cry_init_ss_all(:,i))
+
+       END DO
+
+       DEALLOCATE( cry_init_solid_solution, cry_current_solid_solution, wt_components_fit)
+       DEALLOCATE( rhoB_components, wt_components_init,  rel_cry_components)
+
+       ALLOCATE( cry_init_solid_solution(n_components, n_cry), cry_current_solid_solution(n_components, n_cry) )
+       ALLOCATE( wt_components_fit(n_components) , rhoB_components(n_components) )
+       ALLOCATE( wt_components_init(n_components) , rel_cry_components(n_components, n_cry) )
+
+       cry_init_solid_solution = cry_init_ss_all
+
        IF ( ios .NE. 0 ) THEN
           
           WRITE(*,*) 'IOSTAT=',ios
@@ -1016,8 +1044,8 @@ CONTAINS
          (theta_model .EQ. 'Vona_et_al2013_eq20' ) .OR.                         & 
          (theta_model .EQ. 'Vona_et_al2013_eq21' ) ) THEN
 
-	WRITE(*,*) 'WARNING: bubbles_model not used.' 
-        WRITE(*,*) 'Effect of bubbles is included by using Vona 2013 equations'	 
+        WRITE(*,*) 'WARNING: bubbles_model not used.' 
+        WRITE(*,*) 'Effect of bubbles is included by using Vona 2013 equations'
 
     END IF
 

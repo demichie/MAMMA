@@ -13,10 +13,6 @@ MODULE constitutive
   USE parameters, ONLY : n_eqns , n_vars, n_components
   USE parameters, ONLY : n_cry , n_gas , n_mom
 
-  USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
-       idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last
-  
   IMPLICIT none
 
   !--------- Constants for the equations of state -------------------------------
@@ -87,7 +83,6 @@ MODULE constitutive
   CHARACTER*20 :: gas_law
   !----------------------------------------------------------------------------------------!
 
-
   COMPLEX*16 :: cv_1       !< dis.gas+melt+crystals specific heat capacity at constant volume
 
   COMPLEX*16 :: e_mix      !< total internal energy
@@ -138,17 +133,16 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE :: alfa_d_1(:)   !< dissolved gas volume fractions in phase 1
   COMPLEX*16, ALLOCATABLE :: alfa_g_2(:)   !< exsolved gas volume fractions in phase 2
 
-
   COMPLEX*16, ALLOCATABLE :: beta(:)       !< crystal volume fraction in the melt-crystals phase
   COMPLEX*16, ALLOCATABLE :: beta_eq(:)    !< equil. cry. volume fraction in the melt-crystals phase
 
   COMPLEX*16, ALLOCATABLE :: mom_cry(:,:,:)  !< moments of the crystal referred to the melt-crystals phase
 
-  REAL*8, ALLOCATABLE :: growth_mom(:,:,:)   !< moments of growth rate of crystals
+  REAL*8, ALLOCATABLE:: growth_mom(:,:,:)   !< moments of growth rate of crystals
 
-  REAL*8, ALLOCATABLE :: cry_shape_factor(:) !< shape factor of crystals
+  REAL*8, ALLOCATABLE:: cry_shape_factor(:) !< shape factor of crystals
   
-  REAL*8, ALLOCATABLE :: T_m(:) !< liquidus temperature of crystals
+  REAL*8, ALLOCATABLE:: T_m(:) !< liquidus temperature of crystals
 
   REAL*8, ALLOCATABLE :: T_u(:) !< temp of max growth rate of crystals
   
@@ -156,17 +150,17 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE :: I_m(:) !< max nucleation rate of crystals
 
-  REAL*8, ALLOCATABLE :: T_i(:) !< temp of max nucleation rate of crystals
+  REAL*8, ALLOCATABLE:: T_i(:) !< temp of max nucleation rate of crystals
 
-  REAL*8, ALLOCATABLE :: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
+  REAL*8, ALLOCATABLE:: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
 
   REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst (conduit bottom)
   
-  REAL*8, ALLOCATABLE :: L_nucleus(:) !< size of new nucleus
+  REAL*8, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
-  REAL*8, ALLOCATABLE :: cry_current_solid_solution(:,:) !< composition of crystallizing minerals
+  REAL*8, ALLOCATABLE:: cry_current_solid_solution(:,:) !< composition of crystallizing minerals
   
   REAL*8, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
   
@@ -938,14 +932,14 @@ CONTAINS
             * (alfa_g_2(1:n_gas)*p_2) + solub_exp(1:n_gas)*(alfa_g_2(1:n_gas)*p_2)
 
           DO j=1,n_gas
-	  
-	     IF( (- solub_exp(j) / solub(j) / 2.D0) .LT. (alfa_g_2(j)*p_2) ) THEN
-	     
-	        x_d_md_eq(j) = ( - solub_exp(j) ** 2.D0 / solub(j) / 4.D0)
-	     
-	     ENDIF
-	 	  
-	  ENDDO
+  
+             IF( (- solub_exp(j) / solub(j) / 2.D0) .LT. (alfa_g_2(j)*p_2) ) THEN
+      
+                x_d_md_eq(j) = ( - solub_exp(j) ** 2.D0 / solub(j) / 4.D0)
+     
+             ENDIF
+  
+          ENDDO
 
        CASE ( 'Zhang' )
 
@@ -1036,7 +1030,7 @@ CONTAINS
   !******************************************************************************
 
   FUNCTION growth_rate(i_cry)
-    !
+    
     IMPLICIT NONE
 
     REAL*8 :: growth_rate
@@ -1044,8 +1038,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: i_cry
     
     growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
-         ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( - ( T_u(i_cry) - DREAL(T) )&
-         * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  
+         ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( ( - ( T_u(i_cry) - DREAL(T)) &
+         * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  )
 
     growth_rate = MAX( growth_rate, 0.0)
 
@@ -1063,18 +1057,18 @@ CONTAINS
   !******************************************************************************
 
   FUNCTION nucleation_rate(i_cry)
-    !
+    
     IMPLICIT NONE
 
     REAL*8 :: nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
   
-    nucleation_rate = I_m(i_cry) * DEXP( ( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
-	* ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) - 	    &
-	( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) + 3.0 * T_i(i_cry) ) * &
-	( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -       &
-	( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) )
+    nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
+        * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
+        ( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) + 3.0 * T_i(i_cry) ) * &
+        ( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -      &
+        ( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) ) )
 
     nucleation_rate= MAX( nucleation_rate, 0.0)
 
@@ -1107,7 +1101,7 @@ CONTAINS
 
           ELSE
               
-             cry_current_solid_solution(i,j) = 0.0	  
+             cry_current_solid_solution(i,j) = 0.0
 
           ENDIF
 
@@ -1254,7 +1248,7 @@ CONTAINS
 
     t = MIN(1.0D0,MAX(0.0D0, ( REAL(alfa_2) - frag_thr ) /                      &
          (frag_transition - frag_thr )))
-	 
+
     SELECT CASE ( drag_funct_model )
 
     CASE DEFAULT
@@ -1410,7 +1404,7 @@ CONTAINS
 
        drag_funct = effusive_drag ** ( 1.D0 - t ) *                             &
                ( explosive_drag + 1.D-10 ) ** t
-	    
+
     ELSE
     
        drag_funct = effusive_drag ** ( 1.D0 - frag_eff ) *                      &
@@ -2034,7 +2028,7 @@ CONTAINS
 
        theta =  theta_fixed * (1.D0 + var_phi ** delta )/( ( 1.D0 - (1.D0 - csi)&
             * errorf ) ** (Einstein_coeff * phi_star) ) 
-	    
+    
     CASE ('Vona_et_al2013_eq19')
 
        theta = ( 1.D0 - SUM(beta(1:n_cry)) / (1.D0 - alfa_2 ) ) ** ( - 5.D0     &

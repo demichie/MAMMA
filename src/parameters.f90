@@ -51,6 +51,8 @@ MODULE parameters
   INTEGER :: idx_alfa_last         !< Last index of alfa in the qp array
   INTEGER :: idx_beta_first        !< First index of beta in the qp array
   INTEGER :: idx_beta_last         !< Last index of beta in the qp array
+  INTEGER :: idx_components_first        !< First index of components in the qp array
+  INTEGER :: idx_components_last         !< Last index of components in the qp array
   
   INTEGER :: idx_mix_mass_eqn      !> Index of the mixture mass equation
   INTEGER :: idx_vol1_eqn          !> Index of the first phase volume equation
@@ -63,7 +65,8 @@ MODULE parameters
   INTEGER :: idx_ex_gas_eqn_last   !> Index of the last ex. gas equation
   INTEGER :: idx_cry_eqn_first     !> Index of the first cry. equation
   INTEGER :: idx_cry_eqn_last     !> Index of the last cry. equation
-
+  INTEGER :: idx_components_eqn_first        !< Index of the first component equation
+  INTEGER :: idx_components_eqn_last         !< Index of the last component equation
   
   INTEGER :: n_nh
 

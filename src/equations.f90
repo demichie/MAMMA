@@ -18,12 +18,14 @@ MODULE equations
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last
+       idx_beta_first , idx_beta_last, idx_components_first,                    &
+       idx_components_last
   
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
        idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
-       idx_cry_eqn_first , idx_cry_eqn_last
+       idx_cry_eqn_first , idx_cry_eqn_last, idx_components_eqn_first,          &
+       idx_components_eqn_last
   
   USE melts_fit_module, ONLY: rel_cry_components 
   
@@ -162,7 +164,7 @@ CONTAINS
           DO j = 0,n_mom-1
 
              DO k = 1,2         
-	  
+  
                 mom_cry(i,j,k) = qp(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) 
                 
              END DO
@@ -175,7 +177,7 @@ CONTAINS
 
        DO i = 1,n_components
 
-          rhoB_components(i) = qp(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) 
+          rhoB_components(i) = qp(idx_components_eqn_first - 1 + i) 
 
        ENDDO
 
@@ -472,7 +474,7 @@ CONTAINS
 
        DO i = 1,n_components
 
-	        flux(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) = rhoB_components(i) * u_1 * radius ** 2
+          flux(idx_components_eqn_first - 1 + i) = rhoB_components(i) * u_1 * radius ** 2
 
        ENDDO
 
@@ -692,30 +694,30 @@ CONTAINS
           
              IF(k == 1) THEN 
 
-	        relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
-		   nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
+                relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
+                   nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
 
              ELSE
 
-	        relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
-		   0.0
+                relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
+                   0.0
 
              END IF
           
              DO j = 1,n_mom-1
 
-		IF(k == 1) THEN 
+                IF(k == 1) THEN 
 
-	           relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
-		      nucleation_rate(i) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
-	              radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
+                      nucleation_rate(i) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
+                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
 
-		ELSE
+                ELSE
 
-	           relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
-		      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
+                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
 
-		END IF
+                END IF
 
              END DO
                 
@@ -725,16 +727,16 @@ CONTAINS
        
        DO i = 1,n_components
 
-          relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) = 0.0
+          relaxation_term(idx_components_eqn_first - 1 + i) = 0.0
 
           DO j = 1,n_cry
 
              DO k = 1,2
 
-                relaxation_term(idx_cry_eqn_first + 2*n_mom*(n_cry) - 1 + i) =                         &
-                   relaxation_term(idx_cry_eqn_first + 2*n_mom*n_cry - 1 + i) - cry_shape_factor(j)*   &
+                relaxation_term(idx_components_eqn_first - 1 + i) =                         &
+                   relaxation_term(idx_components_eqn_first - 1 + i) - cry_shape_factor(j)*   &
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(j-1) + 2*3 + k - 1) *              &
-		   cry_current_solid_solution(i,j) * rho_c(j)
+                   cry_current_solid_solution(i,j) * rho_c(j)
 
              ENDDO   
 
@@ -866,6 +868,17 @@ CONTAINS
        force_term(i) = DCMPLX(0.d0,0.D0)
 
     END DO
+
+    ! Terms for components----------------------------------------------
+    IF( method_of_moments_flag ) THEN   
+
+       DO i= idx_components_eqn_first,idx_components_eqn_last
+
+          force_term(i) = DCMPLX(0.d0,0.D0)
+
+       END DO
+
+    END IF
 
   END SUBROUTINE eval_forces_terms
 
@@ -1106,6 +1119,17 @@ CONTAINS
 
     END DO
 
+    IF( method_of_moments_flag ) THEN   
+
+       DO i= idx_components_eqn_first,idx_components_eqn_last
+
+          source_term(i) = DCMPLX(0.d0,0.D0)
+
+       END DO
+
+    END IF
+
+
   END SUBROUTINE eval_source_terms
 
   !******************************************************************************
@@ -1178,6 +1202,16 @@ CONTAINS
        expl_forces_term(i) = 0.D0
 
     END DO
+
+    IF( method_of_moments_flag ) THEN   
+
+       DO i= idx_components_eqn_first,idx_components_eqn_last
+
+          expl_forces_term(i) = 0.D0
+
+       END DO
+
+    END IF
 
   END SUBROUTINE eval_explicit_forces
 
