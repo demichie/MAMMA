@@ -162,7 +162,7 @@ MODULE constitutive
   
   REAL*8, ALLOCATABLE:: cry_current_solid_solution(:,:) !< composition of crystallizing minerals
   
-  REAL*8, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
+  COMPLEX*16, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
   
   REAL*8, ALLOCATABLE :: sum_rhoB_components(:)   !< sum of components bulk density in the different crystals
   

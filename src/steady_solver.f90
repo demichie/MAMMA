@@ -141,7 +141,9 @@ CONTAINS
     CALL init_steady( u_inlet , qp )
 
     CALL phys_var_qp(qp)
+
     CALL eos
+
     CALL eval_densities
 
     IF ( verbose_level .GE. 1 ) THEN
@@ -718,7 +720,6 @@ CONTAINS
     delta_full = 0.D0
     delta_half2 = 0.D0
 
-
     zeta = z0
 
     idx_zeta = 1
@@ -805,7 +806,6 @@ CONTAINS
           nh_terms_old(idx_mix_engy_eqn) = 0.D0
 
        END IF
-
 
        dz = MIN( dz , zN - zeta_old )
 
@@ -1222,8 +1222,6 @@ CONTAINS
 
     END DO zeta_integration
 
-    !WRITE(*,*) counter
-
   END SUBROUTINE integrate_equations
 
   !******************************************************************************
@@ -1311,10 +1309,8 @@ CONTAINS
     REAL*8, PARAMETER :: STPMX=100.D0
     REAL*8 :: stpmax
     LOGICAL :: check 
-    !    LOGICAL :: check_phys_var
 
     REAL*8, PARAMETER :: tol_rel_NR = 1.D-20 , tol_abs_NR = 1.D-20
-
 
     LOGICAL :: normalize_qp
     LOGICAL :: normalize_f
@@ -1324,7 +1320,7 @@ CONTAINS
     REAL*8 :: arg_check(n_eqns)
 
     INTEGER :: i,j
-
+   
     check_convergence = .FALSE.
 
     normalize_qp = .TRUE.
@@ -1359,7 +1355,6 @@ CONTAINS
        qp_rel = qp_rel * 1.00001D0
 
     END IF
-
 
     coeff_f(1:n_eqns) = 1.D0
 
@@ -1790,7 +1785,6 @@ CONTAINS
     END DO
 
     left_matrix = Jacob_fluxes - dz * alfa_impl * Jacob_nh
-
 
   END SUBROUTINE eval_jacobian
 

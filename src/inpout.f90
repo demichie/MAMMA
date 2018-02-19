@@ -755,7 +755,7 @@ CONTAINS
        
        DO i = 1, n_cry
 
-          L0_cry(i, 1) = 1.0000E-015
+          L0_cry(i, 1) = L_nucleus(i)
 
           L0_cry(i, 2) = L0_cry_in(i)
 

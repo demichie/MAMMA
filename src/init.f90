@@ -74,7 +74,7 @@ CONTAINS
     IMPLICIT none
 
     REAL*8, INTENT(IN) :: u_0
-    REAL*8, INTENT(OUT) :: qp(n_vars)
+    REAL*8, INTENT(INOUT) :: qp(n_vars)
 
     REAL*8 :: r_rho_g(1:n_gas)   !> exsolved gas density
     REAL*8 :: r_rho_2   !> total exsolved gas density
@@ -219,7 +219,7 @@ CONTAINS
     r_frag_eff = frag_eff_in
 
     ! -------- define the indexes of variables and equations --------------------
-    
+
     idx_p1 = 1
     idx_p2 = 2
     idx_u1 = 3
@@ -354,7 +354,7 @@ CONTAINS
 
           ENDIF
 
-          rhoB_components(i) =  wt_components_init(i) * (REAL(rho_1)*alfa1_in + REAL(rho_2)*(1.D0 - alfa1_in) )
+          rhoB_components(i) =  wt_components_init(i) * ((rho_1)*alfa1_in + (rho_2)*(1.D0 - alfa1_in) )
 
           qp(idx) =  rhoB_components(i)
 

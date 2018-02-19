@@ -45,7 +45,7 @@ PROGRAM MAMMA_main
   CALL cpu_time(t1)
 
   CALL initialize_models
-  
+ 
   CALL init_param
 
   CALL read_param
@@ -53,7 +53,7 @@ PROGRAM MAMMA_main
   CALL init_grid
   
   CALL steady_shooting
-  
+
   CALL cpu_time(t2)
 
   WRITE(*,*) 'Time taken by the code was',t2-t1,'seconds'
