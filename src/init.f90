@@ -68,7 +68,7 @@ CONTAINS
     USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
     USE constitutive, ONLY : beta0
     USE parameters, ONLY : n_components
-    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components, L_nucleus
+    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components
     USE melts_fit_module, ONLY : wt_tot_0, wt_components_init, wt_components_fit
  
     IMPLICIT none
@@ -316,7 +316,7 @@ CONTAINS
                 
                 ELSE
 
-                    mom_cry(i,j,k) = L_nucleus(i) * alfa1_in / cry_shape_factor(i)    &
+                    mom_cry(i,j,k) = 1.D-5 * alfa1_in / cry_shape_factor(i)    &
                          * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
 
                 END IF 

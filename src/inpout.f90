@@ -1477,17 +1477,8 @@ CONTAINS
        OPEN(steady_p_output_unit,FILE=steady_p_file,STATUS='UNKNOWN')
 
        OPEN(steady_q_output_unit,FILE='test.out',STATUS='UNKNOWN')
-       !WRITE(steady_p_output_unit,*) radius_fixed
-       !WRITE(steady_p_output_unit,*) radius_min
-       !WRITE(steady_p_output_unit,*) radius_max
-       !WRITE(steady_p_output_unit,*) radius_z
-       !WRITE(steady_p_output_unit,*) radius_z_sig
-       !WRITE(steady_p_output_unit,*) radius_model
-       !WRITE(steady_p_output_unit,*) comp_cells
 
     END IF
-
-
 
     DO i = 1,n_vars
 

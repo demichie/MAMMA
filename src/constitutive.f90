@@ -1029,13 +1029,14 @@ CONTAINS
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION growth_rate(i_cry)
+  FUNCTION growth_rate(i_cry, L_in)
     
     IMPLICIT NONE
 
     REAL*8 :: growth_rate
     
     INTEGER, INTENT(IN) :: i_cry
+    REAL*8, INTENT(IN) :: L_in
     
     growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
          ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( ( - ( T_u(i_cry) - DREAL(T)) &
@@ -1056,13 +1057,14 @@ CONTAINS
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION nucleation_rate(i_cry)
+  FUNCTION nucleation_rate(i_cry, L_in)
     
     IMPLICIT NONE
 
     REAL*8 :: nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
+    REAL*8, INTENT(IN) :: L_in
   
     nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
         * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
@@ -2381,7 +2383,7 @@ CONTAINS
 
        DO j=1,n_nodes
 
-          growth_rate_array(i_cry,j) = growth_rate( i_cry  )
+          growth_rate_array(i_cry,j) = growth_rate( i_cry, 1.D0)
 
        END DO
 

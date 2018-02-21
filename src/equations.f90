@@ -199,6 +199,9 @@ CONTAINS
 
     END IF
        
+    WRITE(*,*) beta
+    STOP
+
     ! eval_densities requires: beta, x_d_md , p_1 , p_2 , T
     CALL eval_densities
 
@@ -695,7 +698,7 @@ CONTAINS
              IF(k == 1) THEN 
 
                 relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
-                   nucleation_rate(i) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
+                   nucleation_rate(i,1.D0) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
 
              ELSE
 
@@ -709,13 +712,13 @@ CONTAINS
                 IF(k == 1) THEN 
 
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
-                      nucleation_rate(i) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
-                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+                      nucleation_rate(i,1.D0) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
+                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i,1.D0) * mom_cry(i,j-1,k)
 
                 ELSE
 
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =                 &
-                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i) * mom_cry(i,j-1,k)
+                      radius**2 * sum_rhoB_components(i) * j * growth_rate(i,1.D0) * mom_cry(i,j-1,k)
 
                 END IF
 
