@@ -90,7 +90,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	color_list_eq2=['b--','g--','r--','c--','m--','y--','k--'];
 	zeta_grid_reverse = zN - zeta_grid;
 
-	subplot(2,6,1)
+	subplot(2,5,1)
 	plot(rho_1,zeta_grid_reverse);
 	title('rho_1');
 	xlabel('kg/m^3');
@@ -100,7 +100,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,2)
+	subplot(2,5,2)
 	hold all
 
 	for i=1:N_GAS,
@@ -113,7 +113,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,3)
+	subplot(2,5,3)
 	plot(T,zeta_grid_reverse);
 	title('T');
 	xlabel('K');
@@ -122,7 +122,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,4)
+	subplot(2,5,4)
 	hold all
 	for i=1:N_GAS,
 	    plot(alfa_2(i,:),zeta_grid_reverse,color_list(i));
@@ -139,7 +139,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,5)
+	subplot(2,5,5)
 	for i=1:N_CRY,
 	    plot(moms(N_CRY*N_MOM*(i-1) + 7 ,:)./rho_mix,zeta_grid_reverse,color_list_eq(i)); hold on;
 	end
@@ -154,7 +154,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,6)
+	subplot(2,5,6)
 	hold all
 	for i=1:N_GAS,
 	    plot(x_d(i,:),zeta_grid_reverse,color_list(i));
@@ -173,7 +173,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,7)
+	subplot(2,5,7)
 	semilogx(u_1,zeta_grid_reverse);
 	hold all
 	semilogx(u_2,zeta_grid_reverse);
@@ -182,21 +182,8 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	ylim([Z0,ZN]);
 	set(gca,'YDir','reverse')
 	box on;
-	
-	subplot(2,6,8)
-	if ( min(u_rel) > 0 )
-	    semilogx(u_rel,zeta_grid_reverse);
-	else
-	    plot(u_rel,zeta_grid_reverse);  
-	end
-	title('u_{gas} - u_{liq}');
-	xlabel('m/s');
-	ylim([Z0,ZN]);
-	set(gca,'YDir','reverse')
-	box on;
-	hold all;
 
-	subplot(2,6,9)
+	subplot(2,5,8)
 	hold all
 	plot(p_1,zeta_grid_reverse);
 	plot(p_2,zeta_grid_reverse);
@@ -207,7 +194,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,10)
+	subplot(2,5,9)
 	plot(visc,zeta_grid_reverse);
 	hold all
 	plot(visc_melt,zeta_grid_reverse);
@@ -222,16 +209,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	box on;
 	hold all;
 
-	subplot(2,6,11)
-	hp(11) = plot(sum(rho_2.*alfa_2,1),zeta_grid_reverse);
-	title('ex.gas bulk density');
-	xlabel('kg/m^3');
-	ylim([Z0,ZN]);
-	set(gca,'YDir','reverse')
-	box on;
-	hold all;
-
-	subplot(2,6,12)
+	subplot(2,5,10)
 	plot(mass_flow_rate ,zeta_grid_reverse);
 	title('Mass flow rate');
 	xlabel('kg/s');

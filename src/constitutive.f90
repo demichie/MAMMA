@@ -748,8 +748,6 @@ CONTAINS
 
     rho_md = DCMPLX(1.D0,0.D0) / ( SUM( x_d_md(1:n_gas) / rho_d(1:n_gas) )      &
          + ( DCMPLX(1.D0,0.D0) - SUM( x_d_md(1:n_gas) ) ) / rho_m )
-
-    ! x_c_mc(1:n_cry) = cry_shape_factor * mom_cry(1:n_cry,3) * rho_c(1:n_cry)
     
   END SUBROUTINE eval_densities_mom
   
@@ -2363,51 +2361,47 @@ CONTAINS
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  SUBROUTINE eval_additional_moments( Li , w )
+  SUBROUTINE eval_additional_moments
 
     ! external variables
-    USE parameters, ONLY : verbose_level
-    USE moments_module, ONLY : n_nodes
+    USE parameters, ONLY : n_nodes
     
     IMPLICIT NONE
 
-    REAL*8, DIMENSION(n_cry,n_nodes), INTENT(IN) :: Li
-    REAL*8, DIMENSION(n_cry,n_nodes), INTENT(IN) :: w
-
+    REAL*8, DIMENSION(n_cry, n_nodes, 2) :: Li
+    REAL*8, DIMENSION(n_cry, n_nodes, 2) :: w
     REAL*8, DIMENSION(n_cry,n_nodes) :: growth_rate_array
 
     INTEGER :: i , j , k
-    INTEGER :: i_cry
 
-    DO i_cry = 1,n_cry
+    DO i = 1, n_cry
 
-       DO j=1,n_nodes
+       DO k = 1,2
 
-          growth_rate_array(i_cry,j) = growth_rate( i_cry, 1.D0)
+          CALL wheeler_algorithm( REAL(mom_cry(i,:,k)), Li(i,:,k), w(i,:,k) )
 
        END DO
 
-       IF ( verbose_level .GE. 2 ) THEN
+    END DO
+    
+    DO i = 1,n_cry
 
-          WRITE(*,*) 'i_cry',i_cry
-          WRITE(*,*) 'abscissas', Li(i_cry,1:n_nodes)
-          WRITE(*,*) 'weights', w(i_cry,1:n_nodes)
-          WRITE(*,*) 'growth_rate_array',growth_rate_array(i_cry,:)
+       DO j=1,n_nodes
 
+          growth_rate_array(i,j) = growth_rate(i, Li(i,j,k))
 
-       END IF
+      END DO
 
     END DO
 
-
-    DO i_cry=1,n_cry
+    DO i=1,n_cry
 
        DO k = 1,2
        
-          DO i=0,n_mom-1
+          DO j=0,n_mom-1
 
-             growth_mom(i_cry,i,k) = SUM( growth_rate_array(i_cry,:)*w(i_cry,:) &
-                  * Li(i_cry,:)**i ) / mom_cry(i_cry,i,k)
+             growth_mom(i,j,k) = SUM( growth_rate_array(i,:)*w(i,:,k) &
+                 * Li(i,:,k)**j ) / mom_cry(i,j,k)
 
           END DO
              
@@ -2418,5 +2412,168 @@ CONTAINS
     RETURN
 
   END SUBROUTINE eval_additional_moments
+
+  !******************************************************************************
+  !> \brief Wheeler algorithm
+  !
+  !> This subroutine compute quadrature approximation with the Wheeler algorithm.
+  !> Given the moments m from 0 to 2*n_nodes-1 it finds the nodes xi and the  
+  !> weights w. 
+  !> Modified from Marchisio and Fox 2013
+  !> \param[in]     m       moments
+  !> \param[out]    xi      abscissas
+  !> \param[out]    w       weights 
+  !> \date 22/10/2013
+  !> @author 
+  !> Mattia de' Michieli Vitturi
+  !******************************************************************************
+
+  SUBROUTINE wheeler_algorithm(m,xi,w)
+
+    USE parameters, ONLY : n_nodes
+
+    IMPLICIT NONE
+
+    REAL*8, DIMENSION(n_mom), INTENT(IN) :: m
+    REAL*8, DIMENSION(n_nodes), INTENT(OUT) :: xi
+    REAL*8, DIMENSION(n_nodes), INTENT(OUT) :: w
+
+    REAL*8, DIMENSION(n_nodes,n_nodes) :: jacobi
+    REAL*8, DIMENSION(n_nodes) :: D
+    REAL*8, DIMENSION(n_nodes-1) :: E
+
+    REAL*8, DIMENSION(n_nodes) :: a , b
+    REAL*8, DIMENSION(n_nodes+1, 2*n_nodes) :: sigma_wheeler
+
+    REAL*8, DIMENSION(n_nodes,n_nodes) :: evec
+
+    INTEGER :: i , l , k, consdis
+
+    REAL*8, DIMENSION(2*n_nodes-2) :: WORK
+    INTEGER :: INFO
+    CHARACTER*1 :: JOBZ
+    INTEGER :: LDZ
+
+    consdis = 0
+
+    DO i= 2,n_mom-1
+
+       IF( (m(i+1)/m(i) - m(i)/m(i-1)) .GT. 1E-5) THEN
+
+          consdis = 1 
+
+       ENDIF
+
+    END DO
+
+    IF( consdis .EQ. 0 ) THEN
+
+       xi(1) = m(2)/m(1)
+       w(1) = m(1)
+
+       DO i= 2, n_nodes
+
+          xi(i) = 0.0
+          w(i) = 0.0
+
+       ENDDO
+
+    ELSE
+
+       DO i=1,n_nodes+1
+
+          DO l=1,2*n_nodes
+          
+             sigma_wheeler(i,l) = 0.0
+   
+          END DO
+       
+       END DO
+       
+       DO l=0,2*n_nodes-1
+          
+          sigma_wheeler(2,l+1) = m(l+1)
+          
+       END DO
+
+       !
+       ! compute coefficients for Jacobi matrix 
+       !
+       
+       a(1) = m(2) / m(1)
+       b(1) = 0.D0
+
+       DO k=1,n_nodes-1
+          
+          DO l=k,2*n_nodes-k-1
+             
+             sigma_wheeler(k+2,l+1) = sigma_wheeler(k+1,l+2) - a(k) * sigma_wheeler(k+1,l+1) - b(k) *      &
+                  sigma_wheeler(k,l+1)
+             
+             a(k+1) = -sigma_wheeler(k+1,k+1) / sigma_wheeler(k+1,k) + sigma_wheeler(k+2,k+2) /            &
+                  sigma_wheeler(k+2,k+1)
+             
+             b(k+1) = sigma_wheeler(k+2,k+1) / sigma_wheeler(k+1,k)
+             
+          END DO
+          
+       END DO
+  
+       !
+       ! compute Jacobi matrix
+       !
+       
+       DO i=1,n_nodes
+          
+          jacobi(i,i) = a(i)
+          
+          D(i) = jacobi(i,i)
+          
+       END DO
+       
+       DO i=1,n_nodes-1
+          
+          jacobi(i,i+1) = -(ABS(b(i+1)))**0.5
+          jacobi(i+1,i) = -(ABS(b(i+1)))**0.5
+          
+          E(i) = jacobi(i,i+1)
+          
+       END DO
+       
+       !
+       ! compute eigenvalues and eigenvectors
+       !
+       
+       JOBZ = 'V'    ! compute the eigenvectors
+       
+       LDZ = n_nodes
+       
+       CALL DSTEV(JOBZ, n_nodes, D, E, evec, LDZ, WORK, INFO)
+       
+       !
+       ! return weights
+       !
+       
+       DO i=1,n_nodes
+          
+          w(i) = evec(1,i)**2 * m(1)
+          
+       END DO
+       
+       !
+       ! return abscissas
+       !
+       
+       DO i=1,n_nodes
+          
+          xi(i) = D(i)
+          
+       END DO
+
+    ENDIF
+
+    RETURN
+
+  END SUBROUTINE wheeler_algorithm
 
 END MODULE constitutive

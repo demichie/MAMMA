@@ -24,6 +24,8 @@ MODULE init
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
        idx_cry_eqn_first , idx_cry_eqn_last, idx_components_eqn_first,          &
        idx_components_eqn_last
+
+  USE parameters, ONLY : n_nodes
   
   IMPLICIT none
 
@@ -302,6 +304,8 @@ CONTAINS
 
     IF ( method_of_moments_flag ) THEN
 
+       n_nodes = NINT(0.5D0 * n_mom)
+ 
        DO i = 1,n_cry
 
           DO j = 0,n_mom-1

@@ -39,6 +39,7 @@ MODULE parameters
   LOGICAL :: method_of_moments_flag
  
   INTEGER :: n_mom         !< Number of moments for each crystal phase
+  INTEGER :: n_nodes       !> Number of nodes for the quadrature
 
   INTEGER :: idx_p1        !< Index of p1 in the qp array
   INTEGER :: idx_p2        !< Index of p2 in the qp array
