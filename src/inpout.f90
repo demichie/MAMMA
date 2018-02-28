@@ -905,18 +905,6 @@ CONTAINS
 
     END IF
 
-    IF ( (crystallization_model .EQ. 'Vitturi2010' ) .AND.                      & 
-         (.NOT.(n_cry .EQ. 1 )) .AND. .NOT. method_of_moments_flag ) THEN
-
-       WRITE(*,*) ''
-       WRITE(*,*) 'Wrong number of crystal components inserted'
-       WRITE(*,*) 'Using Vitturi2010, n_cry has to be 1'
-       WRITE(*,*) ''
-
-       CALL ABORT
-
-    END IF
-
     ! ------- READ melt_parameters NAMELIST -------------------------------------
     READ(input_unit, melt_parameters , IOSTAT = ios )
 

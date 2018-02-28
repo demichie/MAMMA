@@ -942,7 +942,7 @@ CONTAINS
     ! --- TOTAL MASS SOURCE TERM ------------------------------------------------
     IF ( lateral_degassing ) THEN
 
-       source_term(idx_mix_mass_eqn) = - 2.D0 * q_lat * radius * f_eccen_a
+       source_term(idx_mix_mass_eqn) = - 2.D0 * q_lat * radius * f_eccen_a 
 
     ELSE
 
@@ -1102,8 +1102,10 @@ CONTAINS
 
        IF ( lateral_degassing ) THEN
 
-          source_term(i) = - 2.D0 * q_lat * radius * f_eccen_a
-
+          source_term(i) = - 2.D0 * q_lat * radius * f_eccen_a *                     &
+             alfa_g_2(1+i-idx_ex_gas_eqn_first) * rho_g(1+i-idx_ex_gas_eqn_first)   &
+             / rho_2
+          
        ELSE
 
           source_term(i) = DCMPLX(0.D0,0.D0)
@@ -1166,7 +1168,7 @@ CONTAINS
     expl_forces_term(idx_vol1_eqn) = 0.D0
 
     ! --- Mixture Momentum ------------------------------------------------------
-    expl_forces_term(idx_mix_mom_eqn) = DREAL( rho_mix * grav * radius ** 2 )
+    expl_forces_term(idx_mix_mom_eqn) = 0.D0
 
     ! --- Relative Velocity -----------------------------------------------------
     expl_forces_term(idx_rel_vel_eqn) = 0.D0

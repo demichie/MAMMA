@@ -890,7 +890,6 @@ CONTAINS
 
              END IF
 
-
           END IF
 
           IF ( check_convergence ) THEN
@@ -961,7 +960,7 @@ CONTAINS
           END IF
           
           IF ( check_convergence ) THEN
-             
+          
              ! -------- compare the solutions obtained with dz and twice dz/2 ---
              
              check_error = MAXVAL(ABS( qp_full(1:n_vars) -                      &
@@ -1043,9 +1042,7 @@ CONTAINS
 
              IF ( ( .NOT.fragmentation )                                        &
                   .AND. ( fragmentation_half2 .OR. fragmentation_full )         &
-                  .AND. ( frag_thr - alfa_2_qp .GT. 1.D-4 )                     &
-!                 .AND. ( MAX(alfa_2_half2,alfa_2_full) - frag_thr .GT. 1.D-4 ) &
-                ) THEN
+                  .AND. ( frag_thr - alfa_2_qp .GT. 1.D-4 )  ) THEN
 
                 check_convergence = .FALSE.
 

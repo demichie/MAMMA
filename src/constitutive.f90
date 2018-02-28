@@ -951,8 +951,8 @@ CONTAINS
 
           pp = p_2 * 1.0D-6
 
-          x_d_md_eq(1:n_gas) = 1.0D-2 * ( aa * CDSQRT(pp) + bb * pp + cc        &
-               * pp ** 1.5D0 )
+          x_d_md_eq(1:n_gas) = 1.0D-2 * ( aa * CDSQRT(alfa_g_2(1:n_gas) * pp) +  &
+             bb * (alfa_g_2(1:n_gas) * pp) + cc * (alfa_g_2(1:n_gas) * pp) ** 1.5D0 )
           
        END SELECT
 
@@ -1172,7 +1172,7 @@ CONTAINS
 
     CALL mixture_viscosity
 
-    SELECT CASE (  p_relax_model )
+    SELECT CASE ( p_relax_model )
 
     CASE DEFAULT
 
@@ -1191,13 +1191,10 @@ CONTAINS
 
        END IF
 
-
     CASE ( 'eval2' ) 
-
 
        tau_p = ( 1.D0 - frag_eff ) * visc_mix /                                 &
             ( (alfa_1 ** alfa_1) * rho_mix ) + 0.001 * frag_eff
-
 
     CASE ( 'constant' )
 
