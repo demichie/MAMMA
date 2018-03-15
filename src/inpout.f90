@@ -169,8 +169,8 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
   
-  NAMELIST / method_of_moments_parameters / n_mom, n_components, T_u , U_m ,      &
-       L0_cry_in, cry_shape_factor, cry_init_solid_solution, T_i, I_m, T_m,       &
+  NAMELIST / method_of_moments_parameters / n_mom, n_components, U_m ,         &
+       L0_cry_in, cry_shape_factor, cry_init_solid_solution,  I_m,             &
        L_nucleus
 
 CONTAINS
@@ -891,14 +891,15 @@ CONTAINS
     bar_p_c(1:n_cry) = ( rho0_c(1:n_cry) * C0_c(1:n_cry) ** 2.d0 -              &
          gamma_c(1:n_cry) * p0_c(1:n_cry) ) / gamma_c(1:n_cry)
 
-    IF (.NOT. (crystallization_model .EQ. 'Vitturi2010' ) .AND. .NOT. &
-       method_of_moments_flag ) THEN
+    IF ( (.NOT. (crystallization_model .EQ. 'Vitturi2010' )) .AND. (.NOT.       &
+       method_of_moments_flag) .AND. (.NOT. (crystallization_model .EQ. 'None' )) ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
        WRITE(*,*) 'Please choose between:'
        WRITE(*,*) ''
        WRITE(*,*) 'Vitturi2010'
+       WRITE(*,*) 'None'
        WRITE(*,*) ''
 
        CALL ABORT

@@ -299,10 +299,6 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	ylabel('depth (m)')
 	box on;
 	hold all;
-
-
-
-
 else
 
 	data_reshaped = reshape(data(1:L)',8+2*N_CRY+4*N_GAS+4,[]);

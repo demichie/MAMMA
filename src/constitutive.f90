@@ -273,6 +273,7 @@ MODULE constitutive
 
   !> Model for the equilibrium crystal volume fraction:\n
   !> - 'Vitturi2010'    => Eq. 4 of de' Michieli Vitturi et al. 2010;
+  !> - 'None'           => Without crystallization
   !> .
   CHARACTER*20 :: crystallization_model
 
@@ -1009,6 +1010,18 @@ CONTAINS
           
           beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'None' )
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = beta0(j)
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
           
        END DO
 
@@ -1108,6 +1121,16 @@ CONTAINS
        ENDDO
 
     END DO 
+
+    DO i=1,n_cry
+
+       T_m(i) = 1100.00
+
+       T_u(i) = 1000.00
+
+       T_i(i) = 900.00
+
+    ENDDO
 
   END SUBROUTINE update_kinetics
  
