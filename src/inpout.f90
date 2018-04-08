@@ -19,12 +19,13 @@ MODULE inpout
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom, n_components
   USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
-  USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry, L_nucleus
+  USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry, L_nucleus, L_nucleus_in
   USE constitutive, ONLY : cry_init_solid_solution, cry_current_solid_solution
+  USE constitutive, ONLY : cry_shape_factor_in
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
-  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars 
+  USE parameters, ONLY : n_cry , n_gas , n_eqns , n_vars , n_nodes
 
   ! -- Variables for the namelist NEWRUN_PARAMETERS
   USE geometry, ONLY : z0 , zN , radius_fixed, radius_min, radius_max,          &
@@ -170,8 +171,8 @@ MODULE inpout
   NAMELIST / permeability_parameters / xa, xb, xc
   
   NAMELIST / method_of_moments_parameters / n_mom, n_components, U_m ,         &
-       L0_cry_in, cry_shape_factor, cry_init_solid_solution,  I_m,             &
-       L_nucleus
+       L0_cry_in, cry_shape_factor_in, cry_init_solid_solution,  I_m,             &
+       L_nucleus_in
 
 CONTAINS
 
@@ -695,7 +696,8 @@ CONTAINS
     IF ( method_of_moments_flag ) THEN
     
        ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
-       ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus(n_cry) )
+       ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus_in(n_cry) )
+       ALLOCATE( cry_shape_factor_in(n_cry) , L_nucleus(n_cry) )
        ALLOCATE( cry_init_solid_solution(100, n_cry), cry_current_solid_solution(100, n_cry) )
        ALLOCATE( wt_components_fit(100) , rhoB_components(100) , sum_rhoB_components(n_cry) )
        ALLOCATE( wt_components_init(100) , rel_cry_components(100, n_cry) )
@@ -755,11 +757,17 @@ CONTAINS
        
        DO i = 1, n_cry
 
-          L0_cry(i, 1) = L_nucleus(i)
+          L0_cry(i, 1) = DCMPLX(L_nucleus_in(i), 0.D0)
 
-          L0_cry(i, 2) = L0_cry_in(i)
+          L0_cry(i, 2) = DCMPLX(L0_cry_in(i), 0.D0)
+
+          L_nucleus(i) = DCMPLX(L_nucleus_in(i), 0.D0)
+
+          cry_shape_factor(i) = DCMPLX(cry_shape_factor_in(i), 0.D0)
 
        END DO
+
+       n_nodes = NINT(0.5D0 * n_mom)
 
     ELSE
 

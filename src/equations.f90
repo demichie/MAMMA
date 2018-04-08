@@ -183,7 +183,7 @@ CONTAINS
 
        DO i = 1,n_cry 
 
-          sum_rhoB_components(i) = 0.0
+          sum_rhoB_components(i) = DCMPLX(0.D0, 0.D0)
 
           DO j = 1,n_components
 
@@ -502,6 +502,14 @@ CONTAINS
 
     END IF
 
+    !DO i=1,n_vars
+
+    !   PRINT *, flux(i)
+
+    !ENDDO
+
+    !PRINT *, ' '
+
   END SUBROUTINE eval_fluxes_qp
 
   !******************************************************************************
@@ -562,6 +570,7 @@ CONTAINS
     END IF
 
     CALL phys_var_qp( c_qp = qp )
+
     CALL eos
 
     !--------------- Evaluate the relaxation terms -----------------------------
@@ -647,7 +656,9 @@ CONTAINS
     relaxation_term(idx_mix_engy_eqn) = DCMPLX(0.D0,0.D0)
 
     ! relaxation term for dissolved gas -----------------------------------------
+
     CALL f_xdis_eq
+
     relaxation_term(idx_dis_gas_eqn_first:idx_dis_gas_eqn_last) =               &
          - ( x_d_md(1:n_gas) - x_d_md_eq(1:n_gas) ) * ( 1.D0 - alfa_2 )         &
          * ( rho_1 - SUM( beta(1:n_cry) * rho_c(1:n_cry) ) ) / tau_d(1:n_gas)   &
@@ -664,6 +675,7 @@ CONTAINS
     END DO
 
     ! relaxation term for exsolved gas ------------------------------------------
+
     CALL f_xdis_eq
 
     relaxation_term(idx_ex_gas_eqn_first:idx_ex_gas_eqn_last) =                 &
@@ -701,7 +713,7 @@ CONTAINS
              ELSE
 
                 relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) =                 &
-                   0.0
+                   DCMPLX(0.D0, 0.D0)
 
              END IF
           
@@ -728,7 +740,7 @@ CONTAINS
 
        DO i = 1,n_components
 
-          relaxation_term(idx_components_eqn_first - 1 + i) = 0.0
+          relaxation_term(idx_components_eqn_first - 1 + i) = DCMPLX(0.D0, 0.D0)
 
           DO j = 1,n_cry
 

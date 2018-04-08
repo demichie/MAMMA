@@ -820,8 +820,11 @@ CONTAINS
           ! ------------integrate the whole step --------------------------------
 
           IF ( verbose_level .GE. 1 ) THEN
+
              WRITE(*,*)''
+
              WRITE(*,*) '/--------full step---------/'
+
           END IF
 
           qp_full = qp_old
@@ -843,6 +846,7 @@ CONTAINS
           END IF
 
           fluxes_temp = fluxes_old
+
           nh_terms_temp = nh_terms_old
 
           IF ( check_convergence ) THEN
@@ -855,8 +859,11 @@ CONTAINS
 
 
              IF ( verbose_level .GE. 1 ) THEN
+
                 WRITE(*,*)''
+
                 WRITE(*,*) '/--------fist half step---------/'
+
              END IF
 
              qp_half(1:n_vars) = qp_old(1:n_vars)
@@ -899,12 +906,16 @@ CONTAINS
              zeta = zeta_old + dz
 
              IF ( verbose_level .GE. 1 ) THEN
+
                 WRITE(*,*)''
+
                 WRITE(*,*) '/--------second half step---------/'
+
              END IF
 
              ! use the values from the first step as old values
              CALL update_radius(zeta_old + 0.5D0 * dz)
+
              CALL eval_fluxes_qp( r_qp = qp_half , r_flux = fluxes_old )
 
              CALL eval_nonhyperbolic_terms_qp( r_qp = qp_half , r_nh_term_impl =&
@@ -1096,7 +1107,6 @@ CONTAINS
 
           ELSE
 
-
              ! --- if the error is big repeat the step with smaller dz
 
              dz = 0.950D0 * dz
@@ -1210,8 +1220,6 @@ CONTAINS
 
        IF ( ( r_alfa_2 .GE. alfa2_lat_thr ) .AND.                               &
             ( lateral_degassing_flag ) .AND. ( .NOT.lateral_degassing ) ) THEN
-
-          lateral_degassing = .TRUE.
 
           WRITE(*,*) 'Lateral degassing from z = ',zeta
 

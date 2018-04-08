@@ -19,7 +19,7 @@ MODULE melts_fit_module
   REAL*8, ALLOCATABLE :: wt_components_init(:)
 
   !> Information about the relation between crystals and phases 
-  REAL*8, ALLOCATABLE :: rel_cry_components(:,:)	
+  COMPLEX*16, ALLOCATABLE :: rel_cry_components(:,:)	
 
 CONTAINS
 
@@ -36,7 +36,7 @@ CONTAINS
 
     DO i=1,n_components
 
-       wt_components_fit(i) = 1.0 / n_components
+       wt_components_fit(i) =  1.D0 / n_components 
 
     END DO 
     
@@ -44,11 +44,11 @@ CONTAINS
 
           IF(( i == 1 .AND. j == 1 ) .OR. (i .GT. 1 .AND. j .GT. 1)) THEN
 
-             rel_cry_components(i,j) = 1.0	
+             rel_cry_components(i,j) = DCMPLX( 1.D0, 0.D0 )	
  
           ELSE
               
-             rel_cry_components(i,j) = 0.0	  
+             rel_cry_components(i,j) = DCMPLX( 0.D0, 0.D0 )	  
 
           ENDIF
 

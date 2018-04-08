@@ -140,7 +140,9 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE:: growth_mom(:,:,:)   !< moments of growth rate of crystals
 
-  REAL*8, ALLOCATABLE:: cry_shape_factor(:) !< shape factor of crystals
+  COMPLEX*16, ALLOCATABLE:: cry_shape_factor(:) !< shape factor of crystals
+
+  REAL*8, ALLOCATABLE:: cry_shape_factor_in(:) !< shape factor of crystals (input)
   
   REAL*8, ALLOCATABLE:: T_m(:) !< liquidus temperature of crystals
 
@@ -152,11 +154,13 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE:: T_i(:) !< temp of max nucleation rate of crystals
 
-  REAL*8, ALLOCATABLE:: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
+  COMPLEX*16, ALLOCATABLE:: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
 
   REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst (conduit bottom)
   
-  REAL*8, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus
+  COMPLEX*16, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus (input)
+
+  REAL*8, ALLOCATABLE:: L_nucleus_in(:) !< size of new nucleus
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
@@ -164,7 +168,7 @@ MODULE constitutive
   
   COMPLEX*16, ALLOCATABLE :: rhoB_components(:)   !< components bulk density
   
-  REAL*8, ALLOCATABLE :: sum_rhoB_components(:)   !< sum of components bulk density in the different crystals
+  COMPLEX*16, ALLOCATABLE :: sum_rhoB_components(:)   !< sum of components bulk density in the different crystals
   
   COMPLEX*16 :: u_1        !< melt-crystals phase local velocity
   COMPLEX*16 :: u_2        !< exsolved gas local velocity
@@ -1044,16 +1048,18 @@ CONTAINS
     
     IMPLICIT NONE
 
-    REAL*8 :: growth_rate
+    COMPLEX*8 :: growth_rate
+
+    REAL*8 :: r_growth_rate
     
     INTEGER, INTENT(IN) :: i_cry
     REAL*8, INTENT(IN) :: L_in
     
-    growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
+    r_growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
          ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( ( - ( T_u(i_cry) - DREAL(T)) &
          * T_m(i_cry) / ( ( T_m(i_cry) - T_u(i_cry) ) * DREAL(T) ) )  )
 
-    growth_rate = MAX( growth_rate, 0.0)
+    growth_rate = CMPLX( MAX( r_growth_rate, 0.D0), 0.D0 )
 
   END FUNCTION growth_rate
   
@@ -1072,18 +1078,20 @@ CONTAINS
     
     IMPLICIT NONE
 
-    REAL*8 :: nucleation_rate
+    COMPLEX*16 :: nucleation_rate
+
+    REAL*8 :: r_nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
     REAL*8, INTENT(IN) :: L_in
   
-    nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
+    r_nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
         * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
         ( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) + 3.0 * T_i(i_cry) ) * &
         ( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -      &
         ( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) ) )
 
-    nucleation_rate= MAX( nucleation_rate, 0.0)
+    nucleation_rate= DCMPLX( MAX( r_nucleation_rate, 0.D0 ), 0.D0 ) 
 
   END FUNCTION nucleation_rate
  
@@ -1124,11 +1132,11 @@ CONTAINS
 
     DO i=1,n_cry
 
-       T_m(i) = 1100.00
+       T_m(i) = 1200.00
 
-       T_u(i) = 1000.00
+       T_u(i) = 1150.00
 
-       T_i(i) = 900.00
+       T_i(i) = 1100.00
 
     ENDDO
 
@@ -2403,7 +2411,7 @@ CONTAINS
        END DO
 
     END DO
-    
+
     DO i = 1,n_cry
 
        DO j=1,n_nodes

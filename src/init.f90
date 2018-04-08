@@ -24,8 +24,6 @@ MODULE init
        idx_dis_gas_eqn_last , idx_ex_gas_eqn_first , idx_ex_gas_eqn_last ,      &
        idx_cry_eqn_first , idx_cry_eqn_last, idx_components_eqn_first,          &
        idx_components_eqn_last
-
-  USE parameters, ONLY : n_nodes
   
   IMPLICIT none
 
@@ -67,7 +65,7 @@ CONTAINS
     USE constitutive, ONLY : rho_2 , rho_md, rho_g, rho_1, rho_c
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
-    USE constitutive, ONLY : L0_cry , mom_cry , cry_shape_factor
+    USE constitutive, ONLY : L0_cry_in , L_nucleus_in , mom_cry , cry_shape_factor_in
     USE constitutive, ONLY : beta0
     USE parameters, ONLY : n_components
     USE constitutive, ONLY : cry_init_solid_solution, rhoB_components
@@ -303,8 +301,6 @@ CONTAINS
     idx = idx_beta_first
 
     IF ( method_of_moments_flag ) THEN
-
-       n_nodes = NINT(0.5D0 * n_mom)
  
        DO i = 1,n_cry
 
@@ -315,13 +311,13 @@ CONTAINS
   
                 IF(k .EQ. 2) THEN
 
-                    mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor(i)    &
-                         * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
+                    mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor_in(i)    &
+                         * L0_cry_in(i)**3.0 / L0_cry_in(i)**j 
                 
                 ELSE
 
-                    mom_cry(i,j,k) = 1.D-5 * alfa1_in / cry_shape_factor(i)    &
-                         * L0_cry(i,k)**3.0 / L0_cry(i,k)**j 
+                    mom_cry(i,j,k) = L_nucleus_in(i) * alfa1_in / cry_shape_factor_in(i)    &
+                         * L_nucleus_in(i)**3.0 / L_nucleus_in(i)**j 
 
                 END IF 
                 
@@ -351,14 +347,14 @@ CONTAINS
 
           END DO
 
-          IF( (wt_components_init(i)) .LT. 0.0) THEN
+          IF( ( wt_components_init(i) ) .LT. 0.D0 ) THEN
 
              WRITE(*,*) 'Initial volume of crystals is not compatible with composition'
              STOP
 
           ENDIF
 
-          rhoB_components(i) =  wt_components_init(i) * ((rho_1)*alfa1_in + (rho_2)*(1.D0 - alfa1_in) )
+          rhoB_components(i) =  wt_components_init(i) * REAL( (rho_1) * alfa1_in + (rho_2) * (1.D0 - alfa1_in) )
 
           qp(idx) =  rhoB_components(i)
 
