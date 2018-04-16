@@ -728,8 +728,7 @@ CONTAINS
 
     CALL update_radius(zeta)
 
-    IF ( ( .NOT. shooting ) .OR. ( flag_output ) ) CALL output_steady( zeta , &
-         qp , radius )
+    IF ( ( .NOT. shooting ) .OR. ( flag_output ) ) CALL output_steady( zeta , qp , radius )
 
     dz_max = ( zN - z0 ) / comp_cells
 
@@ -856,7 +855,6 @@ CONTAINS
              zeta = zeta_old + 0.5D0 * dz
              zeta_lith = zeta 
              CALL update_radius(zeta)
-
 
              IF ( verbose_level .GE. 1 ) THEN
 
@@ -1119,6 +1117,7 @@ CONTAINS
 
              IF ( dz .LT. 1E-20 ) THEN
 
+                WRITE(*,*) 'Aca'
                 WRITE(*,*)'Convergence Error: dz too small'
                 WRITE(*,*)'dz =', dz
                 STOP

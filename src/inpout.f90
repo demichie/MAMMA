@@ -754,7 +754,7 @@ CONTAINS
     IF ( method_of_moments_flag ) THEN
     
        n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom + n_components
-       
+
        DO i = 1, n_cry
 
           L0_cry(i, 1) = DCMPLX(L_nucleus_in(i), 0.D0)

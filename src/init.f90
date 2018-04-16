@@ -312,12 +312,12 @@ CONTAINS
                 IF(k .EQ. 2) THEN
 
                     mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor_in(i)    &
-                         * L0_cry_in(i)**3.0 / L0_cry_in(i)**j 
+                         * L0_cry_in(i)**j / L0_cry_in(i)**3.0 !Revisar
                 
                 ELSE
 
                     mom_cry(i,j,k) = L_nucleus_in(i) * alfa1_in / cry_shape_factor_in(i)    &
-                         * L_nucleus_in(i)**3.0 / L_nucleus_in(i)**j 
+                         * L_nucleus_in(i)**j  / L_nucleus_in(i)**3.0 !Revisar
 
                 END IF 
                 
