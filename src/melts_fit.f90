@@ -37,8 +37,6 @@ CONTAINS
     DO i=1,n_components
 
        wt_components_fit(i) =  1.D0 / n_components 
-
-    END DO 
     
        DO j=1,n_cry
 
@@ -53,6 +51,8 @@ CONTAINS
           ENDIF
 
        ENDDO
+ 
+    ENDDO
 
     RETURN
 

@@ -708,7 +708,7 @@ CONTAINS
              IF(k == 1) THEN 
 
                 relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) = &
-                   nucleation_rate(i,1.D0) * L_nucleus(i)**j * radius**2 * sum_rhoB_components(i) 
+                   nucleation_rate(i,1.D0) * radius**2.0 * sum_rhoB_components(i) 
 
              ELSE
 
