@@ -1117,7 +1117,6 @@ CONTAINS
 
              IF ( dz .LT. 1E-20 ) THEN
 
-                WRITE(*,*) 'Aca'
                 WRITE(*,*)'Convergence Error: dz too small'
                 WRITE(*,*)'dz =', dz
                 STOP

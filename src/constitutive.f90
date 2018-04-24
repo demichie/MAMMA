@@ -1087,7 +1087,7 @@ CONTAINS
   
     r_nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
         * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
-        ( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) + 3.0 * T_i(i_cry) ) * &
+        ( ( T_m(i_cry) - T_i(i_cry) ) ** 3.0 ) / (T_m(i_cry) - 3.0 * T_i(i_cry) ) * &
         ( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -      &
         ( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) ) )
 
