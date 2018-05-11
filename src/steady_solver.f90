@@ -290,7 +290,6 @@ CONTAINS
 
     IF ( verbose_level .GE. 1 ) READ(*,*)
 
-
     ! -------------------- SOLVE with u_inlet = V_2 ----------------------------
 
     check_interval = .FALSE.
@@ -522,7 +521,6 @@ CONTAINS
 
        END IF
 
-
        IF ( iter .GT. 20 ) THEN
 
           IF ( ( ( V_2 - V_0 ) / V_0 .LT. eps_conv ) .AND.                      &
@@ -637,7 +635,6 @@ CONTAINS
     USE equations, ONLY : eval_fluxes_qp
     USE equations, ONLY : phys_var_qp
 
-    
     USE geometry, ONLY : update_radius
 
     ! external variables
@@ -963,9 +960,13 @@ CONTAINS
           END IF
 
           IF ( verbose_level .GE. 1 ) THEN
+
              WRITE(*,*)''
+
              WRITE(*,*) '<<<<<<<<< check_convergence >>>>>>>> ',check_convergence
+
              READ(*,*)
+
           END IF
           
           IF ( check_convergence ) THEN
@@ -1099,6 +1100,7 @@ CONTAINS
                      REAL(rho_mix * u_mix)*3.14*radius*radius
                 WRITE(*,*)''
                 READ(*,*)
+
              END IF
 
              EXIT find_step_loop
@@ -1509,7 +1511,6 @@ CONTAINS
              END DO
 
           END IF
-
           
           qp = qp_rel * qp_org
 
@@ -1550,7 +1551,6 @@ CONTAINS
              WRITE(*,*) 'zeta = '
              WRITE(*,*) zeta
 
-
              READ(*,*)
 
           END IF
@@ -1563,7 +1563,9 @@ CONTAINS
              WRITE(*,*) 'left_matrix'
 
              DO j=1,n_eqns
+
                 WRITE(*,*) left_matrix(j,:)
+
              END DO
 
              READ(*,*)
@@ -2077,7 +2079,6 @@ CONTAINS
 
     !--- check on small values of the phisical variables ------------------------
 
-
     r_p_1 = qp(idx_p1)
     r_p_2 = qp(idx_p2)
 
@@ -2151,7 +2152,6 @@ CONTAINS
        IF ( verbose_level .GE. -1 ) THEN
 
           WRITE(*,*) 'Pressure Conditions reached before the exit' 
-          !READ(*,*)
 
        END IF
 
@@ -2168,7 +2168,6 @@ CONTAINS
        IF ( verbose_level .GE. -1 ) THEN
 
           WRITE(*,*) 'Dissolved gas Conditions reached before the exit' 
-          !READ(*,*)
 
        END IF
 
@@ -2178,8 +2177,6 @@ CONTAINS
        RETURN
 
     END IF
-
-
 
     ! --------------------------------------------------------------------------
 

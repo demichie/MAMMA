@@ -18,7 +18,7 @@ MODULE inpout
   
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom, n_components
-  USE constitutive, ONLY : T_u, U_m, T_m, I_m, T_i
+  USE constitutive, ONLY : U_m, I_m
   USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry, L_nucleus, L_nucleus_in
   USE constitutive, ONLY : cry_init_solid_solution, cry_current_solid_solution
   USE constitutive, ONLY : cry_shape_factor_in
@@ -279,7 +279,6 @@ CONTAINS
     u1_in = 0.D0
     shooting = .TRUE.
     eps_conv = 1.D5
-
     
     ! exsolved gas parameters
     gas_law_init = 'VDW'
@@ -595,6 +594,7 @@ CONTAINS
 
     ! external subroutines
     USE constitutive, ONLY : allocate_phases_parameters
+    USE melts_fit_module, ONLY : read_fit
 
     ! external variables
     USE constitutive, ONLY : n_drag_models , available_drag_models
@@ -604,7 +604,8 @@ CONTAINS
     USE constitutive, ONLY : T0_c , bar_p_c !, bar_e_c
     USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
     
-    USE constitutive, ONLY : T_m , mom_cry, growth_mom, rhoB_components, sum_rhoB_components 
+    USE constitutive, ONLY : mom_cry, growth_mom, rhoB_components, sum_rhoB_components 
+    USE constitutive, ONLY : T_s, T_u, T_i, T_m 
     USE melts_fit_module, ONLY : wt_components_init, wt_components_fit, rel_cry_components  
     
     USE init, ONLY : beta_in , xd_md_in
@@ -695,7 +696,7 @@ CONTAINS
     ! ------- READ method_of_moments_parameters NAMELIST ------------------------
     IF ( method_of_moments_flag ) THEN
     
-       ALLOCATE( T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
+       ALLOCATE( T_s(n_cry) , T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
        ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus_in(n_cry) )
        ALLOCATE( cry_shape_factor_in(n_cry) , L_nucleus(n_cry) )
        ALLOCATE( cry_init_solid_solution(100, n_cry), cry_current_solid_solution(100, n_cry) )
@@ -729,6 +730,8 @@ CONTAINS
 
        cry_init_solid_solution = cry_init_ss_all
 
+       CALL read_fit
+
        IF ( ios .NE. 0 ) THEN
           
           WRITE(*,*) 'IOSTAT=',ios
@@ -752,7 +755,7 @@ CONTAINS
     END IF
     
     IF ( method_of_moments_flag ) THEN
-    
+
        n_vars = 5 + 2 * n_gas + 2 * n_cry * n_mom + n_components
 
        DO i = 1, n_cry
@@ -776,7 +779,6 @@ CONTAINS
     END IF
        
     n_eqns = n_vars
-
 
     READ(input_unit,steady_boundary_conditions , IOSTAT = ios )
 
@@ -949,7 +951,6 @@ CONTAINS
        REWIND(input_unit)
        
     END IF
-
     
     check_model = .FALSE.
 
@@ -977,7 +978,6 @@ CONTAINS
        STOP
 
     END IF
-
 
     IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
        
@@ -1073,7 +1073,6 @@ CONTAINS
 
     END IF
 
-
     ! ------- READ temperature_parameters NAMELIST ------------------------------
     READ(input_unit, temperature_parameters , IOSTAT = ios )
 
@@ -1114,7 +1113,6 @@ CONTAINS
           REWIND(input_unit)
           
        END IF
-       
        
        IF (fragmentation_model .NE. 1 ) THEN
           
@@ -1412,7 +1410,6 @@ CONTAINS
 107    FORMAT(12(f5.2,1x))
        
     END IF
-    
 
     CLOSE(backup_unit)
 
@@ -1645,4 +1642,3 @@ CONTAINS
   END FUNCTION lettera
 
 END MODULE inpout
-

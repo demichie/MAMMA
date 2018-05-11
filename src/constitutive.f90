@@ -143,6 +143,8 @@ MODULE constitutive
   COMPLEX*16, ALLOCATABLE:: cry_shape_factor(:) !< shape factor of crystals
 
   REAL*8, ALLOCATABLE:: cry_shape_factor_in(:) !< shape factor of crystals (input)
+
+  REAL*8, ALLOCATABLE:: T_s(:) !< solidus temperature of crystals
   
   REAL*8, ALLOCATABLE:: T_m(:) !< liquidus temperature of crystals
 
@@ -158,9 +160,9 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst (conduit bottom)
   
-  COMPLEX*16, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus (input)
+  COMPLEX*16, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus
 
-  REAL*8, ALLOCATABLE:: L_nucleus_in(:) !< size of new nucleus
+  REAL*8, ALLOCATABLE:: L_nucleus_in(:) !< size of new nucleus (input)
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
@@ -1083,7 +1085,7 @@ CONTAINS
     REAL*8 :: r_nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
-    REAL*8, INTENT(IN) :: L_in
+    COMPLEX*16, INTENT(IN) :: L_in
   
     r_nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
         * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
@@ -1091,56 +1093,237 @@ CONTAINS
         ( ( T_m(i_cry) / ( T_i(i_cry) * ( T_m(i_cry) - T_i(i_cry) ) ** 2 ) ) -      &
         ( T_m(i_cry) / ( DREAL(T) * ( T_m(i_cry) - DREAL(T) ) ** 2 ) ) ) ) )
 
-    nucleation_rate= DCMPLX( MAX( r_nucleation_rate, 0.D0 ), 0.D0 ) 
+    nucleation_rate = DCMPLX( MAX( r_nucleation_rate, 0.D0 ), 0.D0 ) 
 
   END FUNCTION nucleation_rate
  
   !******************************************************************************
   !> @author 
+  !> Alvaro Aravena
   !
   !> This subrotine updates kinetic parameters
-  !> \date 13/03/12       
+  !> \date 05/05/18       
   !******************************************************************************
   
-  SUBROUTINE update_kinetics ! It must be modified
+  SUBROUTINE update_kinetics
+
+    USE melts_fit_module
 
     IMPLICIT NONE
 
     INTEGER :: i, j
-  
-    DO i=1,n_components
 
-       DO j=1,n_cry
+    REAL*8, DIMENSION(n_components) :: current_comp
 
-          IF(( i == 1 .AND. j == 1 ) ) THEN
+    REAL*8 :: current_fraction
 
-             cry_current_solid_solution(i,j) = 1.0
-  
-          ELSEIF(( i .GT. 1 ) .AND. ( j .GT. 1 )) THEN
+    REAL*8 :: current_p_1_bar
 
-             cry_current_solid_solution(i,j) = 1.0 / (n_components - 1.0)
+    REAL*8 :: current_p00, current_p10, current_p20, current_p01, current_p02, current_p11
+    REAL*8 :: current_q00, current_q10, current_q20, current_q01, current_q02, current_q11
+    REAL*8 :: current_s00, current_s10, current_s20, current_s01, current_s02, current_s11
+    REAL*8 :: current_T_ref
+    REAL*8 :: a_fit, b_fit, c_fit, delta_fit
 
-          ELSE
-              
-             cry_current_solid_solution(i,j) = 0.0
+    REAL*8 :: factor_0, factor_11, factor_21, factor_12, factor_22
+
+    IF( type_system .EQ. 1) THEN
+
+       DO i=1,n_components
+
+          current_comp(i) = REAL(rhoB_components(i) / ( rho_1 * alfa_1 + rho_2 * (1 - alfa_1) ) / &
+             ( 1 - SUM(x_c_1)) / x_1)
+
+       ENDDO
+
+       current_fraction = SUM( current_comp )
+
+        DO i=1,n_components
+
+          current_comp(i) = current_comp(i) / current_fraction
+
+       ENDDO
+      
+       current_p_1_bar = REAL(p_1) / 1.0e5
+
+       DO i= 1,n_pressure
+
+          IF( pressure_list(i) .GT. current_p_1_bar ) THEN
+
+              EXIT
 
           ENDIF
 
        ENDDO
 
-    END DO 
+       DO j= 1,n_fraction
 
-    DO i=1,n_cry
+          IF( fraction_list(j) .GT. current_fraction ) THEN
 
-       T_m(i) = 1200.00
+              EXIT
 
-       T_u(i) = 1150.00
+          ENDIF
 
-       T_i(i) = 1100.00
+       ENDDO
 
-    ENDDO
+       i = MIN(n_pressure, MAX( 2, i ) )
+
+       j = MIN(n_fraction, MAX( 2, j ) )
+
+       factor_0 = 1.D0 / ( pressure_list(i) - pressure_list(i-1) ) /  ( fraction_list(j) - fraction_list(j-1) )
+
+       factor_11 = ( pressure_list(i) - current_p_1_bar ) * ( fraction_list(j) - current_fraction )
+
+       factor_21 = ( current_p_1_bar - pressure_list(i-1)) * ( fraction_list(j) - current_fraction )
+
+       factor_12 = ( pressure_list(i) - current_p_1_bar ) * (  current_fraction - fraction_list(j-1) )
+
+       factor_22 = ( current_p_1_bar - pressure_list(i-1) ) * (  current_fraction - fraction_list(j-1) )
+
+       current_p00 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p00 )
+       current_p01 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p01 )
+       current_p02 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p02 )
+       current_p10 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p10 )
+       current_p20 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p20 )
+       current_p11 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , p11 )
+       current_q00 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q00 )
+       current_q01 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q01 )
+       current_q02 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q02 )
+       current_q10 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q10 )
+       current_q20 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q20 )
+       current_q11 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , q11 )
+       current_s00 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s00 )
+       current_s01 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s01 )
+       current_s02 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s02 )
+       current_s10 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s10 )
+       current_s20 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s20 )
+       current_s11 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s11 )
+       current_T_ref = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , T_ref )
+
+       T_m(1) = current_T_ref * ( current_p00 + current_p10 * current_comp(1) + current_p20 *         &
+          current_comp(1) * current_comp(1) + current_p01 * current_comp(2) + current_p02 *         &
+          current_comp(2) * current_comp(2) + current_p11 * current_comp(1) * current_comp(2) ) 
+
+       T_m(2) = current_T_ref * ( current_q00 + current_q10 * current_comp(1) + current_q20 *         &
+          current_comp(1) * current_comp(1) + current_q01 * current_comp(2) + current_q02 *         &
+          current_comp(2) * current_comp(2) + current_q11 * current_comp(1) * current_comp(2) ) 
+
+       T_s(1) = 0.D0
+
+       T_s(2) = current_T_ref * ( current_s00 + current_s10 * current_comp(1) + current_s20 *         &
+          current_comp(1) * current_comp(1) + current_s01 * current_comp(2) + current_s02 *         &
+          current_comp(2) * current_comp(2) + current_s11 * current_comp(1) * current_comp(2) ) 
+
+       DO i=1,n_cry
+
+          T_u(i) = 0.92 * T_m(i)
+
+          T_i(i) = 0.88 * T_m(i)
+
+       ENDDO
+
+       DO i=1,n_cry
+
+          IF( REAL(T) .GT. T_m(i) ) THEN
+
+             DO j=1,n_components
+
+                cry_current_solid_solution(j,i) = 0.D0
+
+             ENDDO
+
+          ELSE
+           
+             IF( i .EQ. 1) THEN
+
+                cry_current_solid_solution(1,i) = 1.D0
+                cry_current_solid_solution(2,i) = 0.D0
+                cry_current_solid_solution(3,i) = 0.D0
+
+             ELSE
+
+                cry_current_solid_solution(1,i) = 0.D0
+
+                a_fit = current_s20 + current_s02 - current_s11
+
+                b_fit = current_s10 - current_s01 - 2 * current_s02 * (1 - current_comp(1)) +  &
+                   current_s11 * (1 -  current_comp(1))
+
+                c_fit = current_s00 + current_s02 * ( 1 - current_comp(1)) * ( 1 - current_comp(1)) + &
+                   current_s01 * ( 1 - current_comp(1)) - REAL(T) / current_T_ref
+
+                delta_fit = b_fit * b_fit - 4 * a_fit * c_fit
+
+                IF( (a_fit .GT. 0) .AND. (delta_fit .LT. 0) ) THEN
+
+                   cry_current_solid_solution(2,i) = current_comp(2)
+
+                ELSEIF( (a_fit .LT. 0) .AND. (delta_fit .LT. 0) ) THEN
+
+                   cry_current_solid_solution(2,i) = 1.D0
+
+                ELSEIF( delta_fit .GT. 0 ) THEN
+
+                   cry_current_solid_solution(2,i) = ( - b_fit + SQRT(delta_fit) ) / ( 2.D0 * a_fit )   
+
+                ENDIF
+
+                IF( (current_comp(2) .LT. 1e-20) .AND.  (current_comp(3) .GT. 1e-20) ) THEN
+
+                   cry_current_solid_solution(2,i) = 0.D0
+
+                ELSEIF( (current_comp(2) .GT. 1e-20) .AND.  (current_comp(3) .LT. 1e-20) ) THEN
+
+                   cry_current_solid_solution(2,i) = 1.D0
+
+                ELSEIF( T_s(i) .GT. T_m(i) ) THEN
+
+                   cry_current_solid_solution(2,i) = current_comp(2)
+
+                ENDIF
+                
+                cry_current_solid_solution(2,i) = cry_current_solid_solution(2,i) / (1.D0 + 1e-20 - current_comp(1) )
+
+                cry_current_solid_solution(2,i) = MIN( 1.D0, MAX( 0.D0, cry_current_solid_solution(2,i) ) )
+
+                cry_current_solid_solution(3,i) = 1.D0 - cry_current_solid_solution(2,i)
+
+             ENDIF
+
+          ENDIF
+
+       ENDDO
+
+    ENDIF
 
   END SUBROUTINE update_kinetics
+
+  !******************************************************************************
+  !> @author 
+  !> Alvaro Aravena
+  !
+  !> This function develops 2d interpolations
+  !> \date 05/05/18       
+  !******************************************************************************
+  
+  FUNCTION interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22 , i , j , matrix )
+
+    USE melts_fit_module, ONLY: n_pressure, n_fraction
+
+    IMPLICIT NONE
+
+    REAL*8 :: interp_2d
+
+    REAL*8, INTENT(IN) :: factor_0, factor_11, factor_21, factor_12, factor_22
+
+    REAL*8, INTENT(IN) :: matrix(n_pressure, n_fraction)
+
+    INTEGER, INTENT(IN) :: i, j
+
+    interp_2d = factor_0 * ( matrix(i-1,j-1)* factor_11 +  matrix(i,j-1)* factor_21 + &
+        matrix(i-1,j)* factor_12 +  matrix(i,j)* factor_22 )
+
+  END FUNCTION interp_2d
  
   !******************************************************************************
   !> @author 
@@ -1156,6 +1339,7 @@ CONTAINS
     USE geometry, ONLY : zN
 
     USE complexify 
+
     IMPLICIT NONE
 
     p_lith = ( zN - zeta_lith ) * rho_cr * grav
@@ -1182,7 +1366,6 @@ CONTAINS
     p_hydro = ( zN - zeta_lith ) * rho_w * grav
 
   END SUBROUTINE hydrostatic_pressure
-
 
   !******************************************************************************
   !> @author 
