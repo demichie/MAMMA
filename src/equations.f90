@@ -708,7 +708,7 @@ CONTAINS
              IF(k == 1) THEN 
 
                 relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) = &
-                   nucleation_rate(i,1.D0) * radius**2.0 * sum_rhoB_components(i) 
+                   nucleation_rate(i,L_nucleus(i)) * radius**2.0 * sum_rhoB_components(i) / rho_1
 
              ELSE
 
@@ -721,13 +721,13 @@ CONTAINS
                 IF(k == 1) THEN 
 
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) = &
-                      nucleation_rate(i,1.D0) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
-                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k)
+                      nucleation_rate(i,L_nucleus(i)) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
+                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k) / rho_1
 
                 ELSE
 
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =  &
-                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k)
+                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k) / rho_1
 
                 END IF
 
