@@ -233,7 +233,7 @@ MAMMA_SOURCES = \
                 parameters.f90 \
                 melts_fit.f90 \
 		complexify.f90 \
-                constitutive.f90 \
+		constitutive.f90 \
 		equations.f90 \
                 init.f90 \
                 inpout.f90 \

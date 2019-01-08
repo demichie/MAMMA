@@ -9,6 +9,7 @@
 MODULE constitutive
 
   USE geometry, ONLY : pi
+  USE parameters, ONLY : method_of_moments_flag
   USE parameters, ONLY : verbose_level
   USE parameters, ONLY : n_eqns , n_vars, n_components
   USE parameters, ONLY : n_cry , n_gas , n_mom
@@ -140,10 +141,6 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE:: growth_mom(:,:,:)   !< moments of growth rate of crystals
 
-  COMPLEX*16, ALLOCATABLE:: cry_shape_factor(:) !< shape factor of crystals
-
-  REAL*8, ALLOCATABLE:: cry_shape_factor_in(:) !< shape factor of crystals (input)
-
   REAL*8, ALLOCATABLE:: T_s(:) !< solidus temperature of crystals
   
   REAL*8, ALLOCATABLE:: T_m(:) !< liquidus temperature of crystals
@@ -156,13 +153,11 @@ MODULE constitutive
 
   REAL*8, ALLOCATABLE:: T_i(:) !< temp of max nucleation rate of crystals
 
-  COMPLEX*16, ALLOCATABLE:: L0_cry(:,:) !< initial size of crystals (conduit bottom) 
-
-  REAL*8, ALLOCATABLE :: L0_cry_in(:) !< initial size of phenocryst (conduit bottom)
+  REAL*8, ALLOCATABLE :: M0_cry_in(:) !< initial mass of phenocryst (conduit bottom)
   
-  COMPLEX*16, ALLOCATABLE:: L_nucleus(:) !< size of new nucleus
+  COMPLEX*16, ALLOCATABLE:: M_nucleus(:) !< mass of new nucleus
 
-  REAL*8, ALLOCATABLE:: L_nucleus_in(:) !< size of new nucleus (input)
+  REAL*8, ALLOCATABLE:: M_nucleus_in(:) !< mass of new nucleus (input)
   
   REAL*8, ALLOCATABLE :: cry_init_solid_solution(:,:) !< initial composition of phenocrysts
   
@@ -784,6 +779,7 @@ CONTAINS
          ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) )
 
     rho_m = ( p_1 + bar_p_m ) / ( T * cv_m * ( gamma_m - DCMPLX(1.D0,0.D0) ) )
+
     rho_d(1:n_gas) = ( p_1 + bar_p_d(1:n_gas) ) / ( T * cv_d(1:n_gas) *         &
          ( gamma_d(1:n_gas) - DCMPLX(1.D0,0.D0) ) )
 
@@ -926,7 +922,7 @@ CONTAINS
 
           ! Henry's law
 
-          x_d_md_eq(1:n_gas) = solub(1:n_gas) * (alfa_g_2(1:n_gas) * p_2 )      &
+          x_d_md_eq(1:n_gas) = solub(1:n_gas) * ( alfa_g_2(1:n_gas) * p_2 )      &
                ** solub_exp(1:n_gas)
 
        CASE ( 'Polynomial' )
@@ -1040,13 +1036,13 @@ CONTAINS
   !
   !> This function evaluates the growth rate of crystals given the size. 
   !> \param[in]   i_cry crystal component index 
-  !> \param[in]   L_in  crystal size
+  !> \param[in]   M_in  crystal mass
   !> \date 22/10/2013
   !> @author 
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION growth_rate(i_cry, L_in)
+  FUNCTION growth_rate(i_cry, M_in)
     
     IMPLICIT NONE
 
@@ -1055,7 +1051,7 @@ CONTAINS
     REAL*8 :: r_growth_rate
     
     INTEGER, INTENT(IN) :: i_cry
-    REAL*8, INTENT(IN) :: L_in
+    REAL*8, INTENT(IN) :: M_in
     
     r_growth_rate = U_m(i_cry) * ( T_m(i_cry) - T ) * T_u(i_cry) /                &
          ( ( T_m(i_cry) - T_u(i_cry) ) * T ) * DEXP( ( - ( T_u(i_cry) - DREAL(T)) &
@@ -1070,13 +1066,13 @@ CONTAINS
   !
   !> This function evaluates the nucleation rate of crystals given the size. 
   !> \param[in]   i_cry crystal component index 
-  !> \param[in]   L_in  crystal size
+  !> \param[in]   M_in  crystal mass
   !> \date 22/10/2013
   !> @author 
   !> Mattia de' Michieli Vitturi
   !******************************************************************************
 
-  FUNCTION nucleation_rate(i_cry, L_in)
+  FUNCTION nucleation_rate(i_cry, M_in)
     
     IMPLICIT NONE
 
@@ -1085,7 +1081,7 @@ CONTAINS
     REAL*8 :: r_nucleation_rate
     
     INTEGER, INTENT(IN) :: i_cry
-    COMPLEX*16, INTENT(IN) :: L_in
+    COMPLEX*16, INTENT(IN) :: M_in
   
     r_nucleation_rate = I_m(i_cry) * DEXP( (( T_u(i_cry) / (T_m(i_cry) - T_u(i_cry)) ) &
         * ( ( T_m(i_cry) / T_i(i_cry) ) - ( T_m(i_cry) / DREAL(T) ) ) -             &
@@ -1114,17 +1110,13 @@ CONTAINS
     INTEGER :: i, j
 
     REAL*8, DIMENSION(n_components) :: current_comp
-
     REAL*8 :: current_fraction
-
     REAL*8 :: current_p_1_bar
-
     REAL*8 :: current_p00, current_p10, current_p20, current_p01, current_p02, current_p11
     REAL*8 :: current_q00, current_q10, current_q20, current_q01, current_q02, current_q11
     REAL*8 :: current_s00, current_s10, current_s20, current_s01, current_s02, current_s11
     REAL*8 :: current_T_ref
     REAL*8 :: a_fit, b_fit, c_fit, delta_fit
-
     REAL*8 :: factor_0, factor_11, factor_21, factor_12, factor_22
 
     IF( type_system .EQ. 1) THEN
@@ -1200,19 +1192,19 @@ CONTAINS
        current_s11 = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , s11 )
        current_T_ref = interp_2d( factor_0, factor_11, factor_21, factor_12, factor_22, i , j , T_ref )
 
-       T_m(1) = current_T_ref * ( current_p00 + current_p10 * current_comp(1) + current_p20 *         &
-          current_comp(1) * current_comp(1) + current_p01 * current_comp(2) + current_p02 *         &
-          current_comp(2) * current_comp(2) + current_p11 * current_comp(1) * current_comp(2) ) 
+       T_m(2) = current_T_ref * ( current_p00 + current_p10 * current_comp(3) + current_p20 *         &
+          current_comp(3) * current_comp(3) + current_p01 * current_comp(2) + current_p02 *         &
+          current_comp(2) * current_comp(2) + current_p11 * current_comp(3) * current_comp(2) ) 
 
-       T_m(2) = current_T_ref * ( current_q00 + current_q10 * current_comp(1) + current_q20 *         &
-          current_comp(1) * current_comp(1) + current_q01 * current_comp(2) + current_q02 *         &
-          current_comp(2) * current_comp(2) + current_q11 * current_comp(1) * current_comp(2) ) 
+       T_m(1) = current_T_ref * ( current_q00 + current_q10 * current_comp(3) + current_q20 *         &
+          current_comp(3) * current_comp(3) + current_q01 * current_comp(2) + current_q02 *         &
+          current_comp(2) * current_comp(2) + current_q11 * current_comp(3) * current_comp(2) ) 
 
-       T_s(1) = 0.D0
+       T_s(2) = 0.D0
 
-       T_s(2) = current_T_ref * ( current_s00 + current_s10 * current_comp(1) + current_s20 *         &
-          current_comp(1) * current_comp(1) + current_s01 * current_comp(2) + current_s02 *         &
-          current_comp(2) * current_comp(2) + current_s11 * current_comp(1) * current_comp(2) ) 
+       T_s(1) = current_T_ref * ( current_s00 + current_s10 * current_comp(3) + current_s20 *         &
+          current_comp(3) * current_comp(3) + current_s01 * current_comp(2) + current_s02 *         &
+          current_comp(2) * current_comp(2) + current_s11 * current_comp(3) * current_comp(2) ) 
 
        DO i=1,n_cry
 
@@ -1234,23 +1226,23 @@ CONTAINS
 
           ELSE
            
-             IF( i .EQ. 1) THEN
+             IF( i .EQ. 2 ) THEN
 
-                cry_current_solid_solution(1,i) = 1.D0
+                cry_current_solid_solution(1,i) = 0.D0
                 cry_current_solid_solution(2,i) = 0.D0
-                cry_current_solid_solution(3,i) = 0.D0
+                cry_current_solid_solution(3,i) = 1.D0
 
              ELSE
 
-                cry_current_solid_solution(1,i) = 0.D0
+                cry_current_solid_solution(3,i) = 0.D0
 
                 a_fit = current_s20 + current_s02 - current_s11
 
-                b_fit = current_s10 - current_s01 - 2 * current_s02 * (1 - current_comp(1)) +  &
-                   current_s11 * (1 -  current_comp(1))
+                b_fit = current_s10 - current_s01 - 2 * current_s02 * (1 - current_comp(3)) +  &
+                   current_s11 * (1 -  current_comp(3))
 
-                c_fit = current_s00 + current_s02 * ( 1 - current_comp(1)) * ( 1 - current_comp(1)) + &
-                   current_s01 * ( 1 - current_comp(1)) - REAL(T) / current_T_ref
+                c_fit = current_s00 + current_s02 * ( 1 - current_comp(3)) * ( 1 - current_comp(3)) + &
+                   current_s01 * ( 1 - current_comp(3)) - REAL(T) / current_T_ref
 
                 delta_fit = b_fit * b_fit - 4 * a_fit * c_fit
 
@@ -1268,11 +1260,11 @@ CONTAINS
 
                 ENDIF
 
-                IF( (current_comp(2) .LT. 1e-20) .AND.  (current_comp(3) .GT. 1e-20) ) THEN
+                IF( (current_comp(2) .LT. 1e-20) .AND.  (current_comp(1) .GT. 1e-20) ) THEN
 
                    cry_current_solid_solution(2,i) = 0.D0
 
-                ELSEIF( (current_comp(2) .GT. 1e-20) .AND.  (current_comp(3) .LT. 1e-20) ) THEN
+                ELSEIF( (current_comp(2) .GT. 1e-20) .AND.  (current_comp(1) .LT. 1e-20) ) THEN
 
                    cry_current_solid_solution(2,i) = 1.D0
 
@@ -1282,11 +1274,11 @@ CONTAINS
 
                 ENDIF
                 
-                cry_current_solid_solution(2,i) = cry_current_solid_solution(2,i) / (1.D0 + 1e-20 - current_comp(1) )
+                cry_current_solid_solution(2,i) = cry_current_solid_solution(2,i) / (1.D0 + 1e-20 - current_comp(3) )
 
                 cry_current_solid_solution(2,i) = MIN( 1.D0, MAX( 0.D0, cry_current_solid_solution(2,i) ) )
 
-                cry_current_solid_solution(3,i) = 1.D0 - cry_current_solid_solution(2,i)
+                cry_current_solid_solution(1,i) = 1.D0 - cry_current_solid_solution(2,i)
 
              ENDIF
 
@@ -1327,7 +1319,7 @@ CONTAINS
  
   !******************************************************************************
   !> @author 
-  !> Mattia de' Michieli Vitturi
+  !> Alvaro Aravena
   !> \brief Lithostatic pressure
   !
   !> This subrotine evaluates the lithostatic pressure at depth zeta
@@ -1345,11 +1337,10 @@ CONTAINS
     p_lith = ( zN - zeta_lith ) * rho_cr * grav
 
   END SUBROUTINE lithostatic_pressure
-
   
   !******************************************************************************
   !> @author 
-  !> Mattia de' Michieli Vitturi
+  !> Alvaro Aravena
   !> \brief Hydrostatic pressure
   !
   !> This subrotine evaluates the hydrostatic pressure at depth zeta
@@ -1765,6 +1756,8 @@ CONTAINS
   SUBROUTINE f_viscmelt
 
     USE complexify 
+    USE melts_fit_module, ONLY : wt_oxide_residual, wt_oxide_components
+
     IMPLICIT NONE
 
     COMPLEX*16 :: w
@@ -1881,17 +1874,38 @@ CONTAINS
        ! Call for dissolved water in te melt from the model and add it to the   
        ! composition of glass in wt
 
-       DO i = 1,12
+       IF( method_of_moments_flag ) THEN
 
-          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+          DO i = 1,12
 
-       END DO
+             wt(i) = DCMPLX( wt_oxide_residual(i) , 0.D0 )
 
-       wt(11) = w
+          END DO
+
+          DO i = 1, n_components
+
+             wt = wt + 100.0 * ((rhoB_components(i) / (alfa_1 * rho_1 * &
+                      (1.0 - x_d_1) )) * wt_oxide_components(1:12,i))
+
+          END DO       
+
+       ELSE
+
+          DO i = 1,12
+
+             wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+          END DO
+
+       ENDIF
+
+       wt(11) = 0
 
        ! Create the normalized wt. % distribution
+       norm_wt = 100.D0 * ( wt / (SUM(wt) + w) )
 
-       norm_wt = 100.D0 * ( wt / SUM(wt) )
+       wt(11) = w
+       norm_wt(11) = w 
 
        ! Change to molar fractions
 
@@ -1901,14 +1915,11 @@ CONTAINS
        xmf = ( norm_wt / mw ) * gfw
 
        ! Model coefficients
-
        bb  = [159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43,     &
             -0.91, 17.62]
        cc  = [2.75, 15.72, 8.32, 10.2, -12.29, -99.54, 0.3]
 
-       ! Load composition-based matrix for multiplication against 
-       ! model-coefficients
-
+       ! Load composition-based matrix for multiplication against model-coefficients
        siti = xmf(1) + xmf(2)
        tial = xmf(2) + xmf(3)
        fmm  = xmf(4) + xmf(5) + xmf(6)
@@ -1937,7 +1948,6 @@ CONTAINS
        ccf =   [c1, c2, c3, c4, c5, c6, c11]   
 
        ! Model main parameters
-
        A  = -4.55D0
        B  = SUM( bb * bcf )
        C  = SUM( cc * ccf )
@@ -1955,18 +1965,38 @@ CONTAINS
        ! Call for dissolved water in te melt from the model and add it to the   
        ! composition of glass in wt
 
-       DO i = 1,12
+       IF( method_of_moments_flag ) THEN
 
-          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+          DO i = 1,12
 
-       END DO
+             wt(i) = DCMPLX( wt_oxide_residual(i) , 0.D0 )
 
+          END DO
 
-       wt(11) = w
+          DO i = 1, n_components
+
+             wt = wt + 100.0 * ((rhoB_components(i) / (alfa_1 * rho_1 * &
+                      (1.0 - x_d_1) )) * wt_oxide_components(1:12,i))
+
+          END DO       
+
+       ELSE
+
+          DO i = 1,12
+
+             wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+          END DO
+
+       ENDIF
+
+       wt(11) = 0
 
        ! Create the normalized wt. % distribution
+       norm_wt = 100.D0 * ( wt / (SUM(wt) + w) )
 
-       norm_wt = 100.D0 * ( wt / SUM(wt) )
+       wt(11) = w
+       norm_wt(11) = w 
 
        ! Change to molar fractions
 
@@ -1997,17 +2027,38 @@ CONTAINS
        ! Call for dissolved water in te melt from the model and add it to the   
        ! composition of glass in wt
 
-       DO i = 1,12
+       IF( method_of_moments_flag ) THEN
 
-          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+          DO i = 1,12
 
-       END DO
+             wt(i) = DCMPLX( wt_oxide_residual(i) , 0.D0 )
 
-       wt(11) = w
+          END DO
+
+          DO i = 1, n_components
+
+             wt = wt + 100.0 * ((rhoB_components(i) / (alfa_1 * rho_1 * &
+                      (1.0 - x_d_1) )) * wt_oxide_components(1:12,i))
+
+          END DO       
+
+       ELSE
+
+          DO i = 1,12
+
+             wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+          END DO
+
+       ENDIF
+
+       wt(11) = 0
 
        ! Create the normalized wt. % distribution
+       norm_wt = 100.D0 * ( wt / (SUM(wt) + w) )
 
-       norm_wt = 100.D0 * ( wt / SUM(wt) )
+       wt(11) = w
+       norm_wt(11) = w 
 
        ! Change to molar fractions
 
@@ -2030,24 +2081,43 @@ CONTAINS
        visc_melt = A + B / ( T - C )
        visc_melt = 10.D0 ** visc_melt
 
-
     CASE ( 'Giordano_et_al2009' )
 
        ! Call for dissolved water in te melt from the model and add it to the   
        ! composition of glass in wt
 
-       DO i = 1,12
+       IF( method_of_moments_flag ) THEN
 
-          wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+          DO i = 1,12
 
-       END DO
+             wt(i) = DCMPLX( wt_oxide_residual(i) , 0.D0 )
 
+          END DO
 
-       wt(11) = w
+          DO i = 1, n_components
+
+             wt = wt + 100.0 * ((rhoB_components(i) / (alfa_1 * rho_1 * &
+                      (1.0 - x_d_1) )) * wt_oxide_components(1:12,i))
+
+          END DO       
+
+       ELSE
+
+          DO i = 1,12
+
+             wt(i) = DCMPLX( wt_init(i) , 0.D0 )
+
+          END DO
+
+       ENDIF
+
+       wt(11) = 0
 
        ! Create the normalized wt. % distribution
+       norm_wt = 100.D0 * ( wt / (SUM(wt) + w) )
 
-       norm_wt = 100.D0 * ( wt / SUM(wt) )
+       wt(11) = w
+       norm_wt(11) = w 
 
        ! Change to molar fractions
 
@@ -2455,8 +2525,6 @@ CONTAINS
     REAL*8, INTENT(IN) :: r_rho_g(n_gas) 
     REAL*8, INTENT(OUT) :: r_alfa_g(n_gas)
 
-
-    !REAL*8 :: r_x_g(n_gas)    !< exsolved gas mass fraction
     REAL*8 :: r_x_d(n_gas)
     REAL*8 :: r_alfa_g_2_max(n_gas),best_alfa_g_2(n_gas)
     REAL*8 :: r_alfa_g_2(n_gas), r_alfa_g_2_new(n_gas)

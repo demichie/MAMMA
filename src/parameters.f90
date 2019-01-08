@@ -26,7 +26,7 @@ MODULE parameters
   !> .
   LOGICAL :: interfaces_relaxation
 
-  INTEGER :: n_cry         !< Numbeer of crystal phases
+  INTEGER :: n_cry         !< Number of crystal phases
   INTEGER :: n_gas         !< Number of crystal phases
   INTEGER :: n_components  !< Number of phases in diagram (for MOM)
 
@@ -50,8 +50,6 @@ MODULE parameters
   INTEGER :: idx_xd_last         !< Last index of xd in the qp array
   INTEGER :: idx_alfa_first        !< First index of alfa in the qp array
   INTEGER :: idx_alfa_last         !< Last index of alfa in the qp array
-  INTEGER :: idx_beta_first        !< First index of beta in the qp array
-  INTEGER :: idx_beta_last         !< Last index of beta in the qp array
   INTEGER :: idx_components_first        !< First index of components in the qp array
   INTEGER :: idx_components_last         !< Last index of components in the qp array
   
@@ -164,6 +162,5 @@ MODULE parameters
   LOGICAL :: complex_step_speed
 
   LOGICAL :: exact_speed
-
 
 END MODULE parameters

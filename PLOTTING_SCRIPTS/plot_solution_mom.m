@@ -13,7 +13,7 @@ L = length(data);
 
 if(METHOD_OF_MOMENTS_FLAG == 'T')
 
-	data_reshaped = reshape(data(1:L)',12+N_CRY+4*N_GAS+N_COMPONENTS+2*N_MOM*N_CRY,[]);
+	data_reshaped = reshape(data(1:L)',12 + 2 * N_CRY + 4 * N_GAS + N_COMPONENTS + 2 * N_MOM * N_CRY ,[]);
 
 	n_grid = size(data_reshaped,2);
 
@@ -24,65 +24,102 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	zeta_grid = data_reshaped(1,:);
 
 	z0 = Z0;
+
 	zN = ZN;
 
-	alfa_2(1:N_GAS,:) = data_reshaped(6+N_GAS+1:6+N_GAS+N_GAS,:);
+	alfa_2(1:N_GAS,:) = data_reshaped( 6 + N_GAS + 1 : 6 + N_GAS + N_GAS,:);
+
 	alfa_1(1,:) = 1.D0 - sum(alfa_2,1);
 
-	p_1 = data_reshaped(1+1,:);
-	p_2 = data_reshaped(1+2,:);
-	u_1 = data_reshaped(1+3,:);
-	u_2 = data_reshaped(1+4,:);
-	T =   data_reshaped(1+5,:);
+	p_1 = data_reshaped(2,:);
 
-	rho_1 = data_reshaped(7+2*N_GAS+2*N_CRY*N_MOM + N_COMPONENTS,:);
-	rho_2 = zeros(N_GAS,comp_cells);
+	p_2 = data_reshaped(3,:);
+
+	u_1 = data_reshaped(4,:);
+
+	u_2 = data_reshaped(5,:);
+
+	T =   data_reshaped(6,:);
+
+	rho_1 = data_reshaped(1 + 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + N_COMPONENTS , :);
+
+	rho_2 = zeros( N_GAS , comp_cells );
 
 	for i=1:N_GAS,
-	    rho_2(i,:) = data_reshaped(7+2*N_GAS+2*N_CRY*N_MOM + N_COMPONENTS+i,:);
-	end
 
-	beta = zeros(N_CRY,comp_cells);
-	for i=1:N_CRY,
-	    beta(i,:) = data_reshaped(6+2*N_GAS+i,:);
+	    rho_2(i,:) = data_reshaped(1 + 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + N_COMPONENTS + i,:);
+
 	end
 
 	x_d = zeros(N_GAS,comp_cells);
+
 	for i=1:N_GAS,
-	    x_d(i,:) = data_reshaped(6 + i,:);
+
+	    x_d(i,:) = data_reshaped( 6 + i,:);
+
 	end
-	x_d_eq = zeros(N_GAS,comp_cells);
+
+	x_d_eq = zeros( N_GAS , comp_cells );
+
 	for i=1:N_GAS,
-	    x_d_eq(i,:) = data_reshaped(7+3*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY+i,:);
+
+	    x_d_eq(i,:) = data_reshaped( 7 + 3 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + i,:);
+
 	end
 
 	components = zeros(N_COMPONENTS,comp_cells);
 
 	for i=1:N_COMPONENTS,
-	    components(i,:) = data_reshaped(6+2*N_GAS+2*N_CRY*N_MOM+i,:);
+
+	    components(i,:) = data_reshaped( 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + i,:);
+
 	end
 
-	moms = zeros(2*N_CRY*N_MOM,comp_cells);
+	moms = zeros(2 * N_CRY * N_MOM , comp_cells);
 
 	for i=1:2*N_CRY*N_MOM,
-	    moms(i,:) = data_reshaped(6+2*N_GAS+i,:);
+
+	    moms(i,:) = data_reshaped(6 + 2 * N_GAS + i,:);
+
 	end
 
-	visc =  data_reshaped(8+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_melt =  data_reshaped(9+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_rel_crystals =  data_reshaped(10+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_rel_bubbles =  data_reshaped(11+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	radius =data_reshaped(12+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
+	beta = zeros(N_CRY,comp_cells);
+
+	for i=1:N_CRY,
+
+	    beta(i,:) =  data_reshaped(11 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + i,:);
+
+	end
+
+	visc =  data_reshaped(8 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_melt =  data_reshaped( 9 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_rel_crystals =  data_reshaped(10 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_rel_bubbles =  data_reshaped(11 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	radius = data_reshaped(12 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + N_CRY,:);
+
 	rho_mix = alfa_1 .* rho_1 + sum(alfa_2 .* rho_2 , 1);
+
 	c_1 = alfa_1 .* rho_1 ./ rho_mix;
+
 	c_2 = 1.0 - c_1;
+
 	p_mix = alfa_1 .* p_1 + sum(alfa_2,1) .* p_2;
+
 	u_mix = c_1 .* u_1 + c_2 .* u_2;
+
 	u_rel = u_2 - u_1;
+
 	mass_flow_rate = pi * radius.^2 .* ( rho_mix .* u_mix );
 
 	beta_tot = sum(beta);
+
 	x_d_tot = sum(x_d,1);
+
+	x_d_eq_tot = sum(x_d_eq,1);
 
 	FigHandle = figure;
 	set(FigHandle, 'Position', [100, 100, 1049, 895]);
@@ -106,7 +143,6 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 
 	subplot(3,6,2)
 	hold all
-
 	for i=1:N_GAS,
 	    plot(rho_2(i,:),zeta_grid_reverse,color_list(i));
 	end
@@ -148,17 +184,14 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	hold all;
 
 	subplot(3,6,5)
-        suma = 0.*alfa_1;
-	for i=1:N_CRY,
-	    plot(100.*csf(i).*sum( moms(N_CRY*N_MOM*(i-1) + 7:N_CRY*N_MOM*(i-1) + 8 ,:) )./alfa_1,zeta_grid_reverse, color_list(i)); hold on;
-            suma = suma + 100.*csf(i).*sum( moms(N_CRY*N_MOM*(i-1) + 7:N_CRY*N_MOM*(i-1) + 8 ,:) )./alfa_1;
-	end
-       
-	plot(suma,zeta_grid_reverse, 'b'); hold on;
+	plot(100.*beta(1,:),zeta_grid_reverse, 'b'); hold on;
+	plot(100.*beta(2,:),zeta_grid_reverse, 'r'); hold on;
+	plot(100.*beta(1,:) + 100.*beta(2,:),zeta_grid_reverse, 'k'); hold on;
 	title('Crystallinity');
 	xlabel('[vol.%]');
-        legend('Cx 1','Cx 2','Total');
+        legend('Pl','Cpx','Total');
 	ylim([Z0,ZN]);
+        xlim([0,100])
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]')
 	box on;
@@ -177,7 +210,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	    plot(x_d_eq_tot(subgrid_idx),zeta_grid_reverse(subgrid_idx),...
 	    color_list_eq(1+2*(i-1):2*i) );
 	end
-	title('Dissolved gas in phase 1');
+	title('Dissolved gas in melt');
 	ylim([Z0,ZN]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
@@ -206,7 +239,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	xlabel('[Pa]');
 	ylabel('Depth [km]');
 	ylim([Z0,ZN]);
-        legend('Phase 1','Phase 2');
+        legend('Pl','Cpx');
 	set(gca,'YDir','reverse')
 	box on;
 	hold all;
@@ -217,7 +250,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	xlabel('[kg/s]');
 	xlimits = xlim;
 	ylabel('Depth [km]');
-	xlim([0.9*xlimits(1),1.1*xlimits(2)]);
+	xlim([0.8*xlimits(1),1.2*xlimits(2)]);
 	set(gca,'YDir','reverse')
 	ylim([Z0,ZN]);
 	box on;
@@ -236,18 +269,16 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	ylabel('Depth [m]');
 	box on;
 	hold all;
-        legend('Comp 1','Comp 2','Comp 3');
-
+        legend('Ab','An','Di');
 
 	subplot(3,6,11);
 	for i=1:N_CRY,
 	    plot(moms(N_CRY*N_MOM*(i-1) + 7 ,:)./moms(N_CRY*N_MOM*(i-1) + 5,:),zeta_grid_reverse,color_list(i)); hold on;
 	end
 	title('m^{(3)}/m^{(2)} (Mcx)');
-
 	xlabel('[m]');
 	ylim([Z0,ZN]);
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
         xlimits = xlim;
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
@@ -266,7 +297,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	box on;
 	hold all;
 
@@ -282,7 +313,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	box on;
 	hold all;
 
@@ -297,7 +328,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	box on;
 	hold all;
 
@@ -314,7 +345,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	box on;
 	hold all;
 
@@ -328,7 +359,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlimits = xlim;
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	ylabel('Depth [km]');
 	box on;
 	hold all;
@@ -345,7 +376,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse')
 	ylabel('Depth [km]');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	box on;
 	hold all;
 
@@ -359,7 +390,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
         xlimits = xlim;
         xlim([0 xlimits(2).*1.1]);
 	set(gca,'YDir','reverse');
-        legend('Cx 1','Cx 2');
+        legend('Pl','Cpx');
 	ylabel('Depth [km]');
 	box on;
 	hold all;

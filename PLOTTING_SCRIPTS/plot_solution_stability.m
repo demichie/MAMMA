@@ -11,7 +11,7 @@ L = length(data);
 
 if(METHOD_OF_MOMENTS_FLAG == 'T')
 
-	data_reshaped = reshape(data(1:L)',12+N_CRY+4*N_GAS+N_COMPONENTS+2*N_MOM*N_CRY,[]);
+	data_reshaped = reshape(data(1:L)',12 + 2 * N_CRY + 4 * N_GAS + N_COMPONENTS + 2 * N_MOM * N_CRY ,[]);
 
 	n_grid = size(data_reshaped,2);
 
@@ -22,147 +22,215 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	zeta_grid = data_reshaped(1,:);
 
 	z0 = Z0;
+
 	zN = ZN;
 
-	alfa_2(1:N_GAS,:) = data_reshaped(6+N_GAS+1:6+N_GAS+N_GAS,:);
+	alfa_2(1:N_GAS,:) = data_reshaped( 6 + N_GAS + 1 : 6 + N_GAS + N_GAS,:);
+
 	alfa_1(1,:) = 1.D0 - sum(alfa_2,1);
 
-	p_1 = data_reshaped(1+1,:);
-	p_2 = data_reshaped(1+2,:);
-	u_1 = data_reshaped(1+3,:);
-	u_2 = data_reshaped(1+4,:);
-	T =   data_reshaped(1+5,:);
+	p_1 = data_reshaped(2,:);
 
-	rho_1 = data_reshaped(7+2*N_GAS+2*N_CRY*N_MOM + N_COMPONENTS,:);
-	rho_2 = zeros(N_GAS,comp_cells);
+	p_2 = data_reshaped(3,:);
+
+	u_1 = data_reshaped(4,:);
+
+	u_2 = data_reshaped(5,:);
+
+	T =   data_reshaped(6,:);
+
+	rho_1 = data_reshaped(1 + 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + N_COMPONENTS , :);
+
+	rho_2 = zeros( N_GAS , comp_cells );
 
 	for i=1:N_GAS,
-	    rho_2(i,:) = data_reshaped(7+2*N_GAS+2*N_CRY*N_MOM + N_COMPONENTS+i,:);
-	end
 
-	beta = zeros(N_CRY,comp_cells);
-	for i=1:N_CRY,
-	    beta(i,:) = data_reshaped(6+2*N_GAS+i,:);
+	    rho_2(i,:) = data_reshaped(1 + 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + N_COMPONENTS + i,:);
+
 	end
 
 	x_d = zeros(N_GAS,comp_cells);
+
 	for i=1:N_GAS,
-	    x_d(i,:) = data_reshaped(6 + i,:);
+
+	    x_d(i,:) = data_reshaped( 6 + i,:);
+
 	end
-	x_d_eq = zeros(N_GAS,comp_cells);
+
+	x_d_eq = zeros( N_GAS , comp_cells );
+
 	for i=1:N_GAS,
-	    x_d_eq(i,:) = data_reshaped(7+3*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY+i,:);
+
+	    x_d_eq(i,:) = data_reshaped( 7 + 3 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + i,:);
+
 	end
 
 	components = zeros(N_COMPONENTS,comp_cells);
 
 	for i=1:N_COMPONENTS,
-	    components(i,:) = data_reshaped(6+2*N_GAS+2*N_CRY*N_MOM+i,:);
+
+	    components(i,:) = data_reshaped( 6 + 2 * N_GAS + 2 * N_CRY * N_MOM + i,:);
+
 	end
 
-	moms = zeros(2*N_CRY*N_MOM,comp_cells);
+	moms = zeros(2 * N_CRY * N_MOM , comp_cells);
 
 	for i=1:2*N_CRY*N_MOM,
-	    moms(i,:) = data_reshaped(6+2*N_GAS+i,:);
+
+	    moms(i,:) = data_reshaped(6 + 2 * N_GAS + i,:);
+
 	end
 
-	visc =  data_reshaped(8+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_melt =  data_reshaped(9+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_rel_crystals =  data_reshaped(10+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	visc_rel_bubbles =  data_reshaped(11+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
-	radius =data_reshaped(12+4*N_GAS+2*N_MOM*N_CRY+N_COMPONENTS+N_CRY,:);
+	beta = zeros(N_CRY,comp_cells);
+
+	for i=1:N_CRY,
+
+	    beta(i,:) =  data_reshaped(11 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + i,:);
+
+	end
+
+	visc =  data_reshaped(8 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_melt =  data_reshaped( 9 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_rel_crystals =  data_reshaped(10 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	visc_rel_bubbles =  data_reshaped(11 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY,:);
+
+	radius = data_reshaped(12 + 4 * N_GAS + 2 * N_MOM * N_CRY + N_COMPONENTS + N_CRY + N_CRY,:);
+
 	rho_mix = alfa_1 .* rho_1 + sum(alfa_2 .* rho_2 , 1);
+
 	c_1 = alfa_1 .* rho_1 ./ rho_mix;
+
 	c_2 = 1.0 - c_1;
+
 	p_mix = alfa_1 .* p_1 + sum(alfa_2,1) .* p_2;
+
 	u_mix = c_1 .* u_1 + c_2 .* u_2;
+
 	u_rel = u_2 - u_1;
+
 	mass_flow_rate = pi * radius.^2 .* ( rho_mix .* u_mix );
 
 	beta_tot = sum(beta);
+
 	x_d_tot = sum(x_d,1);
+
+	x_d_eq_tot = sum(x_d_eq,1);
+
+	color_list = ['b','r','k','g','c','m','y'];
+
+	color_list_eq = ['b--','r--','k--','g--','c--','m--','y--'];
 
 	zeta_grid_reverse = zN - zeta_grid;
 
 else
 
-	data_reshaped = reshape(data(1:L)',8+2*N_CRY+4*N_GAS+4,[]);
+	data_reshaped = reshape(data(1:L)',12 + 3 * N_CRY + 4 * N_GAS, [] );
 
-	n_grid = size(data_reshaped,2);
+	n_grid = size(data_reshaped, 2);
 
-	comp_cells = size(data_reshaped,2);
+	comp_cells = size(data_reshaped, 2);
 
-	subgrid_idx = round(linspace(1,n_grid,25));
+	subgrid_idx = round( linspace(1, n_grid , 25) );
 
 	zeta_grid = data_reshaped(1,:);
 
 	z0 = Z0;
 	zN = ZN;
 
-	alfa_2(1:N_GAS,:) = data_reshaped(6+N_GAS+1:6+N_GAS+N_GAS,:);
+	alfa_2(1:N_GAS,:) = data_reshaped(6 + N_GAS + 1: 6 + N_GAS + N_GAS,:);
+
 	alfa_1(1,:) = 1.D0 - sum(alfa_2,1);
 
-	p_1 = data_reshaped(1+1,:);
-	p_2 = data_reshaped(1+2,:);
-	u_1 = data_reshaped(1+3,:);
-	u_2 = data_reshaped(1+4,:);
-	T =   data_reshaped(1+5,:);
+	p_1 = data_reshaped(2,:);
 
-	beta = zeros(N_CRY,comp_cells);
+	p_2 = data_reshaped(3,:);
+
+	u_1 = data_reshaped(4,:);
+
+	u_2 = data_reshaped(5,:);
+
+	T =   data_reshaped(6,:);
+
+	beta = zeros( N_CRY , comp_cells);
 
 	for i=1:N_CRY,
 
-	    beta(i,:) = data_reshaped(6+2*N_GAS+i,:);
+	    beta(i,:) = data_reshaped( 6 + 2 * N_GAS + i,:);
 
 	end
 
-	x_d = zeros(N_GAS,comp_cells);
+	x_d = zeros( N_GAS , comp_cells );
+
 	for i=1:N_GAS,
-	    x_d(i,:) = data_reshaped(1+5+i,:);
+
+	    x_d(i,:) = data_reshaped( 6 + i,:);
+
 	end
 
-	rho_1 = data_reshaped(7+2*N_GAS+N_CRY,:);
+	rho_1 = data_reshaped(7 + 2*N_GAS + N_CRY,:);
+
 	rho_2 = zeros(N_GAS,comp_cells);
+
 	for i=1:N_GAS,
-	    rho_2(i,:) = data_reshaped(7+2*N_GAS+N_CRY+i,:);
+
+	    rho_2(i,:) = data_reshaped( 7 + 2 * N_GAS + N_CRY + i , : );
+
 	end
 
 	beta_eq = zeros(N_CRY,comp_cells);
+
 	for i=1:N_CRY,
-	    beta_eq(i,:) = data_reshaped(7+3*N_GAS+N_CRY+i,:);
+
+	    beta_eq(i,:) = data_reshaped( 7 + 3 * N_GAS + N_CRY + i,:);
+
 	end
 
 	x_d_eq = zeros(N_GAS,comp_cells);
 
 	for i=1:N_GAS,
-	    x_d_eq(i,:) = data_reshaped(7+3*N_GAS+2*N_CRY+i,:);
+
+	    x_d_eq(i,:) = data_reshaped( 7 + 3 * N_GAS + 2 * N_CRY + i,:);
+
 	end
 
-	visc =  data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+N_CRY+N_GAS+1,:);
+	visc =  data_reshaped( 7 + 4 * N_GAS + 2 * N_CRY + 1,:);
 
-	visc_melt =  data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+N_CRY+N_GAS+2,:);
+	visc_melt = data_reshaped( 7 + 4 * N_GAS + 2 * N_CRY + 2,:);
 
-	visc_rel_crystals =  data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+N_CRY+N_GAS+3,:);
+	visc_rel_crystals = data_reshaped( 7 + 4 * N_GAS + 2 * N_CRY + 3,:);
 
-	visc_rel_bubbles =  data_reshaped(1+N_GAS+5+N_CRY+N_GAS+1+N_GAS+N_CRY+N_GAS+4,:);
+	visc_rel_bubbles =  data_reshaped( 7 + 4 * N_GAS + 2 * N_CRY + 4,:);
 
-	radius = data_reshaped(8+2*N_CRY+4*N_GAS+4,:);
+	radius =data_reshaped( 12 + 4 * N_GAS + 3 * N_CRY ,:);
 	
 	rho_mix = alfa_1 .* rho_1 + sum(alfa_2 .* rho_2 , 1);
 
 	c_1 = alfa_1 .* rho_1 ./ rho_mix;
+
 	c_2 = 1.0 - c_1;
 
 	p_mix = alfa_1 .* p_1 + sum(alfa_2,1) .* p_2;
+
 	u_mix = c_1 .* u_1 + c_2 .* u_2;
+
 	u_rel = u_2 - u_1;
 
 	mass_flow_rate = pi * radius.^2 .* ( rho_mix .* u_mix );
+
 	beta_tot = sum(beta);
+
 	x_d_tot = sum(x_d,1);
 
 	beta_eq_tot = sum(beta_eq,1);
+
 	x_d_eq_tot = sum(x_d_eq,1);
+ 
+	color_list = ['b','r','k','g','c','m','y'];
+
+	color_list_eq = ['b--','r--','k--','g--','c--','m--','y--'];
 
 	zeta_grid_reverse = zN - zeta_grid;
 

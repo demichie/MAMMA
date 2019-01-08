@@ -19,9 +19,8 @@ MODULE inpout
   ! -- Variables for the namelist METHOD_OF_MOMENTS_PARAMETERS
   USE parameters, ONLY : n_mom, n_components
   USE constitutive, ONLY : U_m, I_m
-  USE constitutive, ONLY : cry_shape_factor , L0_cry_in, L0_cry, L_nucleus, L_nucleus_in
+  USE constitutive, ONLY : M0_cry_in, M_nucleus_in, M_nucleus
   USE constitutive, ONLY : cry_init_solid_solution, cry_current_solid_solution
-  USE constitutive, ONLY : cry_shape_factor_in
 
   ! -- Variables for the namelist TRANSIENT_PARAMETERS
   USE parameters, ONLY : verbose_level
@@ -110,7 +109,7 @@ MODULE inpout
   INTEGER, PARAMETER :: steady_p_output_unit = 13 !< Output unit
   INTEGER, PARAMETER :: steady_q_output_unit = 14 !< Output unit
   INTEGER, PARAMETER :: dakota_unit = 15          !< Dakota Output unit
-  INTEGER, PARAMETER :: dakota_unit2 = 17          !< Dakota Output unit
+  INTEGER, PARAMETER :: dakota_unit2 = 17         !< Dakota Output unit
   INTEGER, PARAMETER :: exit_unit = 16            !< Exit Output unit
 
   LOGICAL :: close_units
@@ -170,9 +169,8 @@ MODULE inpout
 
   NAMELIST / permeability_parameters / xa, xb, xc
   
-  NAMELIST / method_of_moments_parameters / n_mom, n_components, U_m ,         &
-       L0_cry_in, cry_shape_factor_in, cry_init_solid_solution,  I_m,             &
-       L_nucleus_in
+  NAMELIST / method_of_moments_parameters / n_mom, n_components, U_m , I_m ,    &
+       M0_cry_in, M_nucleus_in , cry_init_solid_solution
 
 CONTAINS
 
@@ -252,7 +250,12 @@ CONTAINS
     method_of_moments_flag = .FALSE.
     verbose_level = 4 
 
-    ! Inizialization of the Variables for the namelist geometry_parameters
+    ! Inizialization of the Variables for the namelist PHASE_PARAMETERS
+    n_gas_init = 1
+    n_cry_init = 1
+    n_components_init = 1
+
+    ! Inizialization of the Variables for the namelist GEOMETRY_PARAMETERS
     z0 = 0.D0
     zN = 5200.D0
     radius_fixed = 0.D0
@@ -292,10 +295,6 @@ CONTAINS
     visc_2 = 1.5D2
     alfa2_lat_thr = 1.1D0
     perm0 = 5.0D3
-
-    n_gas_init = 1
-    n_cry_init = 1
-    n_components_init = 1
 
     ! dissolved gas parameters
     rho0_d_init = 1000.D0
@@ -337,15 +336,13 @@ CONTAINS
     isothermal = .FALSE.
     fixed_temp = 1323.D0
 
-    ! Inizialization of the Variables for the namelist 
-    ! fragmentation_parameters
+    ! Inizialization of the Variables for the namelist fragmentation_parameters
     fragmentation_model = 1
     frag_thr = 0.60D+0
     !tau_frag_coeff = 1.D0
     !tau_frag_exp = 5.0D0
 
-    ! Inizialization of the Variables for the namelist 
-    ! external_water_parameters 
+    ! Inizialization of the Variables for the namelist external_water_parameters 
     total_water_influx = 0.D0
     min_z_influx = 0.D0
     delta_z_influx = 0.D0
@@ -368,14 +365,12 @@ CONTAINS
     log10_tau_p_coeff = 8.D0
     log10_tau_d_init = 4.0D0
     log10_tau_c_init = 4.0D0
-
     drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
     tau_p_coeff = 10.D0 ** log10_tau_p_coeff
     tau_d(1:n_gas) = 10.D0 ** log10_tau_d
     tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
     ! Forchheimer (Eq. 16 Degruyter et al. 2012)
-
     log10_bubble_number_density = 15.0D0   
     bubble_number_density = 10.0D0 ** log10_bubble_number_density
     tortuosity_factor = 3.5 
@@ -456,7 +451,7 @@ CONTAINS
        solub = 4.11D-06 
        solub_exp = 0.5D0
 
-       ! crystals parameters
+       ! CRYSTALS_PARAMETERS
        RHO0_C = 2800.0000000000000     
        C0_C = 2000.0000000000000     
        CV_C = 360.00000000000000     
@@ -504,11 +499,9 @@ CONTAINS
        log10_k_cr = -12.000000000000  
        
        !-- Initialization of the variables for the namelist relaxation_parameters
-
        ! ------- READ relaxation_parameters NAMELIST -------------------------------
        ALLOCATE( log10_tau_d(n_gas) )
        ALLOCATE( log10_tau_c(n_cry) )
-
 
        drag_funct_model = 'forchheimer'
        log10_drag_funct_coeff = 0.0D0
@@ -516,7 +509,6 @@ CONTAINS
        log10_tau_p_coeff = -8.0D0
        log10_tau_d = -8.0D0
        log10_tau_c = -8.0D0
-
 
        !-- Forchheimer (Eq. 16 Degruyter et al. 2012)
        log10_bubble_number_density = 15.0D0   
@@ -601,12 +593,12 @@ CONTAINS
     USE constitutive, ONLY : n_theta_models , available_theta_models
     USE constitutive, ONLY : n_bubble_models, available_bubble_models
     USE constitutive, ONLY : n_visc_melt_models , available_visc_melt_models
-    USE constitutive, ONLY : T0_c , bar_p_c !, bar_e_c
-    USE constitutive, ONLY : T0_m , bar_p_m !, bar_e_m
-    
+    USE constitutive, ONLY : T0_c , bar_p_c
+    USE constitutive, ONLY : T0_m , bar_p_m
     USE constitutive, ONLY : mom_cry, growth_mom, rhoB_components, sum_rhoB_components 
     USE constitutive, ONLY : T_s, T_u, T_i, T_m 
-    USE melts_fit_module, ONLY : wt_components_init, wt_components_fit, rel_cry_components  
+    USE melts_fit_module, ONLY : wt_components_init, wt_components_fit, rel_cry_components 
+    USE melts_fit_module, ONLY : wt_oxide_components 
     
     USE init, ONLY : beta_in , xd_md_in
 
@@ -620,8 +612,7 @@ CONTAINS
     
     INTEGER :: ios
     
-    REAL*8, ALLOCATABLE :: cry_init_ss_all(:,:), cry_current_ss_all(:,:), wt_comp_fit_all(:),     &
-       rhoB_comp_all(:), wt_comp_init_all(:), rel_cry_comp_all(:,:)
+    REAL*8, ALLOCATABLE :: cry_init_ss_all(:,:)
 
     OPEN(input_unit,FILE=input_file,STATUS='old')
 
@@ -695,25 +686,22 @@ CONTAINS
    
     ! ------- READ method_of_moments_parameters NAMELIST ------------------------
     IF ( method_of_moments_flag ) THEN
-    
-       ALLOCATE( T_s(n_cry) , T_m(n_cry) , T_u(n_cry) , U_m(n_cry), L0_cry_in(n_cry), L0_cry(n_cry,2) )
-       ALLOCATE( T_i(n_cry) , I_m(n_cry) , cry_shape_factor(n_cry), L_nucleus_in(n_cry) )
-       ALLOCATE( cry_shape_factor_in(n_cry) , L_nucleus(n_cry) )
+
+       ALLOCATE( T_s(n_cry) , T_m(n_cry) , T_u(n_cry) , U_m(n_cry), M0_cry_in(n_cry) )
+       ALLOCATE( T_i(n_cry) , I_m(n_cry) ,  M_nucleus_in(n_cry) , M_nucleus(n_cry) )
        ALLOCATE( cry_init_solid_solution(100, n_cry), cry_current_solid_solution(100, n_cry) )
        ALLOCATE( wt_components_fit(100) , rhoB_components(100) , sum_rhoB_components(n_cry) )
        ALLOCATE( wt_components_init(100) , rel_cry_components(100, n_cry) )
        
        READ(input_unit, method_of_moments_parameters , IOSTAT = ios )
 
-       ALLOCATE( cry_init_ss_all(n_components, n_cry), cry_current_ss_all(n_components, n_cry) )
-       ALLOCATE( wt_comp_fit_all(n_components) , rhoB_comp_all(n_components) )
-       ALLOCATE( wt_comp_init_all(n_components) , rel_cry_comp_all(n_components, n_cry) )
+       ALLOCATE( cry_init_ss_all(n_components, n_cry) )
        
        DO i=1,n_cry
 
           DO j=1,n_components
           
-             cry_init_ss_all(j,i) = cry_init_solid_solution((i-1)*n_components + j,1)
+             cry_init_ss_all(j,i) = cry_init_solid_solution((i-1) * n_components + j,1)
 
           END DO
 
@@ -727,6 +715,7 @@ CONTAINS
        ALLOCATE( cry_init_solid_solution(n_components, n_cry), cry_current_solid_solution(n_components, n_cry) )
        ALLOCATE( wt_components_fit(n_components) , rhoB_components(n_components) )
        ALLOCATE( wt_components_init(n_components) , rel_cry_components(n_components, n_cry) )
+       ALLOCATE( wt_oxide_components( 12, n_components ) )
 
        cry_init_solid_solution = cry_init_ss_all
 
@@ -741,8 +730,8 @@ CONTAINS
           
        ELSE
        
-          ALLOCATE( mom_cry(1:n_cry,0:n_mom-1,1:2) )
-          ALLOCATE( growth_mom(1:n_cry,0:n_mom-1,1:2) )
+          ALLOCATE( mom_cry( 1 : n_cry, 0 : n_mom - 1 , 1 : 2) )
+          ALLOCATE( growth_mom( 1 : n_cry , 0 : n_mom - 1 , 1 : 2) )
           WRITE(*,*) 'Solving for ',n_mom,' moments for each crystal phase'          
           REWIND(input_unit)
           
@@ -760,13 +749,7 @@ CONTAINS
 
        DO i = 1, n_cry
 
-          L0_cry(i, 1) = DCMPLX(L_nucleus_in(i), 0.D0)
-
-          L0_cry(i, 2) = DCMPLX(L0_cry_in(i), 0.D0)
-
-          L_nucleus(i) = DCMPLX(L_nucleus_in(i), 0.D0)
-
-          cry_shape_factor(i) = DCMPLX(cry_shape_factor_in(i), 0.D0)
+          M_nucleus(i) = DCMPLX(M_nucleus_in(i), 0.D0)
 
        END DO
 
@@ -795,7 +778,6 @@ CONTAINS
        
     END IF
 
-    
     IF ( u1_in .GT. 0.D0 ) THEN
 
        IF ( shooting .EQV. .TRUE.) THEN
@@ -828,7 +810,6 @@ CONTAINS
        
     END IF
 
-    
     IF ( gas_law .EQ. 'IDEAL' )  THEN
 
        a_g(1:n_gas) = 0.D0
@@ -870,14 +851,12 @@ CONTAINS
        REWIND(input_unit)
        
     END IF
-
     
     T0_d(1:n_gas) = C0_d(1:n_gas) **2.D0 / ( cv_d(1:n_gas) * gamma_d(1:n_gas)   &
          * ( gamma_d(1:n_gas) - 1.D0 ) )
 
     bar_p_d(1:n_gas) = ( rho0_d(1:n_gas) * C0_d(1:n_gas)**2.d0 -                &
          gamma_d(1:n_gas) * p0_d(1:n_gas) ) / gamma_d(1:n_gas)
-
 
     ! ------- READ crystals_parameters NAMELIST ---------------------------------
     READ(input_unit, crystals_parameters , IOSTAT = ios )
@@ -932,8 +911,8 @@ CONTAINS
        
     END IF
 
-    
     T0_m = C0_m **2.D0 / ( cv_m * gamma_m * ( gamma_m - 1.D0 ) )
+
     bar_p_m = ( rho0_m * C0_m ** 2.d0 - gamma_m * p0_m ) / gamma_m
 
     ! ------- READ viscosity_parameters NAMELIST --------------------------------
@@ -979,7 +958,9 @@ CONTAINS
 
     END IF
 
-    IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
+    IF ( ( visc_melt_model .EQ. 'Giordano_et_al2008' ) .OR. method_of_moments_flag .OR.        &
+       ( visc_melt_model .EQ. 'Giordano_et_al2009' ) .OR. ( visc_melt_model .EQ. 'Di_Genova_et_al2013_eqn_3,5' ) &
+       .OR. ( visc_melt_model .EQ. 'Di_Genova_et_al2013_eqn_4,5' ) ) THEN
        
        tend1 = .FALSE.
        
@@ -1236,10 +1217,9 @@ CONTAINS
 
     tau_p_coeff = 10.D0 ** log10_tau_p_coeff
 
-
     tau_d(1:n_gas) = 10.D0 ** log10_tau_d(1:n_gas)
-    tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
+    tau_c(1:n_cry) = 10.D0 ** log10_tau_c(1:n_cry)
 
     check_model = .FALSE.
 
@@ -1379,7 +1359,6 @@ CONTAINS
        
     WRITE(backup_unit, relaxation_parameters )
 
-
     IF ( ( drag_funct_model .EQ. 'eval' ) .OR.                                  &
          ( drag_funct_model .EQ. 'Klug_and_Cashman' ) .OR.                      &
          ( drag_funct_model .EQ. 'drag' ) ) THEN
@@ -1400,7 +1379,6 @@ CONTAINS
        
     END IF
 
-    
     IF ( visc_melt_model .EQ. 'Giordano_et_al2008' ) THEN
        
        WRITE(backup_unit,*) '''MELTCOMPOSITION'''
@@ -1435,7 +1413,7 @@ CONTAINS
     USE parameters, ONLY : n_vars , n_cry , n_gas
 
     USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,          &
-         idx_alfa_first , idx_alfa_last , idx_beta_first , idx_beta_last
+         idx_alfa_first , idx_alfa_last , idx_cry_eqn_first, idx_cry_eqn_last
 
     USE geometry, ONLY : zeta_exit
 
@@ -1450,7 +1428,7 @@ CONTAINS
     REAL*8 :: qp(n_vars)
     REAL*8, INTENT(IN) :: radius
 
-    REAL*8 :: qp2(1+n_cry+n_gas+n_gas+4)
+    REAL*8 :: qp2(1+n_cry+n_gas+n_gas+4+n_cry)
     REAL*8 :: mass_flow_rate
     REAL*8 :: pi
 
@@ -1476,23 +1454,25 @@ CONTAINS
 
     DO i = 1,n_vars
 
-       IF ( ABS(qp(i)) .LT. 1D-20 ) THEN
+       IF ( ABS(qp(i)) .LT. 1D-50 ) THEN
           qp(i) = 0.D0
        END IF
 
     END DO
 
-    DO i = 1,1+n_cry+n_gas+n_gas+4
+    DO i = 1, 1 + n_cry + n_gas + n_gas + 4 + n_cry
 
-       IF ( ABS(qp2(i)) .LT. 1D-20 ) THEN
+       IF ( ABS(qp2(i)) .LT. 1D-50 ) THEN
+
           qp2(i) = 0.D0
+
        END IF
 
     END DO
 
     WRITE(steady_p_output_unit, *) (zeta)
     WRITE(steady_p_output_unit, 1006) (qp(i), i=1,n_vars)
-    WRITE(steady_p_output_unit, 1006) (qp2(i), i=1,1+n_cry+n_gas+n_gas+4)
+    WRITE(steady_p_output_unit, 1006) (qp2(i), i=1,1+n_cry+n_gas+n_gas+4+n_cry)
     WRITE(steady_p_output_unit, *) radius
 
 1006 FORMAT(4e20.12) 
@@ -1505,7 +1485,7 @@ CONTAINS
 
     END DO
 
-    DO i = 1,1+n_cry+n_gas+n_gas+4
+    DO i = 1,1+n_cry+n_gas+n_gas+4+n_cry
 
        WRITE(steady_q_output_unit,1007,advance="no") qp2(i)
 
@@ -1557,8 +1537,8 @@ CONTAINS
        WRITE(dakota_unit,*) 'Liquid/particles velocity',qp(idx_u1)
        WRITE(dakota_unit,*) 'Gas velocity',qp(idx_u2)
        WRITE(dakota_unit,*) 'Exit Temperature',qp(idx_T)
-       WRITE(dakota_unit,*) 'Crystals volume fraction',SUM(qp(idx_beta_first:   &
-            idx_beta_last))
+       WRITE(dakota_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_eqn_first:   &
+            idx_cry_eqn_last))
 
        CALL sound_speeds(C_mix,mach) 
        CALL update_radius(zeta)
@@ -1597,8 +1577,8 @@ CONTAINS
             idx_alfa_last))
        WRITE(exit_unit,*) 'Pressure 1',qp(idx_p1)
        WRITE(exit_unit,*) 'Pressure 2',qp(idx_p2)
-       WRITE(exit_unit,*) 'Crystals volume fraction',SUM(qp(idx_beta_first:     &
-            idx_beta_last))
+       WRITE(exit_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_eqn_first:     &
+            idx_cry_eqn_last))
        WRITE(exit_unit,*) 'Liquid/particles velocity',qp(idx_u1)
        WRITE(exit_unit,*) 'Gas velocity',qp(idx_u2)
        WRITE(exit_unit,*) 'Mach number',mach

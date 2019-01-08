@@ -16,8 +16,7 @@ MODULE init
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last, idx_components_first,                    &
-       idx_components_last
+       idx_components_first, idx_components_last
 
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
        idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
@@ -64,11 +63,12 @@ CONTAINS
     USE constitutive, ONLY : rho_2 , rho_md, rho_g, rho_1, rho_c
     USE constitutive, ONLY : bar_p_m, gamma_m, cv_m
     USE constitutive, ONLY : bar_p_c, gamma_c, cv_c
-    USE constitutive, ONLY : L0_cry_in , L_nucleus_in , mom_cry , cry_shape_factor_in
+    USE constitutive, ONLY : M0_cry_in , M_nucleus_in , mom_cry
     USE constitutive, ONLY : beta0
     USE parameters, ONLY : n_components
-    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components
+    USE constitutive, ONLY : cry_init_solid_solution, rhoB_components, wt_init
     USE melts_fit_module, ONLY : wt_tot_0,  wt_components_init, wt_components_fit
+    USE melts_fit_module, ONLY :  wt_oxide_components, wt_oxide_residual
  
     IMPLICIT none
 
@@ -76,13 +76,13 @@ CONTAINS
     REAL*8, INTENT(INOUT) :: qp(n_vars)
 
     REAL*8 :: r_rho_g(1:n_gas)   !> exsolved gas density
-    REAL*8 :: r_rho_2   !> total exsolved gas density
-    REAL*8 :: r_rho_1   !> total exsolved melt density
+    REAL*8 :: r_rho_2            !> total exsolved gas density
+    REAL*8 :: r_rho_1            !> total exsolved melt density
     REAL*8 :: r_rho_c(1:n_cry)   !> crystals density
 
-    REAL*8 :: r_rho_md  !> dis.gas+melt density
+    REAL*8 :: r_rho_md  !> dis.gas + melt density
 
-    REAL*8 :: r_u_1     !> melt+crystal phase velocity
+    REAL*8 :: r_u_1     !> melt + crystal phase velocity
     REAL*8 :: r_u_2     !> exsolved gas velocity
 
     REAL*8 :: r_frag_eff
@@ -95,6 +95,9 @@ CONTAINS
     REAL*8 :: xd_md_tot
 
     REAL*8 :: xtot_in
+
+    REAL*8 :: aux_norm
+    REAL*8 :: wt_norm(1:12)
 
     INTEGER :: i,j,k
     INTEGER :: idx,iter,max_iter
@@ -170,6 +173,7 @@ CONTAINS
        r_rho_2 = REAL( rho_2 )
        r_rho_g = REAL( rho_g )
        
+
        r_rho_md = REAL( rho_md )
        
        xd_md_tot = SUM( xd_md_in(1:n_gas) )
@@ -188,7 +192,6 @@ CONTAINS
           
        END IF
        
-       
        DO i = 1,n_gas
           
           alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-10 )
@@ -196,6 +199,7 @@ CONTAINS
        END DO
        
        alfa2_in = SUM( alfa_g_in(1:n_gas) )
+
        alfa1_in = 1.D0 - alfa2_in
        
        x_g = alfa_g_in * r_rho_g / ( alfa1_in * r_rho_1 + alfa2_in * r_rho_2 )
@@ -224,38 +228,35 @@ CONTAINS
     idx_u1 = 3
     idx_u2 = 4
     idx_T = 5
-    idx_xd_first = 5+1
-    idx_xd_last = 5+n_gas
-    idx_alfa_first = 5+n_gas+1
-    idx_alfa_last = 5+2*n_gas
-    idx_beta_first = 5+2*n_gas+1
+    idx_xd_first = 5 + 1
+    idx_xd_last = 5 + n_gas
+    idx_alfa_first = 5 + n_gas + 1
+    idx_alfa_last = 5 + 2 * n_gas
     
     idx_mix_mass_eqn = 1
     idx_vol1_eqn = 2
     idx_mix_mom_eqn = 3
     idx_rel_vel_eqn = 4
     idx_mix_engy_eqn = 5
-    idx_dis_gas_eqn_first = 5+1
-    idx_dis_gas_eqn_last = 5+n_gas
-    idx_ex_gas_eqn_first = 5+n_gas+1
-    idx_ex_gas_eqn_last = 5+2*n_gas 
-    idx_cry_eqn_first = 5+2*n_gas+1
+    idx_dis_gas_eqn_first = 5 + 1
+    idx_dis_gas_eqn_last = 5 + n_gas
+    idx_ex_gas_eqn_first = 5 + n_gas + 1
+    idx_ex_gas_eqn_last = 5 + 2 * n_gas 
+    idx_cry_eqn_first = 5 + 2 * n_gas + 1
 
     IF ( method_of_moments_flag ) THEN
 
-       idx_cry_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom
-       idx_beta_last = 5 + 2*n_gas + 2*n_cry*n_mom
+       idx_cry_eqn_last = 5 + 2 *n_gas + 2 * n_cry * n_mom
+ 
+       idx_components_eqn_first = 5 + 2 * n_gas + 2 * n_cry * n_mom + 1
+       idx_components_first = 5 + 2 * n_gas + 2 * n_cry * n_mom + 1
 
-       idx_components_eqn_first = 5 + 2*n_gas + 2*n_cry*n_mom + 1
-       idx_components_first = 5 + 2*n_gas + 2*n_cry*n_mom + 1
-
-       idx_components_eqn_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
-       idx_components_last = 5 + 2*n_gas + 2*n_cry*n_mom + n_components
+       idx_components_eqn_last = 5 + 2 * n_gas + 2 * n_cry * n_mom + n_components
+       idx_components_last = 5 + 2 * n_gas + 2 * n_cry * n_mom + n_components
 
     ELSE
        
-       idx_cry_eqn_last = 5 + 2*n_gas + n_cry
-       idx_beta_last = 5 + 2*n_gas + n_cry
+       idx_cry_eqn_last = 5 + 2 * n_gas + n_cry
        
     END IF
     
@@ -278,6 +279,7 @@ CONTAINS
 
     ! Dissolved gas mass fractions
     idx = idx_xd_first
+
     DO i = 1,n_gas
 
        qp(idx) = xd_md_in(i)
@@ -288,6 +290,7 @@ CONTAINS
 
     ! Exsolved gas volume fraction
     idx = idx_alfa_first
+
     DO i = 1,n_gas
               
        qp(idx) = alfa_g_in(i)
@@ -297,26 +300,24 @@ CONTAINS
     END DO
     
     ! Crystal volume fractions
-    idx = idx_beta_first
+    idx = idx_cry_eqn_first
 
     IF ( method_of_moments_flag ) THEN
  
-       DO i = 1,n_cry
+       DO i = 1 , n_cry
 
-          DO j = 0,n_mom-1
+          DO j = 0 , n_mom-1
 
              ! k is the index for microlith and phenocryst
-             DO k = 1,2
+             DO k = 1 , 2
   
                 IF(k .EQ. 2) THEN
 
-                    mom_cry(i,j,k) = beta_in(i) * alfa1_in / cry_shape_factor_in(i)    &
-                         * L0_cry_in(i)**j / L0_cry_in(i)**3.0 !Revisar
+                    mom_cry(i,j,k) = beta_in(i) * alfa1_in * REAL(rho_c(i)) * M0_cry_in(i) ** j / M0_cry_in(i) ** 1.0 
                 
                 ELSE
 
-                    mom_cry(i,j,k) = L_nucleus_in(i) * alfa1_in / cry_shape_factor_in(i)    &
-                         * L_nucleus_in(i)**j  / L_nucleus_in(i)**3.0 !Revisar
+                    mom_cry(i,j,k) = 1E-5 * alfa1_in * REAL(rho_c(i)) * M_nucleus_in(i) ** j  / M_nucleus_in(i) ** 1.0 
 
                 END IF 
                 
@@ -331,6 +332,38 @@ CONTAINS
        END DO
 
        idx = idx_components_first
+
+       wt_norm = wt_init
+
+       wt_norm(11) = 0.0
+
+       wt_norm = wt_norm / sum( wt_norm )
+
+       DO i = 1, n_components
+	
+          aux_norm = 1E+10
+
+          DO j = 1, 12
+
+             IF( wt_oxide_components(j,i) .GT. 0.0) THEN
+
+                aux_norm = min(aux_norm, wt_norm(j) / wt_oxide_components(j,i))
+
+             ENDIF
+
+          ENDDO
+          
+          wt_norm  = wt_norm - aux_norm * wt_oxide_components(:,i)
+
+          wt_components_fit(i) = aux_norm
+
+       ENDDO
+
+       wt_oxide_residual(1:12) = wt_norm * 100.0
+
+       wt_tot_0 = sum(wt_components_fit)
+
+       wt_components_fit = wt_components_fit / wt_tot_0
 
        DO i = 1, n_components
 
@@ -347,12 +380,11 @@ CONTAINS
           IF( ( wt_components_init(i) ) .LT. 0.D0 ) THEN
 
              WRITE(*,*) 'Initial volume of crystals is not compatible with composition'
-
              STOP
 
           ENDIF
 
-          rhoB_components(i) =  wt_components_init(i) * REAL( (rho_1) * alfa1_in + (rho_2) * (1.D0 - alfa1_in) )
+          rhoB_components(i) =  wt_components_init(i) * REAL( ( rho_1 ) * alfa1_in + ( rho_2 ) * ( 1.D0 - alfa1_in ) )
 
           qp(idx) =  rhoB_components(i)
 

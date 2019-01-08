@@ -18,7 +18,13 @@ MODULE melts_fit_module
   !> Normalized fraction of phases at conduit bottom (with crystals)
   REAL*8, ALLOCATABLE :: wt_components_init(:)
 
-  !> Type of geochemical system (1: DiAnAb)
+  !> Proportion of oxides in each component
+  REAL*8, ALLOCATABLE :: wt_oxide_components(:,:)
+
+  !> Residual values of oxides
+  REAL*8,  DIMENSION(12) :: wt_oxide_residual
+
+  !> Type of geochemical system (1: AbAnDi)
   INTEGER :: type_system
 
   !> Pressure list
@@ -107,8 +113,7 @@ CONTAINS
     headings_string(19) = 's20'
     headings_string(20) = 's11'
     headings_string(21) = 'T_ref'
-    headings_string(22) = 'initial_composition'
-    headings_string(23) = 'type'
+    headings_string(22) = 'type'
 
     INQUIRE (FILE=input_fitting,exist=fexist)
     
@@ -145,13 +150,13 @@ CONTAINS
 
                    ALLOCATE(  pressure_list(n_pressure) )
 
-                   pressure_list(1:n_fraction) = lecture_array(1:n_pressure)
+                   pressure_list(1:n_pressure) = lecture_array(1:n_pressure)
 
                 ELSE
 
                    n_fraction = MINLOC(lecture_array, DIM=1) - 1
 
-                   ALLOCATE(  fraction_list(n_fraction))
+                   ALLOCATE(fraction_list(n_fraction))
 
                    fraction_list(1:n_fraction) = lecture_array(1:n_fraction)
 
@@ -177,7 +182,7 @@ CONTAINS
     ALLOCATE( s11(n_pressure, n_fraction), s10(n_pressure, n_fraction), s20(n_pressure, n_fraction))
     ALLOCATE( T_ref(n_pressure, n_fraction) )
 
-    DO i=3,21
+    DO i = 3,21
 
        OPEN(fitting_unit,FILE=input_fitting,STATUS='old')
 
@@ -195,7 +200,7 @@ CONTAINS
 
              IF(TRIM(lines) .EQ.  TRIM(headings_string(i))) THEN
 
-                DO k=1,n_pressure
+                DO k = 1,n_pressure
 
                    READ(fitting_unit, * , IOSTAT=bol_lines) (lecture_array(l), l=1,n_fraction)
 
@@ -293,39 +298,7 @@ CONTAINS
 
     ENDDO
 
-    wt_tot_0 = fraction_list(n_fraction)
-
     i = 22
-
-    OPEN(fitting_unit,FILE=input_fitting,STATUS='old')
-
-    DO j=1,100
-
-       lecture_array(j) = 0.D0
-
-    ENDDO
-
-    DO j=1,500
-
-       READ(fitting_unit, * ,IOSTAT=bol_lines), lines
- 
-       IF(bol_lines .EQ. 0) THEN
-
-          IF(TRIM(lines) .EQ.  TRIM(headings_string(i))) THEN
-
-             READ(fitting_unit, * , IOSTAT=bol_lines) (wt_components_fit(l), l=1,n_components)
-
-             EXIT
-
-          ENDIF
-
-       ENDIF
-
-    ENDDO
-
-    CLOSE(fitting_unit)
-
-    i = 23
 
     OPEN(fitting_unit,FILE=input_fitting,STATUS='old')
 
@@ -357,12 +330,21 @@ CONTAINS
 
     IF(type_system .EQ. 1) THEN
 
+       wt_oxide_components(1:12, 1) = [68.74, 0.0, 19.44, 0.0, 0.0, 0.0, 0.0, 11.82, 0.0, 0.0, 0.0, 0.0] / 100.0
+       wt_oxide_components(1:12, 2) = [43.19, 0.0, 36.65, 0.0, 0.0, 0.0, 20.16, 0.0, 0.0, 0.0, 0.0, 0.0] / 100.0
+       wt_oxide_components(1:12, 3) = [55.49, 0.0, 0.0, 0.0, 0.0, 18.61, 25.90, 0.0, 0.0, 0.0, 0.0, 0.0] / 100.0
+
        IF(( n_cry .NE. 2 ) .OR. (n_components .NE. 3 )) THEN
 
-          WRITE(*,*) 'Number of components/crystals is not compatible with system DiAnAb'
+          WRITE(*,*) 'Number of components/crystals is not compatible with system AbAnDi.'
           STOP
 
        ENDIF
+
+    ELSE
+
+          WRITE(*,*) 'System type is not supported.'
+          STOP       
 
     ENDIF
 
@@ -372,7 +354,7 @@ CONTAINS
 
           IF(type_system == 1) THEN
 
-             IF(( i == 1 .AND. j == 1 ) .OR. (i .GT. 1 .AND. j .GT. 1)) THEN
+             IF(( i == 3 .AND. j == 2 ) .OR. (i .LT. 3 .AND. j .LT. 2)) THEN
 
                 rel_cry_components(i,j) = DCMPLX( 1.D0, 0.D0 )	
  

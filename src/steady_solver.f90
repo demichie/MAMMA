@@ -19,7 +19,7 @@ MODULE steady_solver
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last, idx_components_first,                    &
+       idx_cry_eqn_first, idx_cry_eqn_last, idx_components_first,               &
        idx_components_last
   
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
@@ -1439,7 +1439,7 @@ CONTAINS
 
              END DO
 
-             DO i=idx_beta_first,idx_beta_last
+             DO i=idx_cry_eqn_first,idx_cry_eqn_last
 
                 qp_rel(i) = MAX(qp_rel(i),0.D0)
 
@@ -1465,7 +1465,7 @@ CONTAINS
 
              END DO
 
-             DO i=idx_beta_first,idx_beta_last
+             DO i=idx_cry_eqn_first,idx_cry_eqn_last
 
                 qp_rel(i) = MAX(qp_rel(i),0.D0)
 
@@ -1496,7 +1496,7 @@ CONTAINS
              
           END DO
           
-          DO i=idx_beta_first,idx_beta_last
+          DO i=idx_cry_eqn_first,idx_cry_eqn_last
              
              qp_rel(i) = MAX(qp_rel(i),0.D0)
              

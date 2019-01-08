@@ -18,7 +18,7 @@ MODULE equations
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_beta_first , idx_beta_last, idx_components_first,                    &
+       idx_cry_eqn_first , idx_cry_eqn_last, idx_components_first,              &
        idx_components_last
   
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
@@ -163,25 +163,25 @@ CONTAINS
 
           DO j = 0,n_mom-1
 
-             DO k = 1,2         
+             DO k = 1 , 2         
   
-                mom_cry(i,j,k) = qp(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) 
+                mom_cry(i,j,k) = qp( idx_cry_eqn_first + 2 * n_mom * ( i - 1 ) + 2 * j + k - 1 ) 
 
              END DO
 
           END DO
           
-          beta(i) = MAX( MIN( REAL(cry_shape_factor(i) * SUM( mom_cry( i , 3 , 1:2 )) / alfa_1 ) , beta_max(i) ), beta0(i) )
+          beta(i) = MAX( MIN( REAL( SUM( mom_cry( i , 1 , 1 : 2 ) ) / alfa_1 / rho_c(i) ) , beta_max(i) ), beta0(i) )
 
        END DO
 
-       DO i = 1,n_components
+       DO i = 1 , n_components
 
           rhoB_components(i) = qp(idx_components_eqn_first - 1 + i) 
 
        ENDDO
 
-       DO i = 1,n_cry 
+       DO i = 1 , n_cry 
 
          sum_rhoB_components(i) = DCMPLX(0.D0, 0.D0)
 
@@ -195,7 +195,7 @@ CONTAINS
 
     ELSE
 
-       beta(1:n_cry) = qp(idx_beta_first:idx_beta_last)
+       beta(1:n_cry) = qp( idx_cry_eqn_first : idx_cry_eqn_last )
 
     END IF
        
@@ -205,17 +205,21 @@ CONTAINS
     alfarho_2 = alfa_2 * rho_2
 
     x_c_1(1:n_cry) = rho_c(1:n_cry) * beta(1:n_cry) / rho_1
+
     x_md_1 = DCMPLX(1.D0,0.D0) - SUM(x_c_1)
 
     x_d_1(1:n_gas) = x_d_md(1:n_gas) * x_md_1
+
     x_m_1 = DCMPLX(1.D0,0.D0) - SUM(x_d_1) - SUM(x_c_1)
 
     alfa_d_1(1:n_gas) = rho_1 * x_d_1(1:n_gas) / rho_d(1:n_gas) 
+
     alfa_m_1 = rho_1 * x_m_1 / rho_m
 
     rho_mix = alfa_1 * rho_1 + alfa_2 * rho_2
 
     x_1 = alfa_1 * rho_1 / rho_mix
+
     x_2 = alfa_2 * rho_2 / rho_mix
 
     x_g(1:n_gas) = alfa_g(1:n_gas) * rho_g(1:n_gas) / rho_mix
@@ -223,12 +227,15 @@ CONTAINS
     x_g_2(1:n_gas) = x_g(1:n_gas) / x_2
 
     x_d(1:n_gas) = x_d_1(1:n_gas) * x_1
+
     x_m = x_m_1 * x_1
+
     x_c(1:n_cry) = x_c_1(1:n_cry) * x_1
 
     u_mix = x_1 * u_1 + x_2 * u_2
 
     rhoB_m = rho_mix * x_m
+
     rhoB_c(1:n_cry) = rho_mix * x_c(1:n_cry)
 
     cv_mix = x_m * cv_m + SUM( x_c(1:n_cry) * cv_c(1:n_cry) )                   &
@@ -259,7 +266,7 @@ CONTAINS
     IMPLICIT none
 
     REAL*8, INTENT(IN) :: r_qp(n_vars)
-    REAL*8, INTENT(OUT) :: qp2(1+n_cry+n_gas+n_gas+4)
+    REAL*8, INTENT(OUT) :: qp2(1+n_cry+n_gas+n_gas+4+n_cry)
 
     COMPLEX*16 :: qp(n_vars)
 
@@ -279,9 +286,14 @@ CONTAINS
     CALL f_xdis_eq
 
     qp2(1) = REAL(rho_1)
+
     qp2(1+1:1+n_gas) = REAL(rho_g(1:n_gas))
+
     qp2(1+n_gas+1:1+n_gas+n_cry) = REAL(beta_eq(1:n_cry))
+
     qp2(1+n_gas+n_cry+1:1+n_gas+n_cry+n_gas) = REAL( x_d_md_eq(1:n_gas) )
+
+    qp2(1+n_gas+n_cry+n_gas+5:1+n_gas+n_cry+n_gas+4+n_cry) = REAL( beta(1:n_cry) )
 
     CALL mixture_viscosity
 
@@ -455,7 +467,6 @@ CONTAINS
     END IF
 
     !----- Crystal Phases -------------------------------------------------------
-
     IF ( method_of_moments_flag ) THEN
        
        DO i=1,n_cry
@@ -464,7 +475,7 @@ CONTAINS
     
              DO k=1,2
                     
-                flux(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) = mom_cry(i,j,k) * u_1 * radius**2
+                flux(idx_cry_eqn_first + 2 * n_mom * (i - 1) + 2 * j + k - 1) = mom_cry(i,j,k) * u_1 * radius**2
 
              END DO
 
@@ -480,8 +491,7 @@ CONTAINS
 
     ELSE
 
-       flux(idx_cry_eqn_first:idx_cry_eqn_last) = alfa_1 * rho_c(1:n_cry) *     &
-            beta(1:n_cry) * u_1 * radius**2
+       flux( idx_cry_eqn_first : idx_cry_eqn_last ) = alfa_1 * rho_c(1:n_cry) * beta(1:n_cry) * u_1 * radius**2
 
        IF ( verbose_level .GE. 3 ) THEN
        
@@ -501,14 +511,6 @@ CONTAINS
        r_flux = REAL( flux )
 
     END IF
-
-    !DO i=1,n_vars
-
-    !   PRINT *, flux(i)
-
-    !ENDDO
-
-    !PRINT *, ' '
 
   END SUBROUTINE eval_fluxes_qp
 
@@ -701,18 +703,18 @@ CONTAINS
 
        CALL eval_additional_moments
 
-       DO i = 1,n_cry
+       DO i = 1 , n_cry
 
           DO k = 1,2
 
              IF(k == 1) THEN 
 
-                relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) = &
-                   nucleation_rate(i,L_nucleus(i)) * radius**2.0 * sum_rhoB_components(i) / rho_1
+                relaxation_term(idx_cry_eqn_first + 2 * n_mom * (i - 1) + k - 1) = &
+                   nucleation_rate(i, M_nucleus(i)) * radius ** 2.0 * sum_rhoB_components(i)
 
              ELSE
 
-                relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + k - 1) = DCMPLX(0.D0, 0.D0)
+                relaxation_term(idx_cry_eqn_first + 2 * n_mom * (i-1) + k - 1) = DCMPLX(0.D0, 0.D0)
 
              END IF
           
@@ -720,14 +722,14 @@ CONTAINS
 
                 IF(k == 1) THEN 
 
-                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) = &
-                      nucleation_rate(i,L_nucleus(i)) * L_nucleus(i)**j * radius**2.0 * sum_rhoB_components(i) +   &
-                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k) / rho_1
+                   relaxation_term(idx_cry_eqn_first + 2 * n_mom * (i - 1) + 2 * j + k - 1) = &
+                      nucleation_rate( i , M_nucleus(i) ) * M_nucleus(i) ** j * radius**2.0 * sum_rhoB_components(i) +   &
+                      radius**2 * sum_rhoB_components(i) * j * growth_mom( i , j-1 , k ) * mom_cry(i,j-1,k) 
 
                 ELSE
 
                    relaxation_term(idx_cry_eqn_first + 2*n_mom*(i-1) + 2*j + k - 1) =  &
-                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k) / rho_1
+                      radius**2 * sum_rhoB_components(i) * j * growth_mom(i,j-1,k) * mom_cry(i,j-1,k) 
 
                 END IF
 
@@ -737,18 +739,18 @@ CONTAINS
 
        END DO
 
-       DO i = 1,n_components
+       DO i = 1, n_components
 
           relaxation_term(idx_components_eqn_first - 1 + i) = DCMPLX(0.D0, 0.D0)
 
-          DO j = 1,n_cry
+          DO j = 1, n_cry
 
-             DO k = 1,2
+             DO k = 1, 2
 
                relaxation_term(idx_components_eqn_first - 1 + i) = &
-                   relaxation_term(idx_components_eqn_first - 1 + i) - cry_shape_factor(j)*   &
-                   relaxation_term(idx_cry_eqn_first + 2*n_mom*(j-1) + 2*3 + k - 1) *              &
-                   cry_current_solid_solution(i,j) * rho_c(j)
+                   relaxation_term(idx_components_eqn_first - 1 + i) -                                &
+                   relaxation_term(idx_cry_eqn_first + 2 * n_mom * ( j - 1 ) + 2 * 1 + k - 1 ) *      &
+                   cry_current_solid_solution(i,j)
 
              ENDDO   
 
@@ -1127,7 +1129,7 @@ CONTAINS
 
     ! --- CRYSTALS BULK DENSITY -------------------------------------------------
 
-    DO i = idx_cry_eqn_first,idx_cry_eqn_last
+    DO i = idx_cry_eqn_first , idx_cry_eqn_last
 
        source_term(i) = DCMPLX(0.D0,0.D0)
 
@@ -1135,7 +1137,7 @@ CONTAINS
 
     IF( method_of_moments_flag ) THEN   
 
-       DO i= idx_components_eqn_first,idx_components_eqn_last
+       DO i= idx_components_eqn_first , idx_components_eqn_last
 
           source_term(i) = DCMPLX(0.d0,0.D0)
 
