@@ -239,7 +239,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 	xlabel('[Pa]');
 	ylabel('Depth [km]');
 	ylim([Z0,ZN]);
-        legend('Pl','Cpx');
+        legend('Phase 1','Phase 2');
 	set(gca,'YDir','reverse')
 	box on;
 	hold all;
