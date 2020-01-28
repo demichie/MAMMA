@@ -30,6 +30,7 @@ MODULE geometry
   REAL*8 :: radius       !< Effective radius
   REAL*8 :: f_eccen_a    !< Eccentricity factor a (rate between ellipse perimeter and 2*pi*sqrt(Ra*Rb))
   REAL*8 :: f_eccen_b    !< Eccentricity factor b (sqrt(2*Ra*Ra*Rb*Rb/(Ra*Ra+Rb*Rb))/sqrt(Ra*Rb))
+  REAL*8 :: d_qradius 	!< Derivative of square radius along zeta
 
   !> geometry model\n
   !> - 'fixed'           => constant equivalent radius, constant eccentricity
@@ -255,7 +256,7 @@ CONTAINS
              
           END IF
 
-       	  radius_stag(j) = eccen_axis_b / ( ( 1 - eccen_stag(j)**2.D0 ) ** 0.25D0)
+       	  radius_stag(j) = eccen_axis_b / ( ( 1 - eccen_stag(j) ** 2.D0 ) ** 0.25D0)
           
        END DO
 
@@ -286,15 +287,17 @@ CONTAINS
     radius = coeff_interp * radius_stag(z_idx+1) + ( 1.D0 - coeff_interp ) *        &
          radius_stag(z_idx)
 
-    eccen_aux1 = coeff_interp * eccen_stag(z_idx+1) + ( 1.D0 - coeff_interp ) *          &
+    d_qradius = 2.D0 * radius * ( radius_stag(z_idx + 1) - radius_stag(z_idx) ) / ( z_stag(z_idx+1) - z_stag(z_idx) )  
+
+    eccen_aux1 = coeff_interp * eccen_stag( z_idx + 1 ) + ( 1.D0 - coeff_interp ) *          &
          eccen_stag(z_idx)
 
-    eccen_aux2 = (1.D0 - eccen_aux1**2.D0)**(0.5D0)
+    eccen_aux2 = (1.D0 - eccen_aux1 ** 2.D0) ** (0.5D0)
 
     f_eccen_a =  ( 3.D0 * (1.D0 + eccen_aux2 ) - ((3.D0 + eccen_aux2) *  &
 		              (1.D0 + 3.D0*eccen_aux2 ))**(0.5D0) ) / (2.D0 * eccen_aux2**(0.5D0) )
 
-    f_eccen_b =  SQRT( (2.D0 * eccen_aux2 ) / (1 + eccen_aux2**2.D0) )
+    f_eccen_b =  SQRT( (2.D0 * eccen_aux2 ) / (1 + eccen_aux2 ** 2.D0) )
 
   END SUBROUTINE update_radius
 

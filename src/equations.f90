@@ -625,7 +625,7 @@ CONTAINS
   SUBROUTINE eval_relaxation_terms( relaxation_term )
 
     USE complexify 
-    USE geometry, ONLY : radius
+    USE geometry, ONLY : radius, d_qradius
     IMPLICIT none
 
     COMPLEX*16, INTENT(OUT) :: relaxation_term(n_eqns)
@@ -648,14 +648,16 @@ CONTAINS
     relaxation_term(idx_vol1_eqn) = pressure_relaxation * radius**2
 
     ! relaxation term for the mixture momentum ----------------------------------
-    relaxation_term(idx_mix_mom_eqn) = DCMPLX(0.D0,0.D0)
+    relaxation_term(idx_mix_mom_eqn) = (1.D0 - frag_eff) * p_1 * d_qradius + &
+	    (frag_eff) * p_2 * d_qradius
 
     ! relaxation term for relative velocity -------------------------------------
     CALL vel_relax_term( velocity_relaxation )
     relaxation_term(idx_rel_vel_eqn) = velocity_relaxation * radius**2
 
     ! relaxation term for the mixture energy ------------------------------------
-    relaxation_term(idx_mix_engy_eqn) = DCMPLX(0.D0,0.D0)
+    relaxation_term(idx_mix_engy_eqn) = - (1.D0 - frag_eff) * p_1 * u_1 * d_qradius - &
+	    (frag_eff) * p_2 * u_2 * d_qradius
 
     ! relaxation term for dissolved gas -----------------------------------------
 
@@ -670,7 +672,7 @@ CONTAINS
 
        IF ( REAL( x_d_md(i) ) .LT. REAL( x_d_md_eq(i) ) ) THEN
 
-          relaxation_term(idx_dis_gas_eqn_first+i-1) = DCMPLX(0.D0,0.D0)
+          relaxation_term(idx_dis_gas_eqn_first + i - 1) = DCMPLX(0.D0,0.D0)
 
        END IF
 
@@ -856,9 +858,6 @@ CONTAINS
     ELSE
 
        force_term(idx_mix_engy_eqn) = - rho_mix * u_mix * grav * radius**2
-
-       force_term(idx_mix_engy_eqn) = force_term(idx_mix_engy_eqn)              &
-            + visc_force_2 * u_2 + visc_force_1 * u_1
 
     END IF
 
@@ -1069,7 +1068,7 @@ CONTAINS
              IF ( inst_vaporization ) THEN
 
                 heat_flux = - 2.D0 * radius * f_eccen_a * water_mass_flux * &
-                     ( cv_d(1) * ( T_boiling-T_w ) + cv_2*( -T_boiling ) &
+                     ( cv_d(1) * ( T_boiling - T_w ) + cv_2 * ( -T_boiling ) &
                      + lambda_w )
 
              ELSE
@@ -1111,12 +1110,12 @@ CONTAINS
 
     ! --- EXSOLVED GAS MASS FRACTIONS -------------------------------------------
 
-    DO i = idx_ex_gas_eqn_first,idx_ex_gas_eqn_last
+    DO i = idx_ex_gas_eqn_first , idx_ex_gas_eqn_last
 
        IF ( lateral_degassing ) THEN
 
           source_term(i) = - 2.D0 * q_lat * radius * f_eccen_a *                     &
-             alfa_g_2(1+i-idx_ex_gas_eqn_first) * rho_g(1+i-idx_ex_gas_eqn_first)   &
+             alfa_g_2( 1 + i - idx_ex_gas_eqn_first) * rho_g( 1 + i - idx_ex_gas_eqn_first )   &
              / rho_2
           
        ELSE
@@ -1126,6 +1125,15 @@ CONTAINS
        END IF
 
     END DO
+
+    ! H2O source due to inlet
+    IF ( ext_water_flag .AND. inst_vaporization ) THEN
+
+       source_term(idx_ex_gas_eqn_first) = source_term(idx_ex_gas_eqn_first) + 2.D0 * radius * f_eccen_a  &
+            * water_mass_flux
+
+    END IF
+
 
     ! --- CRYSTALS BULK DENSITY -------------------------------------------------
 

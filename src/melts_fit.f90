@@ -136,7 +136,7 @@ CONTAINS
 
        DO j=1,500
 
-          READ(fitting_unit, * ,IOSTAT=bol_lines), lines
+          READ(fitting_unit, * ,IOSTAT=bol_lines) lines
  
           IF(bol_lines .EQ. 0) THEN
 
@@ -194,7 +194,7 @@ CONTAINS
 
        DO j=1,500
 
-          READ(fitting_unit, * ,IOSTAT=bol_lines), lines
+          READ(fitting_unit, * ,IOSTAT=bol_lines) lines
  
           IF(bol_lines .EQ. 0) THEN
 
@@ -310,13 +310,13 @@ CONTAINS
 
     DO j=1,500
 
-       READ(fitting_unit, * ,IOSTAT=bol_lines), lines
+       READ(fitting_unit, * ,IOSTAT=bol_lines) lines
  
        IF(bol_lines .EQ. 0) THEN
 
           IF(TRIM(lines) .EQ.  TRIM(headings_string(i))) THEN
 
-             READ(fitting_unit, * , IOSTAT=bol_lines), type_system
+             READ(fitting_unit, * , IOSTAT=bol_lines) type_system
 
              EXIT
 

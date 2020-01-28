@@ -881,13 +881,23 @@ CONTAINS
          gamma_c(1:n_cry) * p0_c(1:n_cry) ) / gamma_c(1:n_cry)
 
     IF ( (.NOT. (crystallization_model .EQ. 'Vitturi2010' )) .AND. (.NOT.       &
-       method_of_moments_flag) .AND. (.NOT. (crystallization_model .EQ. 'None' )) ) THEN
+       method_of_moments_flag) .AND. (.NOT. (crystallization_model .EQ. 'None' )) &
+	  .AND. (.NOT. (crystallization_model .EQ. 'Cotopaxi_1877' )) &
+	  .AND. (.NOT. (crystallization_model .EQ. 'Cotopaxi_MB' )) &
+	  .AND. (.NOT. (crystallization_model .EQ. 'Cotopaxi_MT' )) &
+	  .AND. (.NOT. (crystallization_model .EQ. 'Cotopaxi_L3' )) &
+	  .AND. (.NOT. (crystallization_model .EQ. 'Cotopaxi_L5' )) ) THEN
 
        WRITE(*,*) ''
        WRITE(*,*) 'Wrong crystallization model chosen.'
        WRITE(*,*) 'Please choose between:'
        WRITE(*,*) ''
        WRITE(*,*) 'Vitturi2010'
+       WRITE(*,*) 'Cotopaxi_1877'
+       WRITE(*,*) 'Cotopaxi_MB'
+       WRITE(*,*) 'Cotopaxi_MT'
+       WRITE(*,*) 'Cotopaxi_L3'
+       WRITE(*,*) 'Cotopaxi_L5'
        WRITE(*,*) 'None'
        WRITE(*,*) ''
 

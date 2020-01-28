@@ -274,6 +274,11 @@ MODULE constitutive
 
   !> Model for the equilibrium crystal volume fraction:\n
   !> - 'Vitturi2010'    => Eq. 4 of de' Michieli Vitturi et al. 2010;
+  !> - 'Cotopaxi_1877'  => alphaMELTS calibration
+  !> - 'Cotopaxi_MB'  => alphaMELTS calibration
+  !> - 'Cotopaxi_MT'  => alphaMELTS calibration
+  !> - 'Cotopaxi_L3'  => alphaMELTS calibration
+  !> - 'Cotopaxi_L5'  => alphaMELTS calibration
   !> - 'None'           => Without crystallization
   !> .
   CHARACTER*20 :: crystallization_model
@@ -988,11 +993,12 @@ CONTAINS
 
     COMPLEX*16 :: x_d_md_tot ,x_d_md_wt_tot 
     COMPLEX*16 :: p_1_bar, T_celsius
+    COMPLEX*16 :: am1, am2, am3, am4
     ! COMPLEX*16 :: crystal_mass_fraction(1:n_cry)
 
     INTEGER :: j
 
-    p_1_bar = p_1 / 1.0e5
+    p_1_bar = p_1 / 1.D5
     T_celsius = T - 273.D0
 
     x_d_md_tot = SUM( x_d_md(1:n_gas) )
@@ -1007,7 +1013,97 @@ CONTAINS
        DO j=1,n_cry
           
           !----------------------------------------------------------------------
-          beta_eq(j)=beta0(j) + 0.55D0*( 0.58815D0*( p_1/1.D6 )**( -0.5226D0 ) )
+          beta_eq(j) = beta0(j) + 0.55D0*( 0.58815D0*( p_1/1.D6 )**( -0.5226D0 ) )
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'Cotopaxi_1877' )
+
+	  am1 = -0.00186563
+	  am2 = 1.20316D-5
+	  am3 = -12.9411
+	  am4 = 2.939
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = am1 * T + am2 * p_1_bar + am3 * x_d_md_tot + am4
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'Cotopaxi_MB' )
+
+	  am1 = -0.00193444
+	  am2 = 1.29439D-5
+	  am3 = -13.7759
+	  am4 = 3.08516
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = am1 * T + am2 * p_1_bar + am3 * x_d_md_tot + am4
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'Cotopaxi_MT' )
+
+	  am1 = -0.00186265
+	  am2 = 1.18024D-5 
+	  am3 = -13.0543
+	  am4 = 2.92695
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = am1 * T + am2 * p_1_bar + am3 * x_d_md_tot + am4
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'Cotopaxi_L3' )
+
+	  am1 = -0.00164696
+	  am2 = 1.02924D-5
+	  am3 = -11.1747
+	  am4 = 2.55142
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = am1 * T + am2 * p_1_bar + am3 * x_d_md_tot + am4
+          !----------------------------------------------------------------------
+          
+          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
+
+       END DO
+
+    CASE ( 'Cotopaxi_L5' )
+
+	  am1 = -0.00180323
+	  am2 = 1.16757D-5
+	  am3 = -12.9824 
+	  am4 = 2.86445
+
+       DO j=1,n_cry
+          
+          !----------------------------------------------------------------------
+          beta_eq(j) = am1 * T + am2 * p_1_bar + am3 * x_d_md_tot + am4
           !----------------------------------------------------------------------
           
           beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
@@ -1616,12 +1712,9 @@ CONTAINS
 
     drag_funct = drag_funct_coeff * drag_funct
 
-    velocity_relaxation = - drag_funct * ( u_1 - u_2 ) * ( rho_mix              &
-         / ( rho_1 * rho_2 ) )
-
     IF ( drag_funct_model .EQ. 'eval' ) THEN
 
-       velocity_relaxation = - drag_funct * ( u_1-u_2 ) / ( x_1 * x_2 * rho_mix )
+       velocity_relaxation = - drag_funct * ( u_1 - u_2 ) / ( x_1 * x_2 * rho_mix )
 
     ELSE
 
