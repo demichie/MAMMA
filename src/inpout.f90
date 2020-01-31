@@ -136,13 +136,13 @@ MODULE inpout
        rho0_g , T0_g , bar_e_g , s0_g, visc_2 , alfa2_lat_thr , perm0
        
   NAMELIST / dissolved_gas_parameters / rho0_d , C0_d , cv_d , gamma_d , p0_d , &
-       T0_d , bar_e_d , bar_p_d , s0_d , exsol_model , solub , solub_exp
+       bar_e_d , s0_d , exsol_model , solub , solub_exp
 
   NAMELIST / crystals_parameters / rho0_c , C0_c , cv_c , gamma_c , p0_c ,      &
-       T0_c , bar_e_c , bar_p_c , s0_c , beta0 , beta_max, crystallization_model
+       bar_e_c , s0_c , beta0 , beta_max, crystallization_model
 
-  NAMELIST / melt_parameters / rho0_m , C0_m , cv_m , gamma_m , p0_m , T0_m ,   &
-       bar_e_m , bar_p_m , s0_m
+  NAMELIST / melt_parameters / rho0_m , C0_m , cv_m , gamma_m , p0_m ,          &
+       bar_e_m , s0_m
 
   NAMELIST / viscosity_parameters / visc_melt_model , bubbles_model ,           &
        theta_model , theta_fixed
@@ -202,12 +202,12 @@ CONTAINS
 
     !  Variables for the namelist DISSOLVED_GAS_PARAMETERS
     REAL*8 :: rho0_d_init, C0_d_init , cv_d_init , gamma_d_init , p0_d_init , &
-         T0_d_init , bar_e_d_init , bar_p_d_init , s0_d_init , solub_init ,   &
+         bar_e_d_init , s0_d_init , solub_init ,   &
          solub_exp_init
 
     !  Variables for the namelist CRYSTALS_PARAMETERS
     REAL*8 :: rho0_c_init , C0_c_init , cv_c_init , gamma_c_init , p0_c_init ,&
-         T0_c_init , bar_e_c_init , bar_p_c_init , s0_c_init , beta0_init ,   &
+         bar_e_c_init , s0_c_init , beta0_init ,   &
          beta_max_init
 
     REAL*8 :: log10_tau_c_init , log10_tau_d_init
@@ -230,13 +230,13 @@ CONTAINS
          alfa2_lat_thr , perm0
 
     NAMELIST / dissolved_gas_parameters_init / rho0_d_init ,                  &
-         C0_d_init , cv_d_init , gamma_d_init , p0_d_init , T0_d_init ,       &
-         bar_e_d_init , bar_p_d_init , s0_d_init , exsol_model ,              &
+         C0_d_init , cv_d_init , gamma_d_init , p0_d_init ,                   &
+         bar_e_d_init , s0_d_init , exsol_model ,                             &
          solub_init , solub_exp_init
 
     NAMELIST / crystals_parameters_init / rho0_c_init ,                       &
-         C0_c_init , cv_c_init , gamma_c_init , p0_c_init , T0_c_init ,       &
-         bar_e_c_init , bar_p_c_init , s0_c_init , beta0_init , beta_max_init
+         C0_c_init , cv_c_init , gamma_c_init , p0_c_init ,                   &
+         bar_e_c_init , s0_c_init , beta0_init , beta_max_init
 
     NAMELIST / relaxation_parameters_init / drag_funct_model ,                &
          log10_drag_funct_coeff , p_relax_model , log10_tau_p_coeff ,         &
@@ -443,9 +443,7 @@ CONTAINS
        cv_d = 3637.5787820D0
        gamma_d = 1.11D0
        p0_d = 1.0d8
-       T0_D = 372.99994092673325
        BAR_E_D = 0.0000000000000000
-       BAR_P_D = 49249833.789414391 
        s0_d = 0.d0
        exsol_model = 'Henry'
        solub = 4.11D-06 
@@ -457,9 +455,7 @@ CONTAINS
        CV_C = 360.00000000000000     
        GAMMA_C = 3.3999999999999999     
        P0_C = 250000000.00000000     
-       T0_C = 1361.6557734204794     
        BAR_E_C = 0.0000000000000000     
-       BAR_P_C = 3044117647.0588236     
        S0_C = 0.0000000000000000     
        BETA0 = 0.40000000000000002     
        BETA_MAX = 0.40000000000000002     
@@ -471,16 +467,14 @@ CONTAINS
        CV_M = 707.00000000000000     
        GAMMA_M = 2.0899999999999999     
        P0_M = 140000000.00000000     
-       T0_M = 1158.9999999999998     
        BAR_E_M = 0.0000000000000000     
-       BAR_P_M = 2092900424.9999993     
        S0_M = 0.0000000000000000
 
        !-- Inizialization of the Variables for the namelist viscosity_parameters
        visc_melt_model = 'Hess_and_Dingwell1996'
        bubbles_model = 'none'
        theta_model = 'Costa2005'
-       theta_fixed = 1.d0
+       theta_fixed = 1.D0
 
        !-- Inizialization of the Variables for the namelist temperature_parameters
        isothermal = .TRUE.
@@ -493,10 +487,6 @@ CONTAINS
 
        !-- Inizialization of the Variables for the namelist source_parameters
        grav = 9.81D0
-
-       !-- Inizialization of the Variables for the namelist country_rock_parameters
-       rho_cr =  2600.000000000000                                                                  
-       log10_k_cr = -12.000000000000  
        
        !-- Initialization of the variables for the namelist relaxation_parameters
        ! ------- READ relaxation_parameters NAMELIST -------------------------------
@@ -539,20 +529,10 @@ CONTAINS
        WRITE(input_unit, viscosity_parameters )
 
        WRITE(input_unit, temperature_parameters )
-
-       IF ( explosive_flag ) THEN
        
-          WRITE(input_unit, fragmentation_parameters )
-
-       END IF
+       WRITE(input_unit, fragmentation_parameters )
           
        WRITE(input_unit, source_parameters )
-
-       IF ( ext_water_flag .OR. lateral_degassing_flag ) THEN
-       
-          WRITE(input_unit, country_rock_parameters )
-
-       END IF
           
        WRITE(input_unit, relaxation_parameters )
 
@@ -633,7 +613,7 @@ CONTAINS
        
     END IF
     
-    READ(input_unit,geometry_parameters , IOSTAT = ios )
+    READ( input_unit , geometry_parameters , IOSTAT = ios )
 
     IF ( ios .NE. 0 ) THEN
        
@@ -763,7 +743,7 @@ CONTAINS
        
     n_eqns = n_vars
 
-    READ(input_unit,steady_boundary_conditions , IOSTAT = ios )
+    READ( input_unit , steady_boundary_conditions , IOSTAT = ios )
 
     IF ( ios .NE. 0 ) THEN
        
@@ -792,7 +772,6 @@ CONTAINS
        WRITE(*,*) 'Shooting technique to search for inlet velocity'
 
     END IF
-
 
     ! ------- READ exsolved_gas_parameters NAMELIST ----------------------------
     READ(input_unit, exsolved_gas_parameters , IOSTAT = ios )
@@ -1079,7 +1058,6 @@ CONTAINS
        REWIND(input_unit)
        
     END IF
-
     
     IF ( isothermal ) THEN
 
@@ -1123,7 +1101,7 @@ CONTAINS
     ! ------- READ external_water_parameters NAMELIST ---------------------------
     IF ( ext_water_flag ) THEN
        
-       READ(input_unit, external_water_parameters , IOSTAT = ios )
+       READ( input_unit , external_water_parameters , IOSTAT = ios )
        
        IF ( ios .NE. 0 ) THEN
           
@@ -1216,7 +1194,6 @@ CONTAINS
        
     END IF
 
-    
     drag_funct_coeff = 10.D0 ** log10_drag_funct_coeff
 
     IF ( p_relax_model .EQ. 'single' ) THEN
@@ -1365,7 +1342,11 @@ CONTAINS
 
     WRITE(backup_unit, source_parameters )
        
-    WRITE(backup_unit, country_rock_parameters )
+    IF ( ext_water_flag .OR. lateral_degassing_flag ) THEN
+
+       WRITE(backup_unit, country_rock_parameters )
+
+    ENDIF
        
     WRITE(backup_unit, relaxation_parameters )
 
@@ -1423,7 +1404,7 @@ CONTAINS
     USE parameters, ONLY : n_vars , n_cry , n_gas
 
     USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,          &
-         idx_alfa_first , idx_alfa_last , idx_cry_eqn_first, idx_cry_eqn_last
+         idx_alfa_first , idx_alfa_last , idx_cry_first, idx_cry_last
 
     USE geometry, ONLY : zeta_exit
 
@@ -1547,8 +1528,8 @@ CONTAINS
        WRITE(dakota_unit,*) 'Liquid/particles velocity',qp(idx_u1)
        WRITE(dakota_unit,*) 'Gas velocity',qp(idx_u2)
        WRITE(dakota_unit,*) 'Exit Temperature',qp(idx_T)
-       WRITE(dakota_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_eqn_first:   &
-            idx_cry_eqn_last))
+       WRITE(dakota_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_first:   &
+            idx_cry_last))
 
        CALL sound_speeds(C_mix,mach) 
        CALL update_radius(zeta)
@@ -1587,8 +1568,8 @@ CONTAINS
             idx_alfa_last))
        WRITE(exit_unit,*) 'Pressure 1',qp(idx_p1)
        WRITE(exit_unit,*) 'Pressure 2',qp(idx_p2)
-       WRITE(exit_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_eqn_first:     &
-            idx_cry_eqn_last))
+       WRITE(exit_unit,*) 'Crystals volume fraction',SUM(qp(idx_cry_first:     &
+            idx_cry_last))
        WRITE(exit_unit,*) 'Liquid/particles velocity',qp(idx_u1)
        WRITE(exit_unit,*) 'Gas velocity',qp(idx_u2)
        WRITE(exit_unit,*) 'Mach number',mach

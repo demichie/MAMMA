@@ -17,7 +17,7 @@ if(METHOD_OF_MOMENTS_FLAG == 'T')
 
 	comp_cells = size(data_reshaped,2);
 
-	subgrid_idx = round(linspace(1,n_grid,25));
+	subgrid_idx = round(linspace(1,n_grid,n_grid));
 
 	zeta_grid = data_reshaped(1,:);
 
@@ -133,7 +133,7 @@ else
 
 	comp_cells = size(data_reshaped, 2);
 
-	subgrid_idx = round( linspace(1, n_grid , 25) );
+	subgrid_idx = round( linspace(1, n_grid , n_grid) );
 
 	zeta_grid = data_reshaped(1,:);
 

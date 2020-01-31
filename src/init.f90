@@ -16,7 +16,8 @@ MODULE init
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_components_first, idx_components_last
+       idx_cry_first , idx_cry_last,idx_components_first ,                      & 
+       idx_components_last
 
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
        idx_rel_vel_eqn , idx_mix_engy_eqn , idx_dis_gas_eqn_first ,             &
@@ -118,19 +119,23 @@ CONTAINS
     
     r_rho_c(1:n_cry) = REAL( ( p_1 + bar_p_c(1:n_cry) ) / ( T * cv_c(1:n_cry) * &
          ( gamma_c(1:n_cry) - DCMPLX(1.D0,0.D0) ) ) )    
-    
+    rho_c(1:n_cry) = DCMPLX( r_rho_c(1:n_cry) , 0.D0 )    
+
     r_rho_1 = r_rho_md
-    
-    rho_c(1:n_cry) = DCMPLX( r_rho_c(1:n_cry) , 0.D0 )
     rho_1 = DCMPLX( r_rho_1 , 0.D0 )
     
     DO i=1,n_gas
+
        alfa_g_2(i) = DCMPLX(1.0 / n_gas,0.0);
+
        x_g(i) = DCMPLX(1e-2,0.0)
+
     END DO
     
     iter = 1
+
     max_iter =1000
+
     error_iter = 1.0
     
     DO WHILE( error_iter .GT. 1e-15 .AND. (iter .LT. max_iter) )
@@ -138,16 +143,7 @@ CONTAINS
        x_g_old = x_g
        
        CALL f_xdis_eq
-       
-       DO i=1,n_gas
-          
-          xd_md_in(i) = MIN( REAL(x_d_md_eq(i)) , x_ex_dis_in(i) )
-          
-       END DO
-       
-       ! required by eval_densities
-       x_d_md(1:n_gas) = DCMPLX( xd_md_in(1:n_gas) , 0.D0 )
-       
+
        IF( method_of_moments_flag ) THEN
        
           beta_in(1:n_cry) = beta0(1:n_cry)
@@ -159,31 +155,34 @@ CONTAINS
           beta_in(1:n_cry) = REAL(beta_eq(1:n_cry))
       
        END IF       
+
+       beta = DCMPLX( beta_in(1:n_cry) , 0.D0 )
        
+       DO i=1,n_gas
+          
+          xd_md_in(i) = MIN( REAL(x_d_md_eq(i)) , x_ex_dis_in(i) )
+          
+       END DO
+       
+       x_d_md(1:n_gas) = DCMPLX( xd_md_in(1:n_gas) , 0.D0 )
+
        r_u_1 = u_0
        r_u_2 = u_0 + 1.D-10
-       
-       ! evaluate the volume fractions of the two phases
-       
-       beta = DCMPLX( beta_in(1:n_cry) , 0.D0 )
        
        CALL eval_densities
        
        r_rho_1 = REAL( rho_1 )
        r_rho_2 = REAL( rho_2 )
        r_rho_g = REAL( rho_g )
-       
-
        r_rho_md = REAL( rho_md )
        
        xd_md_tot = SUM( xd_md_in(1:n_gas) )
-       
        xtot_in = SUM( x_ex_dis_in(1:n_gas) ) 
        
        IF ( n_gas .EQ. 1 ) THEN
           
-          CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) ,               &
-               beta_in(1:n_cry) , r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
+          CALL f_alfa( x_ex_dis_in(1:n_gas) , xd_md_in(1:n_gas) ,          &
+             beta_in(1:n_cry) , r_rho_md , r_rho_2 , alfa_g_in(1:n_gas) )
           
        ELSE
           
@@ -194,7 +193,7 @@ CONTAINS
        
        DO i = 1,n_gas
           
-          alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-10 )
+          alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-20 )
           
        END DO
        
@@ -232,7 +231,8 @@ CONTAINS
     idx_xd_last = 5 + n_gas
     idx_alfa_first = 5 + n_gas + 1
     idx_alfa_last = 5 + 2 * n_gas
-    
+    idx_cry_first = 6 + 2 * n_gas
+
     idx_mix_mass_eqn = 1
     idx_vol1_eqn = 2
     idx_mix_mom_eqn = 3
@@ -242,12 +242,13 @@ CONTAINS
     idx_dis_gas_eqn_last = 5 + n_gas
     idx_ex_gas_eqn_first = 5 + n_gas + 1
     idx_ex_gas_eqn_last = 5 + 2 * n_gas 
-    idx_cry_eqn_first = 5 + 2 * n_gas + 1
+    idx_cry_eqn_first = 6 + 2 * n_gas 
 
     IF ( method_of_moments_flag ) THEN
 
        idx_cry_eqn_last = 5 + 2 *n_gas + 2 * n_cry * n_mom
- 
+	  idx_cry_last = 5 + 2 *n_gas + 2 * n_cry * n_mom
+
        idx_components_eqn_first = 5 + 2 * n_gas + 2 * n_cry * n_mom + 1
        idx_components_first = 5 + 2 * n_gas + 2 * n_cry * n_mom + 1
 
@@ -257,6 +258,7 @@ CONTAINS
     ELSE
        
        idx_cry_eqn_last = 5 + 2 * n_gas + n_cry
+       idx_cry_last = 5 + 2 * n_gas + n_cry
        
     END IF
     
@@ -300,7 +302,7 @@ CONTAINS
     END DO
     
     ! Crystal volume fractions
-    idx = idx_cry_eqn_first
+    idx = idx_cry_first
 
     IF ( method_of_moments_flag ) THEN
  

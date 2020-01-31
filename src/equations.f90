@@ -18,7 +18,7 @@ MODULE equations
 
   USE parameters, ONLY : idx_p1 , idx_p2 , idx_u1 , idx_u2 , idx_T ,            &
        idx_xd_first , idx_xd_last , idx_alfa_first , idx_alfa_last ,            &
-       idx_cry_eqn_first , idx_cry_eqn_last, idx_components_first,              &
+       idx_cry_first , idx_cry_last, idx_components_first,              &
        idx_components_last
   
   USE parameters, ONLY : idx_mix_mass_eqn , idx_vol1_eqn , idx_mix_mom_eqn ,    &
@@ -165,7 +165,7 @@ CONTAINS
 
              DO k = 1 , 2         
   
-                mom_cry(i,j,k) = qp( idx_cry_eqn_first + 2 * n_mom * ( i - 1 ) + 2 * j + k - 1 ) 
+                mom_cry(i,j,k) = qp( idx_cry_first + 2 * n_mom * ( i - 1 ) + 2 * j + k - 1 ) 
 
              END DO
 
@@ -195,7 +195,7 @@ CONTAINS
 
     ELSE
 
-       beta(1:n_cry) = qp( idx_cry_eqn_first : idx_cry_eqn_last )
+       beta(1:n_cry) = qp( idx_cry_first : idx_cry_last )
 
     END IF
        
@@ -445,7 +445,7 @@ CONTAINS
 
     !----- Dissolved Gas Phases -------------------------------------------------
     flux(idx_dis_gas_eqn_first:idx_dis_gas_eqn_last) =                          &
-         ( x_d_md(1:n_gas)*alfa_1 *                                             &
+         ( x_d_md(1:n_gas) * alfa_1 *                                             &
          ( rho_1 - SUM( beta(1:n_cry) * rho_c(1:n_cry) ) ) * u_1 ) * radius**2
 
     IF ( verbose_level .GE. 3 ) THEN
@@ -656,7 +656,7 @@ CONTAINS
     relaxation_term(idx_rel_vel_eqn) = velocity_relaxation * radius**2
 
     ! relaxation term for the mixture energy ------------------------------------
-    relaxation_term(idx_mix_engy_eqn) = - (1.D0 - frag_eff) * p_1 * u_1 * d_qradius - &
+    relaxation_term(idx_mix_engy_eqn) = (1.D0 - frag_eff) * p_1 * u_1 * d_qradius + &
 	    (frag_eff) * p_2 * u_2 * d_qradius
 
     ! relaxation term for dissolved gas -----------------------------------------
@@ -683,7 +683,7 @@ CONTAINS
     CALL f_xdis_eq
 
     relaxation_term(idx_ex_gas_eqn_first:idx_ex_gas_eqn_last) =                 &
-         ( x_d_md(1:n_gas) - x_d_md_eq(1:n_gas) ) * ( 1.D0 - alfa_2)            &
+         ( x_d_md(1:n_gas) - x_d_md_eq(1:n_gas) ) * ( 1.D0 - alfa_2 )            &
          * ( rho_1 - SUM( beta(1:n_cry) * rho_c(1:n_cry) ) ) / tau_d(1:n_gas)   &
          * radius **2
     
@@ -691,7 +691,7 @@ CONTAINS
 
        IF ( REAL( x_d_md(i) ) .LT. REAL( x_d_md_eq(i) ) ) THEN
 
-          relaxation_term(idx_ex_gas_eqn_first+i-1) = DCMPLX(0.D0,0.D0)
+          relaxation_term(idx_ex_gas_eqn_first + i - 1) = DCMPLX(0.D0,0.D0)
 
        END IF
 
@@ -1167,8 +1167,6 @@ CONTAINS
 
   SUBROUTINE eval_explicit_forces( expl_forces_term )
 
-    USE geometry, ONLY : radius
-
     IMPLICIT NONE
 
     REAL*8, INTENT(OUT) :: expl_forces_term(n_eqns)  !< explicit forces 
@@ -1200,8 +1198,7 @@ CONTAINS
 
     ELSE
 
-       expl_forces_term(idx_mix_engy_eqn) = DREAL( rho_mix * u_mix * grav *     &
-            radius **2 )
+       expl_forces_term(idx_mix_engy_eqn) = 0.D0
 
     END IF
 

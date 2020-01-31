@@ -715,6 +715,7 @@ CONTAINS
     INTEGER :: counter
 
     delta_full = 0.D0
+
     delta_half2 = 0.D0
 
     zeta = z0

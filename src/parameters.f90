@@ -50,6 +50,8 @@ MODULE parameters
   INTEGER :: idx_xd_last         !< Last index of xd in the qp array
   INTEGER :: idx_alfa_first        !< First index of alfa in the qp array
   INTEGER :: idx_alfa_last         !< Last index of alfa in the qp array
+  INTEGER :: idx_cry_first    	 	!> First index of beta in the qp array
+  INTEGER :: idx_cry_last     		!> Last index of beta in the qp array
   INTEGER :: idx_components_first        !< First index of components in the qp array
   INTEGER :: idx_components_last         !< Last index of components in the qp array
   

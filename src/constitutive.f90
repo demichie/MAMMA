@@ -1016,7 +1016,7 @@ CONTAINS
           beta_eq(j) = beta0(j) + 0.55D0*( 0.58815D0*( p_1/1.D6 )**( -0.5226D0 ) )
           !----------------------------------------------------------------------
           
-          beta_eq(j) = MAX( beta0(j) + 1D-15, beta_eq(j) )
+          beta_eq(j) = MAX( beta0(j) , beta_eq(j) )
           beta_eq(j) = MIN( beta_max(j) , beta_eq(j) )
 
        END DO
@@ -2574,14 +2574,13 @@ CONTAINS
     REAL*8, INTENT(IN) :: r_rho_2 
     REAL*8, INTENT(OUT) :: r_alfa_2(n_gas)
 
-
     REAL*8 :: r_x_g(n_gas)    !< exsolved gas mass fraction
 
     ! Mass fraction of the exsolved gas with respect to the crystal-free magma
     r_x_g(1:n_gas) = xtot(1:n_gas) - xmax(1:n_gas)
 
     r_alfa_2 = ( r_x_g * ( 1.D0 - SUM( r_beta(1:n_cry) ) ) * r_rho_md ) /       &
-         ( ( 1.D0 - xtot) * r_rho_2 + r_x_g * ( 1.D0 - SUM( r_beta(1:n_cry) ) ) &
+         ( r_rho_2 + r_x_g * ( 1.D0 - SUM( r_beta(1:n_cry) ) ) &
          * r_rho_md )
 
   END SUBROUTINE f_alfa
