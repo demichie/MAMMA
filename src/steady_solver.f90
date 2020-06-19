@@ -255,7 +255,7 @@ CONTAINS
        END IF
 
        V_0 = V_temp
-       V_coeff = 1.D1
+       V_coeff = 2.D0
        V_2 = V_temp * V_coeff
 
     ELSE

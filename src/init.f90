@@ -193,7 +193,7 @@ CONTAINS
        
        DO i = 1,n_gas
           
-          alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-20 )
+          alfa_g_in(i) = MAX( alfa_g_in(i) , 1.D-10 )
           
        END DO
        
