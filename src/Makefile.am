@@ -25,7 +25,7 @@ MAMMA_SOURCES = \
 FCFLAGS         = -Wunused -O3 -funroll-all-loops
 FCDEBUGFLAGS    = -Wall -g
 
-LIBS            = -lm -llapack
+LIBS            = -lm -llapack -lblas
 
 FC              = gfortran
 MPFC            = gfortran
